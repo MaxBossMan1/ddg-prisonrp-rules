@@ -1,0 +1,371 @@
+DIGITALDELTGAMING PRISONRP - DYNAMIC RULES & MOTD SYSTEM PLAN
+================================================================
+
+PROJECT OVERVIEW:
+- Create a dynamic web application for DigitalDeltaGaming PrisonRP server
+- Main public interface with MOTD/announcements and categorized rules
+- Separate staff management interface for content editing
+- Advanced formatting with embedded media (images/videos)
+
+SYSTEM ARCHITECTURE:
+[ ] Frontend: Modern web application (HTML/CSS/JavaScript)
+[ ] Backend: Database-driven system for dynamic content
+[ ] Database: Store rules, categories, announcements, media
+[ ] Admin Panel: Staff-only content management system
+
+PUBLIC INTERFACE STRUCTURE:
+┌─────────────────────────────────────┐
+│ MAIN PAGE (/)                       │
+├─────────────────────────────────────┤
+│ Header: DigitalDeltaGaming PrisonRP │
+│ SEARCH BAR (Global Rule Search)     │
+│ - Live search with autocomplete     │
+│ - Shows rule codes + descriptions   │
+│   * A.1: "No harassment or..."      │
+│   * B.2.1: "Guards must escort..."  │
+│ - Click to jump to specific rule    │
+├─────────────────────────────────────┤
+│ MOTD/Announcements Section          │
+│ - Current announcements             │
+│ - Server events                     │
+│ - Important updates                 │
+├─────────────────────────────────────┤
+│ RECENT RULE CHANGES                 │
+│ ┌─────────────────────────────────┐ │
+│ │ 📅 Recent Updates (Last 30 Days)│ │
+│ │ • Rule A.2 updated (3 days ago) │ │
+│ │ • New rule B.5 added (1 week)   │ │
+│ │ • Rule C.1.3 revised (2 weeks)  │ │
+│ │ [View All Changes]              │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ RULE CATEGORIES (Auto-Lettered)     │
+│ - Section A: General Server Rules   │
+│ - Section B: PrisonRP Specific      │
+│ - Section C: Guard Guidelines       │
+│ - Section D: Prisoner Guidelines    │
+│ - Section E: Warden Protocols       │
+│ - Section F: Economy & Contraband   │
+│ - Section G: Staff Information      │
+└─────────────────────────────────────┘
+
+INDIVIDUAL RULE PAGES (/rules/[category]):
+┌─────────────────────────────────────┐
+│ CATEGORY PAGE (Section X)           │
+├─────────────────────────────────────┤
+│ Section Title & Description         │
+│ AUTOMATIC RULE NUMBERING SYSTEM     │
+│ ┌─────────────────────────────────┐ │
+│ │ Rule X.1 [📋 Copy Code]         │ │
+│ │ ├─ Sub-rule X.1.1 [📋]         │ │
+│ │ └─ Sub-rule X.1.2 [📋]         │ │
+│ │ Rule X.2 [📋 Copy Code]         │ │
+│ │ └─ Sub-rule X.2.1 [📋]         │ │
+│ └─────────────────────────────────┘ │
+
+│ - Rich text formatting              │
+│ - Expandable sections               │
+│ - Interactive media embeds          │
+│   * Pop-out example images          │
+│   * Embedded demonstration videos   │
+│ - Direct link to specific rules     │
+│ Navigation back to main page        │
+└─────────────────────────────────────┘
+
+STAFF MANAGEMENT SYSTEM (/staff/[secret-link]):
+┌─────────────────────────────────────┐
+│ STAFF DASHBOARD                     │
+├─────────────────────────────────────┤
+│ Authentication: Steam Login         │
+│ Content Management Sections:        │
+│ - Edit MOTD/Announcements           │
+│ - Manage Rule Categories            │
+│   * Add/Edit/Delete categories      │
+│   * Reorder categories              │
+│ - Edit Individual Rules             │
+│   * Rich text editor                │
+│   * Media upload/management         │
+│   * Preview functionality           │
+│ - Media Library                     │
+│   * Upload images/videos            │
+│   * Organize media files            │
+│   * Link media to specific rules    │
+│ - User Management                   │
+│   * Add staff members by Steam ID   │
+│   * Remove staff access             │
+│   * View staff permissions/roles    │
+│   * Assign permission levels        │
+└─────────────────────────────────────┘
+
+TECHNICAL REQUIREMENTS:
+[ ] Frontend Framework: React.js with modern hooks
+[ ] Backend: Node.js with Express.js framework
+[ ] Database: SQLite (simple, file-based, perfect for ~1000 users)
+[ ] Authentication: Steam OpenID integration
+[ ] Session Management: Express-session with secure tokens
+[ ] File Storage: Local filesystem (with Google Cloud migration path)
+[ ] Rich Text Editor: React-based WYSIWYG (TinyMCE or Quill)
+[ ] Media Handling: Multer for uploads, sharp for image processing
+[ ] Responsive Design: CSS Grid/Flexbox with mobile-first approach
+[ ] Deployment: Local development → Google Cloud Run/Compute Engine
+
+FEATURES & FUNCTIONALITY:
+[ ] Dynamic Content Loading
+    - AJAX/fetch for seamless navigation
+    - Fast loading between rule categories
+    
+[ ] Global Search System
+    - Live search with autocomplete
+    - Search by rule content, keywords, or rule codes
+    - Instant results with rule code + truncated description
+      * Format: "A.1: No harassment or bullying of other players..."
+      * Format: "B.2.1: Guards must escort prisoners during..."
+    - Click to jump directly to specific rule
+    - Search history and suggestions
+    - Configurable description length (50-100 characters)
+    
+[ ] Automatic Rule Numbering System
+    - Categories auto-assigned letters (A, B, C...)
+    - Rules auto-numbered within sections (A.1, A.2, A.3...)
+    - Sub-rules auto-numbered (A.1.1, A.1.2, A.1.3...)
+    - Revisions auto-lettered (A.1.1a, A.1.1b, A.1.1c...) - BACKEND ONLY
+    - Only current/active revision shown to public
+    - Previous revisions stored for history/staff reference
+    - Automatic renumbering when rules added/removed/reordered
+    - Maintains numbering integrity across all operations
+    
+[ ] Rule Code Management
+    - Copy button for each rule/sub-rule (current revision only)
+    - Generates shareable rule codes (e.g., "A.2.1" for current revision)
+    - Direct URL access to specific rules (/rules/A/2/1)
+    - Clipboard integration for easy sharing
+    - QR codes for rule references (optional)
+    
+[ ] Recent Changes Tracking
+    - Prominent "Recent Updates" section on MAIN PAGE
+    - Shows rule modifications, additions, deletions
+    - Timestamps for when changes occurred
+    - Links to updated rules for easy navigation
+    - Configurable timeframe (last 30 days, etc.)
+    - Staff can mark changes as "major" or "minor"
+    - "View All Changes" link for complete change history
+    - Highlights major changes vs minor updates
+    
+[ ] Advanced Rule Formatting
+    - Rich text with bold, italic, colors
+    - Hierarchical rule structure display
+    - Expandable/collapsible sections
+    - Code blocks for server commands
+    - Rule cross-references and linking
+    
+[ ] Rich Media in Announcements & Rules
+    - Embedded images in announcements
+    - GIF support for visual examples
+    - Video embeds for demonstrations
+    - Links with preview cards
+    - Media galleries for rule examples
+    
+[ ] Interactive Media
+    - Click-to-expand image galleries
+    - Embedded video players
+    - Lightbox/modal popups for media
+    
+[ ] Staff Management Features
+    - WYSIWYG editor for rule creation
+    - Drag-and-drop media uploads
+    - Live preview of changes
+    - Category management (add/edit/delete/reorder)
+    - Rule hierarchy management (main/sub/revision)
+    - Announcement scheduling (optional)
+    - Steam authentication integration
+    - User management (add/remove staff by Steam ID)
+    - Permission level assignment (Admin, Moderator, Editor)
+
+DATABASE SCHEMA:
+[ ] Categories Table
+    - id, name, description, letter_code, order, created_at
+[ ] Rules Table  
+    - id, category_id, parent_rule_id, title, content, rule_number, sub_number, revision_letter, rule_type, is_active, order, created_at, updated_at
+[ ] Rule_Changes Table (for recent changes tracking)
+    - id, rule_id, change_type, old_content, new_content, change_description, is_major, staff_user_id, created_at
+[ ] Rule_Codes Table (for search optimization)
+    - id, rule_id, full_code, truncated_description, searchable_content, created_at
+[ ] Announcements Table
+    - id, title, content, priority, active, created_at
+[ ] Media Table
+    - id, filename, type, rule_id, description, created_at
+[ ] Staff_Users Table
+    - id, steam_id, steam_username, permission_level, active, created_at, last_login
+[ ] Sessions Table
+    - id, user_id, session_token, expires_at, created_at
+[ ] Search_History Table (optional)
+    - id, search_term, results_count, created_at
+
+DESIGN PREFERENCES:
+[ ] Color Scheme: Neutral (customizable later)
+[ ] Typography: Clean, readable fonts
+[ ] Layout: Modern card-based design
+[ ] Theme: Professional with subtle prison aesthetics
+[ ] Responsive: Mobile-first approach
+
+SECURITY CONSIDERATIONS:
+[ ] Staff access via secret URL (no login buttons on public side)
+[ ] Steam OpenID authentication for staff verification
+[ ] Session management with secure tokens and expiration
+[ ] Permission-based access control (different staff levels)
+[ ] Input sanitization for rich text content
+[ ] File upload restrictions and validation
+[ ] XSS protection for user-generated content
+[ ] Steam ID validation and verification
+
+DEVELOPMENT PHASES:
+1. Project setup and database design
+   - Initialize Node.js/Express backend
+   - Set up React frontend with Create React App
+   - Design SQLite schema and create migrations
+   - Basic project structure and routing
+
+2. Backend API development
+   - RESTful API endpoints for rules, categories, announcements
+   - Steam OpenID authentication integration
+   - File upload handling with Multer
+   - Session management and middleware
+
+3. Public interface (React frontend)
+   - Main page with search, MOTD, recent changes
+   - Rule category pages with hierarchical display
+   - Search functionality with autocomplete
+   - Responsive design implementation
+
+4. Staff management dashboard
+   - Protected routes and authentication
+   - Rich text editor integration
+   - User management (add/remove staff)
+   - Media library and upload interface
+
+5. Advanced features
+   - Automatic rule numbering system
+   - Recent changes tracking
+   - Copy-to-clipboard functionality
+   - Search optimization and indexing
+
+6. Testing and deployment
+   - Local testing and debugging
+   - Google Cloud deployment setup
+   - Performance optimization
+   - Production configuration
+
+AUTOMATIC NUMBERING SYSTEM LOGIC:
+┌─────────────────────────────────────────────────────────────┐
+│ CATEGORY LETTERING: A, B, C, D, E, F, G...                 │
+│ - Auto-assigned based on category order                    │
+│ - Updates automatically when categories reordered          │
+├─────────────────────────────────────────────────────────────┤
+│ RULE NUMBERING: A.1, A.2, A.3, B.1, B.2...               │
+│ - Sequential numbering within each category                 │
+│ - Auto-renumbers when rules added/removed/moved            │
+├─────────────────────────────────────────────────────────────┤
+│ SUB-RULE NUMBERING: A.1.1, A.1.2, A.2.1...               │
+│ - Nested under parent rules                                 │
+│ - Maintains hierarchy automatically                        │
+├─────────────────────────────────────────────────────────────┤
+│ REVISION LETTERING: A.1.1a, A.1.1b, A.2.1a...            │
+│ - Alphabetical revisions for rule modifications            │
+│ - Preserves rule history and changes (BACKEND ONLY)        │
+│ - Only current revision visible to public                  │
+│ - Previous revisions accessible to staff for history       │
+└─────────────────────────────────────────────────────────────┘
+
+RECENT CHANGES SYSTEM:
+- Prominent section on MAIN PAGE showing recent updates
+- Tracks: rule additions, modifications, deletions
+- Shows: timestamp, change description, affected rule codes
+- Staff can mark changes as "major" (important) or "minor" (typos/clarifications)
+- Configurable display timeframe (last 7/14/30 days)
+- Links directly to updated rules for easy navigation
+- "View All Changes" page for complete change history
+- Visual distinction between major and minor changes
+- First thing users see when visiting the site
+
+SEARCH FUNCTIONALITY:
+- Global search bar on all pages
+- Real-time search as user types
+- Search matches: rule content, titles, keywords, rule codes
+- Results show: Rule code + truncated description (50-100 chars)
+  * Example: "A.1: No harassment or bullying of other players..."
+  * Example: "B.2.1: Guards must escort prisoners during yard time..."
+- Click result → jump directly to that rule with highlight
+- Copy button copies rule code to clipboard
+- URL structure: /rules/[section]/[rule]/[sub]
+
+RULE CODE EXAMPLES (PUBLIC DISPLAY):
+- A.1 → Section A, Rule 1 (current revision)
+- B.2.3 → Section B, Rule 2, Sub-rule 3 (current revision)
+- C.1.2 → Section C, Rule 1, Sub-rule 2 (current revision)
+- D.5.1.4 → Section D, Rule 5, Sub-rule 1, Sub-sub-rule 4 (current revision)
+
+STAFF-ONLY REVISION TRACKING:
+- A.1a, A.1b, A.1c → Historical revisions of Rule A.1
+- B.2.3a, B.2.3b → Historical revisions of Sub-rule B.2.3
+- Staff can view full revision history and restore previous versions
+
+TECHNOLOGY STACK DETAILS:
+
+BACKEND (Node.js):
+- Express.js: Web framework
+- SQLite3: Database driver
+- Passport.js: Steam OpenID authentication
+- Express-session: Session management
+- Multer: File upload handling
+- Sharp: Image processing/optimization
+- Helmet: Security middleware
+- CORS: Cross-origin resource sharing
+- Bcrypt: Password hashing (if needed)
+
+FRONTEND (React):
+- Create React App: Project setup
+- React Router: Client-side routing
+- Axios: HTTP client for API calls
+- TinyMCE React: Rich text editor
+- React Query: Data fetching and caching
+- Styled-components or CSS Modules: Styling
+- React Hook Form: Form handling
+
+DATABASE (SQLite):
+- Single file database (perfect for ~1000 users)
+- No separate database server needed
+- Easy backup (just copy the .db file)
+- Simple migration to cloud storage if needed
+
+DEPLOYMENT:
+- Local: npm start for both frontend/backend
+- Google Cloud Run: Containerized deployment
+- Google Cloud Storage: Media files (future)
+- Google Cloud SQL: Database upgrade path (if needed)
+
+NOTES:
+- No authentication UI on public pages (no login buttons/nav bar)
+- Staff access through direct URL only (completely hidden from public)
+- Steam authentication for staff management
+- Permission levels: Admin (full access), Moderator (content editing), Editor (limited editing)
+- Rich media support in announcements and rules (images, GIFs, videos, links)
+- Clean, minimal UI inspired by Discord/macOS design principles
+- Focus on user experience and content clarity
+- Scalable architecture for future enhancements
+- SQLite perfect for community of ~1000 users
+- Easy migration path to Google Cloud services
+- Rule numbering system maintains integrity across all operations
+- Search indexing for fast rule lookup
+
+STEAM AUTHENTICATION FLOW:
+1. Staff visits secret URL (/staff/[secret-link])
+2. If not authenticated, redirected to Steam login
+3. Steam returns with user's Steam ID and profile info
+4. System checks if Steam ID exists in staff database
+5. If authorized, create session and grant access
+6. If not authorized, show "Access Denied" message
+
+PERMISSION LEVELS:
+- Admin: Full system access (user management, all content editing)
+- Moderator: Content editing (rules, announcements, media)
+- Editor: Limited editing (specific rule categories only) 
