@@ -5,9 +5,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Production builds
-frontend/build/
-frontend/dist/
-backend/dist/
+build/
+dist/
 
 # Environment variables
 .env
@@ -16,19 +15,17 @@ backend/dist/
 .env.test.local
 .env.production.local
 
-# Database files
-backend/database/*.db
-backend/database/*.db-journal
-backend/database/*.db-wal
-backend/database/*.db-shm
+# Database
+backend/database/ddg_prisonrp.db
+backend/database/ddg_prisonrp.db-journal
+
+# Uploaded files
+backend/uploads/
+!backend/uploads/.gitkeep
 
 # Logs
-logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+logs/
 
 # Runtime data
 pids/
@@ -38,40 +35,15 @@ pids/
 
 # Coverage directory used by tools like istanbul
 coverage/
-*.lcov
 
 # nyc test coverage
-.nyc_output
+.nyc_output/
 
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
-
-# Dependency directories
-jspm_packages/
-
-# TypeScript cache
-*.tsbuildinfo
+# ESLint cache
+.eslintcache
 
 # Optional npm cache directory
 .npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -82,30 +54,23 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# parcel-bundler cache
+# parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
-# Next.js build output
+# next.js build output
 .next
 
-# Nuxt.js build / generate output
+# nuxt.js build output
 .nuxt
-dist
 
-# Gatsby files
-.cache/
-public
+# vuepress build output
+.vuepress/dist
 
-# Storybook build outputs
-.out
-.storybook-out
+# Serverless directories
+.serverless
 
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
@@ -121,17 +86,14 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Media uploads (optional - uncomment if you don't want to track uploaded files)
-# backend/uploads/*
-# !backend/uploads/.gitkeep
+# Temporary files
+*.tmp
+*.temp
 
-# Session files
-sessions/
+# Version control
+.git/
+.svn/
 
 # Backup files
-*.backup
 *.bak
-
-# SQLite database files (we'll keep schema but not the actual DB)
-*.sqlite
-*.sqlite3 
+*.backup 

@@ -3,6 +3,17 @@
   box-sizing: border-box;
 }
 
+/* Text selection color to match staff dashboard orange */
+::selection {
+  background: #f39c12;
+  color: white;
+}
+
+::-moz-selection {
+  background: #f39c12;
+  color: white;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

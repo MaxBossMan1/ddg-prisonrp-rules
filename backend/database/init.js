@@ -3,9 +3,19 @@ const fs = require('fs');
 const path = require('path');
 
 class Database {
+    static instance = null;
+
     constructor(dbPath) {
         this.dbPath = dbPath;
         this.db = null;
+    }
+
+    static getInstance() {
+        return Database.instance;
+    }
+
+    static setInstance(instance) {
+        Database.instance = instance;
     }
 
     async initialize() {
@@ -55,7 +65,28 @@ class Database {
             }
         }
         
+        // Run migrations
+        await this.runMigrations();
+        
         console.log('Database tables created successfully');
+    }
+
+    async runMigrations() {
+        try {
+            // Migration: Add action_type column to discord_messages if it doesn't exist
+            try {
+                await this.run('ALTER TABLE discord_messages ADD COLUMN action_type TEXT');
+                console.log('Migration: Added action_type column to discord_messages');
+            } catch (error) {
+                // Column already exists, ignore the error
+                if (!error.message.includes('duplicate column name')) {
+                    throw error;
+                }
+            }
+        } catch (error) {
+            console.error('Migration error:', error);
+            // Don't throw here, let the app continue
+        }
     }
 
     async insertDefaultData() {
@@ -100,6 +131,24 @@ class Database {
                 );
 
                 console.log('Default announcement inserted');
+            }
+
+            // Check if staff users exist
+            const existingStaff = await this.get('SELECT COUNT(*) as count FROM staff_users');
+            
+            if (existingStaff.count === 0) {
+                // Insert default admin user (replace with actual Steam IDs)
+                await this.run(
+                    'INSERT INTO staff_users (steam_id, steam_username, permission_level) VALUES (?, ?, ?)',
+                    ['76561198000000000', 'Demo Admin', 'admin']
+                );
+
+                await this.run(
+                    'INSERT INTO staff_users (steam_id, steam_username, permission_level) VALUES (?, ?, ?)',
+                    ['76561198000000001', 'Demo Moderator', 'moderator']
+                );
+
+                console.log('Default staff users inserted (demo accounts)');
             }
 
         } catch (error) {
