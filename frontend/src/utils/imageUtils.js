@@ -3,8 +3,8 @@ export const resolveImageUrl = (relativePath) => {
   // In development, proxy images to backend server
   // In production, images will be served from the same domain
   if (process.env.NODE_ENV === 'development') {
-    // For development, images are served from backend on port 3001
-    return `http://localhost:3001${relativePath}`;
+    // For development, images are served from backend on Google Cloud
+    return `http://34.132.234.56:3001${relativePath}`;
   } else {
     // For production, use relative paths (same domain)
     return relativePath;

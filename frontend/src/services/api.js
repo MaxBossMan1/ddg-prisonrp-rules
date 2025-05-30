@@ -4,7 +4,7 @@ import { withCache, CACHE_TTL, invalidateCache } from './cache';
 // Base API configuration
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '' // In production, API calls will be relative to the same domain
-  : 'http://localhost:3001'; // In development, backend runs on port 3001
+  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
 
 const api = axios.create({
   baseURL: API_BASE_URL,

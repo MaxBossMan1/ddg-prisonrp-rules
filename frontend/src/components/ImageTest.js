@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ImageTest = () => {
-  const testImageUrl = "http://localhost:3001/uploads/images/1748367530368_8hp556t7jd6.webp";
+  const testImageUrl = "http://34.132.234.56:3001/uploads/images/1748367530368_8hp556t7jd6.webp";
   
   return (
     <div style={{ padding: '20px', border: '2px solid red', margin: '20px' }}>

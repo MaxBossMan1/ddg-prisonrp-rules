@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import MDEditor from '@uiw/react-md-editor';
 import { commands } from '@uiw/react-md-editor';
@@ -6,6 +6,7 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { markdownToHtml } from '../utils/markdownUtils';
 import { SketchPicker } from 'react-color';
+import { buildApiUrl, API_ENDPOINTS } from '../utils/apiConfig';
 
 const DashboardContainer = styled.div`
   max-width: 1400px;

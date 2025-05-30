@@ -5,7 +5,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:3001',
+      target: 'http://34.132.234.56:3001',
       changeOrigin: true,
     })
   );
@@ -14,7 +14,7 @@ module.exports = function(app) {
   app.use(
     '/auth',
     createProxyMiddleware({
-      target: 'http://localhost:3001',
+      target: 'http://34.132.234.56:3001',
       changeOrigin: true,
     })
   );
