@@ -8,6 +8,11 @@ import { markdownToHtml } from '../utils/markdownUtils';
 import { SketchPicker } from 'react-color';
 import { buildApiUrl, API_ENDPOINTS } from '../utils/apiConfig';
 
+// Base URL configuration for API calls
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // In production, API calls will be relative to the same domain
+  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
+
 const DashboardContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
@@ -1416,17 +1421,17 @@ For questions, contact staff immediately.`,
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:3001/auth/check', { credentials: 'include' });
+      const response = await fetch(`${BASE_URL}/auth/check`, { credentials: 'include' });
       if (response.ok) {
         const userData = await response.json();
         if (userData.authenticated && userData.user) {
           setUser(userData.user);
           loadDashboardData();
         } else {
-          window.location.href = 'http://localhost:3001/auth/steam';
+          window.location.href = `${BASE_URL}/auth/steam`;
         }
       } else {
-        window.location.href = 'http://localhost:3001/auth/steam';
+        window.location.href = `${BASE_URL}/auth/steam`;
       }
     } catch (error) {
       console.error('Auth failed:', error);
@@ -1455,7 +1460,7 @@ For questions, contact staff immediately.`,
   const loadDashboardStats = async () => {
     setLoadingDashboard(true);
     try {
-      const response = await fetch('http://localhost:3001/api/staff/dashboard', { 
+      const response = await fetch(`${BASE_URL}/api/staff/dashboard`, { 
         credentials: 'include' 
       });
       if (response.ok) {
@@ -1478,7 +1483,7 @@ For questions, contact staff immediately.`,
 
   const loadRules = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/staff/rules', { credentials: 'include' });
+      const response = await fetch(`${BASE_URL}/api/staff/rules`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setRules(data);
@@ -1490,7 +1495,7 @@ For questions, contact staff immediately.`,
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categories');
+      const response = await fetch(`${BASE_URL}/api/categories`);
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
@@ -1502,7 +1507,7 @@ For questions, contact staff immediately.`,
 
   const loadCategoriesData = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/staff/categories', {
+      const response = await fetch(`${BASE_URL}/api/staff/categories`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -1516,7 +1521,7 @@ For questions, contact staff immediately.`,
 
   const loadAnnouncements = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/staff/announcements', { credentials: 'include' });
+      const response = await fetch(`${BASE_URL}/api/staff/announcements`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setAnnouncements(data);
@@ -1530,7 +1535,7 @@ For questions, contact staff immediately.`,
   const loadPendingApprovals = async () => {
     setLoadingApprovals(true);
     try {
-      const response = await fetch('http://localhost:3001/api/staff/pending-approvals', { credentials: 'include' });
+      const response = await fetch(`${BASE_URL}/api/staff/pending-approvals`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setPendingApprovals(data);
@@ -1546,11 +1551,11 @@ For questions, contact staff immediately.`,
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:3001/auth/logout', { 
-        method: 'POST', 
-        credentials: 'include' 
+      await fetch(`${BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
       });
-      window.location.href = 'http://localhost:3001/';
+      window.location.href = `${BASE_URL}/`;
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -1565,7 +1570,7 @@ For questions, contact staff immediately.`,
     setLoadingCrossRefs(true);
     
     try {
-      const url = `http://localhost:3001/api/rules/${rule.id}/cross-references`;
+      const url = `${BASE_URL}/api/rules/${rule.id}/cross-references`;
       console.log('🔗 Fetching cross-references from:', url);
       
       const response = await fetch(url, {
@@ -1670,7 +1675,7 @@ For questions, contact staff immediately.`,
     }
 
     try {
-      const response = await fetch(`http://localhost:3001/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
+      const response = await fetch(`${BASE_URL}/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1682,7 +1687,7 @@ For questions, contact staff immediately.`,
       if (response.ok) {
         showCustomAlert('Success', 'Cross-reference added successfully', 'success');
         // Reload cross-references
-        const reloadResponse = await fetch(`http://localhost:3001/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
+        const reloadResponse = await fetch(`${BASE_URL}/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
           credentials: 'include'
         });
         if (reloadResponse.ok) {
@@ -1713,7 +1718,7 @@ For questions, contact staff immediately.`,
       'Are you sure you want to remove this cross-reference?',
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/rules/${currentRuleForCrossRefs.id}/cross-references/${crossRefId}`, {
+          const response = await fetch(`${BASE_URL}/api/rules/${currentRuleForCrossRefs.id}/cross-references/${crossRefId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
@@ -1721,7 +1726,7 @@ For questions, contact staff immediately.`,
           if (response.ok) {
             showCustomAlert('Success', 'Cross-reference removed successfully', 'success');
             // Reload cross-references
-            const reloadResponse = await fetch(`http://localhost:3001/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
+            const reloadResponse = await fetch(`${BASE_URL}/api/rules/${currentRuleForCrossRefs.id}/cross-references`, {
               credentials: 'include'
             });
             if (reloadResponse.ok) {
@@ -1858,8 +1863,8 @@ For questions, contact staff immediately.`,
       });
       
       const url = modalType === 'edit' 
-        ? `http://localhost:3001/api/staff/rules/${editingRule.id}`
-        : 'http://localhost:3001/api/staff/rules';
+        ? `${BASE_URL}/api/staff/rules/${editingRule.id}`
+        : `${BASE_URL}/api/staff/rules`;
       
       const method = modalType === 'edit' ? 'PUT' : 'POST';
       
@@ -1933,7 +1938,7 @@ For questions, contact staff immediately.`,
       `Are you sure you want to permanently delete ${ruleTypeText} "${ruleIdentifier}"?\n\nThis action cannot be undone.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/staff/rules/${ruleId}`, {
+          const response = await fetch(`${BASE_URL}/api/staff/rules/${ruleId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
@@ -1972,7 +1977,7 @@ For questions, contact staff immediately.`,
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:3001/api/images/upload', {
+      const response = await fetch(`${BASE_URL}/api/images/upload`, {
         method: 'POST', 
         credentials: 'include',
         body: formData
@@ -1980,7 +1985,7 @@ For questions, contact staff immediately.`,
 
       if (response.ok) {
         const result = await response.json();
-        return `http://localhost:3001${result.url}`;
+        return `${BASE_URL}${result.url}`;
       } else {
         console.error('Failed to upload image');
         return null;
@@ -2019,7 +2024,7 @@ For questions, contact staff immediately.`,
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:3001/api/images/upload', {
+      const response = await fetch(`${BASE_URL}/api/images/upload`, {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -2396,7 +2401,7 @@ For questions, contact staff immediately.`,
       `Are you sure you want to publish the scheduled announcement "${title}" immediately?\n\nThis will make it active on the homepage right now.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/staff/scheduled-announcements/${announcementId}/publish-now`, {
+          const response = await fetch(`${BASE_URL}/api/staff/scheduled-announcements/${announcementId}/publish-now`, {
             method: 'POST',
             credentials: 'include'
           });
@@ -2452,8 +2457,8 @@ For questions, contact staff immediately.`,
       }
 
       const url = modalType === 'edit-announcement' 
-        ? `http://localhost:3001/api/staff/announcements/${editingAnnouncement.id}`
-        : 'http://localhost:3001/api/staff/announcements';
+        ? `${BASE_URL}/api/staff/announcements/${editingAnnouncement.id}`
+        : `${BASE_URL}/api/staff/announcements`;
       
       const method = modalType === 'edit-announcement' ? 'PUT' : 'POST';
       
@@ -2528,7 +2533,7 @@ For questions, contact staff immediately.`,
       `Are you sure you want to permanently delete the announcement "${announcementTitle}"?\n\nThis action cannot be undone.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/staff/announcements/${announcementId}`, {
+          const response = await fetch(`${BASE_URL}/api/staff/announcements/${announcementId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
@@ -2599,7 +2604,7 @@ For questions, contact staff immediately.`,
         order_index: index + 1
       }));
       
-      const response = await fetch('http://localhost:3001/api/staff/categories/reorder', {
+      const response = await fetch(`${BASE_URL}/api/staff/categories/reorder`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -2682,8 +2687,8 @@ For questions, contact staff immediately.`,
 
     try {
       const url = categoryModalType === 'edit' 
-        ? `http://localhost:3001/api/staff/categories/${categoryFormData.id}`
-        : 'http://localhost:3001/api/staff/categories';
+        ? `${BASE_URL}/api/staff/categories/${categoryFormData.id}`
+        : `${BASE_URL}/api/staff/categories`;
       
       const method = categoryModalType === 'edit' ? 'PUT' : 'POST';
       
@@ -2743,7 +2748,7 @@ For questions, contact staff immediately.`,
       `Are you sure you want to permanently delete the category "${categoryName}"?\n\nThis action cannot be undone.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/staff/categories/${categoryId}`, {
+          const response = await fetch(`${BASE_URL}/api/staff/categories/${categoryId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
@@ -2781,7 +2786,7 @@ For questions, contact staff immediately.`,
   const loadActivityLog = async () => {
     setLoadingDashboard(true);
     try {
-      const response = await fetch('http://localhost:3001/api/staff/dashboard', { 
+      const response = await fetch(`${BASE_URL}/api/staff/dashboard`, { 
         credentials: 'include' 
       });
       if (response.ok) {
@@ -2878,7 +2883,7 @@ For questions, contact staff immediately.`,
   const loadStaffUsers = async () => {
     setLoadingUsers(true);
     try {
-      const response = await fetch('http://localhost:3001/api/staff/users', { 
+      const response = await fetch(`${BASE_URL}/api/staff/users`, { 
         credentials: 'include' 
       });
       if (response.ok) {
@@ -2971,8 +2976,8 @@ For questions, contact staff immediately.`,
       }
 
       const url = userModalType === 'edit' 
-        ? `http://localhost:3001/api/staff/users/${userFormData.id}`
-        : 'http://localhost:3001/api/staff/users';
+        ? `${BASE_URL}/api/staff/users/${userFormData.id}`
+        : `${BASE_URL}/api/staff/users`;
       
       const method = userModalType === 'edit' ? 'PUT' : 'POST';
       
@@ -3050,7 +3055,7 @@ For questions, contact staff immediately.`,
       `Are you sure you want to deactivate staff user "${username}"?\n\nThey will lose access to the staff dashboard immediately. This action can be reversed by editing the user.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/staff/users/${userId}`, {
+          const response = await fetch(`${BASE_URL}/api/staff/users/${userId}`, {
             method: 'DELETE',
             credentials: 'include'
           });
@@ -3108,8 +3113,8 @@ For questions, contact staff immediately.`,
 
     try {
       const endpoint = reviewItem.type === 'rule' 
-        ? `http://localhost:3001/api/staff/rules/${reviewItem.id}/${reviewAction}`
-        : `http://localhost:3001/api/staff/announcements/${reviewItem.id}/${reviewAction}`;
+        ? `${BASE_URL}/api/staff/rules/${reviewItem.id}/${reviewAction}`
+        : `${BASE_URL}/api/staff/announcements/${reviewItem.id}/${reviewAction}`;
 
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -3161,7 +3166,7 @@ For questions, contact staff immediately.`,
   const loadDiscordSettings = async () => {
     try {
       setLoadingDiscord(true);
-      const response = await fetch('http://localhost:3001/api/discord/settings', {
+      const response = await fetch(`${BASE_URL}/api/discord/settings`, {
         credentials: 'include'
       });
       
@@ -3189,7 +3194,7 @@ For questions, contact staff immediately.`,
   const saveDiscordSettings = async () => {
     try {
       setLoadingDiscord(true);
-      const response = await fetch('http://localhost:3001/api/discord/settings', {
+      const response = await fetch(`${BASE_URL}/api/discord/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -3227,7 +3232,7 @@ For questions, contact staff immediately.`,
   const testDiscordWebhook = async (webhookType) => {
     try {
       setTestingWebhook(true);
-      const response = await fetch('http://localhost:3001/api/discord/webhook/test', {
+      const response = await fetch(`${BASE_URL}/api/discord/webhook/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -3268,7 +3273,7 @@ For questions, contact staff immediately.`,
   const sendAnnouncementToDiscord = async (announcementId) => {
     try {
       setSendingToDiscord(true);
-      const response = await fetch(`http://localhost:3001/api/discord/announcements/${announcementId}/send`, {
+      const response = await fetch(`${BASE_URL}/api/discord/announcements/${announcementId}/send`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -3302,7 +3307,7 @@ For questions, contact staff immediately.`,
   const sendRuleToDiscord = async (ruleId, action = 'update') => {
     try {
       setSendingToDiscord(true);
-      const response = await fetch(`http://localhost:3001/api/discord/rules/${ruleId}/send`, {
+      const response = await fetch(`${BASE_URL}/api/discord/rules/${ruleId}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -3343,7 +3348,7 @@ For questions, contact staff immediately.`,
   const loadDiscordMessages = async () => {
     try {
       setLoadingDiscordMessages(true);
-      const response = await fetch(`http://localhost:3001/api/discord/messages?filter=${discordMessageFilter}`, {
+      const response = await fetch(`${BASE_URL}/api/discord/messages?filter=${discordMessageFilter}`, {
         credentials: 'include'
       });
 
@@ -3925,7 +3930,7 @@ For questions, contact staff immediately.`,
                               {images.map((image, index) => (
                                 <img 
                                   key={index}
-                                  src={`http://localhost:3001${image.thumbnailUrl}`}
+                                  src={`${BASE_URL}${image.thumbnailUrl}`}
                                   alt={image.originalName}
                                   style={{ 
                                     width: '100%', 
@@ -3935,7 +3940,7 @@ For questions, contact staff immediately.`,
                                     border: '1px solid #445566',
                                     cursor: 'pointer'
                                   }}
-                                  onClick={() => window.open(`http://localhost:3001${image.url}`, '_blank')}
+                                  onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
                                 />
                               ))}
                             </div>
@@ -4071,7 +4076,7 @@ For questions, contact staff immediately.`,
                                     {subImages.map((image, index) => (
                                       <img 
                                         key={index}
-                                        src={`http://localhost:3001${image.thumbnailUrl}`}
+                                        src={`${BASE_URL}${image.thumbnailUrl}`}
                                         alt={image.originalName}
                                         style={{ 
                                           width: '100%', 
@@ -4081,7 +4086,7 @@ For questions, contact staff immediately.`,
                                           border: '1px solid #445566',
                                           cursor: 'pointer'
                                         }}
-                                        onClick={() => window.open(`http://localhost:3001${image.url}`, '_blank')}
+                                        onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
                                       />
                                     ))}
                                   </div>
@@ -5188,7 +5193,7 @@ For questions, contact staff immediately.`,
                       {ruleImages.map((image, index) => (
                         <div key={index} style={{ position: 'relative' }}>
                           <img 
-                            src={`http://localhost:3001${image.thumbnailUrl || image.url}`}
+                            src={`${BASE_URL}${image.thumbnailUrl || image.url}`}
                             alt={image.originalName}
                             style={{ 
                               width: '100%', 

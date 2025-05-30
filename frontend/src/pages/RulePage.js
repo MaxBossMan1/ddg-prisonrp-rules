@@ -7,6 +7,11 @@ import ImageModal from '../components/ImageModal';
 import { resolveImagesInContent, extractImagesFromContent } from '../utils/imageUtils';
 import { markdownToHtml } from '../utils/markdownUtils';
 
+// Base URL configuration for API calls
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // In production, API calls will be relative to the same domain
+  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
+
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -604,7 +609,7 @@ function RulePage() {
       const newImage = modalImage.images[newIndex];
       setModalImage(prev => ({
         ...prev,
-        url: `http://localhost:3001${newImage.url}`,
+        url: `${BASE_URL}${newImage.url}`,
         alt: newImage.originalName || `Image ${newIndex + 1}`,
         currentIndex: newIndex
       }));
@@ -628,7 +633,7 @@ function RulePage() {
     
     for (const rule of allRules) {
       try {
-        const response = await fetch(`http://localhost:3001/api/rules/${rule.id}/cross-references`);
+        const response = await fetch(`${BASE_URL}/api/rules/${rule.id}/cross-references`);
         if (response.ok) {
           const data = await response.json();
           crossRefsData[rule.id] = data;
@@ -1056,7 +1061,7 @@ function RulePage() {
                       {images.map((image, index) => (
                         <img 
                           key={index}
-                          src={`http://localhost:3001${image.thumbnailUrl}`}
+                          src={`${BASE_URL}${image.thumbnailUrl}`}
                           alt={image.originalName || `Rule image ${index + 1}`}
                           style={{ 
                             width: '100%', 
@@ -1067,7 +1072,7 @@ function RulePage() {
                             cursor: 'pointer',
                             transition: 'all 0.2s ease'
                           }}
-                          onClick={() => openImageModal(`http://localhost:3001${image.url}`, image.originalName || `Rule image ${index + 1}`, images, index)}
+                          onClick={() => openImageModal(`${BASE_URL}${image.url}`, image.originalName || `Rule image ${index + 1}`, images, index)}
                           onMouseEnter={(e) => {
                             e.target.style.transform = 'scale(1.02)';
                             e.target.style.borderColor = '#677bae';
@@ -1158,7 +1163,7 @@ function RulePage() {
                             {images.map((image, index) => (
                               <img 
                                 key={index}
-                                src={`http://localhost:3001${image.thumbnailUrl}`}
+                                src={`${BASE_URL}${image.thumbnailUrl}`}
                                 alt={image.originalName || `Sub-rule image ${index + 1}`}
                                 style={{ 
                                   width: '100%', 
@@ -1169,7 +1174,7 @@ function RulePage() {
                                   cursor: 'pointer',
                                   transition: 'all 0.2s ease'
                                 }}
-                                onClick={() => openImageModal(`http://localhost:3001${image.url}`, image.originalName || `Sub-rule image ${index + 1}`, images, index)}
+                                onClick={() => openImageModal(`${BASE_URL}${image.url}`, image.originalName || `Sub-rule image ${index + 1}`, images, index)}
                                 onMouseEnter={(e) => {
                                   e.target.style.transform = 'scale(1.02)';
                                   e.target.style.borderColor = '#677bae';
