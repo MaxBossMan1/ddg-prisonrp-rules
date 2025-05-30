@@ -69,8 +69,8 @@ app.use((req, res, next) => {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:", "https:", "http://localhost:3000", "http://localhost:3001"],
-                connectSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "https:", "http://localhost:3000", "http://localhost:3001", "http://34.132.234.56:3000", "http://34.132.234.56:3001"],
+                connectSrc: ["'self'", "http://localhost:3001", "http://34.132.234.56:3001"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
@@ -82,8 +82,24 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://34.132.234.56:3000',
+    process.env.FRONTEND_URL
+].filter(Boolean); // Remove any undefined values
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -111,8 +127,11 @@ app.use(passport.session());
 
 // Static file serving for uploads with CORS headers
 app.use('/uploads', (req, res, next) => {
-    // Add CORS headers for uploads
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    // Add CORS headers for uploads - support multiple origins
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -121,8 +140,11 @@ app.use('/uploads', (req, res, next) => {
 
 // Additional static serving for images specifically with CORS headers
 app.use('/uploads/images', (req, res, next) => {
-    // Add CORS headers for images
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    // Add CORS headers for images - support multiple origins
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
