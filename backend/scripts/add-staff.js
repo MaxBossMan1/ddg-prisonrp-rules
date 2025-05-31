@@ -51,7 +51,7 @@ async function addStaffUser(steamId, username, permissionLevel) {
         console.log(`   Permission Level: ${permissionLevel}`);
         console.log(`   Database ID: ${result.id}`);
         console.log(`\n🔐 They can now access the staff panel at:`);
-        console.log(`   http://localhost:3001/staff/${process.env.STAFF_SECRET_URL || 'staff-management-2024'}`);
+        console.log(`   http://34.132.234.56:3001/staff/${process.env.STAFF_SECRET_URL || 'staff-management-2024'}`);
 
         await database.close();
     } catch (error) {

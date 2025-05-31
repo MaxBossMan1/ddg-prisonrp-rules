@@ -840,7 +840,9 @@ DDGMOTD/
 2. **Add Admin User**: `node scripts/add-staff.js YOUR_STEAM_ID "Your Name" admin`
 3. **Start Backend**: `npm start` (runs on port 3001)
 4. **Start Frontend**: `cd ../frontend && npm start` (runs on port 3000)
-5. **Access Staff Panel**: `http://localhost:3001/staff/staff-management-2024`
+5. **Access Staff Panel**: `http://34.132.234.56:3001/staff/staff-management-2024`
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs.
 
 ### **Key Resources**
 - `SETUP_GUIDE.md` - Quick setup and troubleshooting

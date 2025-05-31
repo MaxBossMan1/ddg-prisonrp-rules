@@ -10,7 +10,7 @@
 - **Auto-processing**: Images are automatically converted to WebP and optimized
 
 ### **2. Hover Preview on Frontend**
-- **Location**: Frontend rule pages (`http://localhost:3000/rules/[category]`)
+- **Location**: Frontend rule pages (`http://34.132.234.56:3000/rules/[category]`)
 - **How it works**: Hover over any image to see a larger preview
 - **Features**: 
   - Smooth fade-in animation
@@ -27,7 +27,7 @@
 ## 🧪 **Testing Steps**
 
 ### **Step 1: Test Image Upload**
-1. Go to: `http://localhost:3001/staff/staff-management-2024/dashboard`
+1. Go to: `http://34.132.234.56:3001/staff/staff-management-2024/dashboard`
 2. Login with Steam
 3. Click "Add New Rule" or "Add New Announcement"
 4. In the rich text editor, click the image button (📷)
@@ -37,7 +37,7 @@
 
 ### **Step 2: Test Hover Preview**
 1. Save the rule/announcement with the image
-2. Go to frontend: `http://localhost:3000`
+2. Go to frontend: `http://34.132.234.56:3000`
 3. Navigate to the category with your test rule
 4. Hover over the image in the rule content
 5. Verify preview appears with smooth animation
@@ -132,5 +132,9 @@ CREATE TABLE uploaded_images (
 ---
 
 **Ready to test!** 🚀 Both servers should be running:
-- Backend: `http://localhost:3001`
-- Frontend: `http://localhost:3000` 
+- Backend: `http://34.132.234.56:3001`
+- Frontend: `http://34.132.234.56:3000`
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs.
+- Backend: `http://34.132.234.56:3001`
+- Frontend: `http://34.132.234.56:3000` 

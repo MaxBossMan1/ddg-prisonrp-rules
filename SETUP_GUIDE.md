@@ -15,7 +15,7 @@ cp env.example .env
 
 1. Visit [Steam Web API Key Registration](https://steamcommunity.com/dev/apikey)
 2. Log in with your Steam account
-3. Enter domain name: **localhost** (for development)
+3. Enter domain name: **34.132.234.56** (for production) or **localhost** (for development)
 4. Copy the generated API key
 
 ### **Step 3: Configure .env File**
@@ -25,8 +25,8 @@ Open `backend/.env` and update these values:
 ```env
 # Steam Authentication Configuration
 STEAM_API_KEY=YOUR_ACTUAL_STEAM_API_KEY_HERE
-STEAM_REALM=http://localhost:3001
-STEAM_RETURN_URL=http://localhost:3001/auth/steam/return
+STEAM_REALM=http://34.132.234.56:3001
+STEAM_RETURN_URL=http://34.132.234.56:3001/auth/steam/return
 
 # Session Configuration
 SESSION_SECRET=change-this-to-a-long-random-string
@@ -55,7 +55,7 @@ npm start
 
 ## 🔐 **Access Staff Panel**
 
-After setup, visit: `http://localhost:3001/staff/your-custom-secret-url`
+After setup, visit: `http://34.132.234.56:3001/staff/your-custom-secret-url`
 
 ---
 
@@ -155,7 +155,9 @@ node scripts/add-staff.js YOUR_STEAM_ID "Your Name" admin
 
 After setup, you should be able to:
 
-1. ✅ Visit `http://localhost:3001/health` (shows server status)
-2. ✅ Visit `http://localhost:3000` (main site)
-3. ✅ Visit `http://localhost:3001/staff/your-secret-url` (staff login)
+1. ✅ Visit `http://34.132.234.56:3001/health` (shows server status)
+2. ✅ Visit `http://34.132.234.56:3000` (main site)
+3. ✅ Visit `http://34.132.234.56:3001/staff/your-secret-url` (staff login)
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs and environment variables.
 4. ✅ Login with Steam and access dashboard 

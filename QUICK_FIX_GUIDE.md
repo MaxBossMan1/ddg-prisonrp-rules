@@ -3,6 +3,8 @@
 ## 🔍 **Problem Diagnosed**
 The staff dashboard is trying to connect to `localhost:3001` instead of your cloud server `34.132.234.56:3001`.
 
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs and configuration steps.
+
 ## ✅ **Solution Applied**
 I've updated the frontend code to point to the correct server IP. Now you need to deploy these changes to your cloud server.
 

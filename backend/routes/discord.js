@@ -510,7 +510,7 @@ function createAnnouncementEmbed(announcement, settings) {
     };
 
     const color = priorityColors[announcement.priority] || parseInt(settings.embed_color.replace('#', ''), 16);
-    const homepageUrl = 'http://localhost:3000'; // Link to homepage where announcements are displayed
+    const homepageUrl = 'http://34.132.234.56:3000'; // Link to homepage where announcements are displayed
 
     return {
         title: announcement.title,
@@ -578,18 +578,18 @@ function createRuleEmbed(rule, settings, action) {
             if (parts.length >= 3) {
                 // Sub-rule like "C.7.1" -> /rules/C/7/1
                 const subRuleNumber = parts[2]; // "1"
-                ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
+                ruleUrl = `http://34.132.234.56:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
             } else {
                 // Main rule like "C.7" -> /rules/C/7
-                ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}`;
+                ruleUrl = `http://34.132.234.56:3000/rules/${category}/${ruleNumber}`;
             }
         } else {
             // Fallback if format is unexpected
-            ruleUrl = `http://localhost:3000/rules/${rule.full_code}`;
+            ruleUrl = `http://34.132.234.56:3000/rules/${rule.full_code}`;
         }
     } else {
         // Fallback to rule ID if no full_code
-        ruleUrl = `http://localhost:3000/rules/id-${rule.id}`;
+        ruleUrl = `http://34.132.234.56:3000/rules/id-${rule.id}`;
     }
 
     return {

@@ -14,8 +14,8 @@ if (!process.env.STEAM_API_KEY || process.env.STEAM_API_KEY === 'your-steam-api-
 
 // Initialize Passport Steam Strategy
 passport.use(new SteamStrategy({
-    returnURL: process.env.STEAM_RETURN_URL || 'http://localhost:3001/auth/steam/return',
-    realm: process.env.STEAM_REALM || 'http://localhost:3001',
+    returnURL: process.env.STEAM_RETURN_URL || 'http://34.132.234.56:3001/auth/steam/return',
+    realm: process.env.STEAM_REALM || 'http://34.132.234.56:3001',
     apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
 }, async (identifier, profile, done) => {
     try {

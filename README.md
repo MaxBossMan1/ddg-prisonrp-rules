@@ -85,13 +85,17 @@ PORT=3001
 DATABASE_PATH=./database/ddg_prisonrp.db
 SESSION_SECRET=your-session-secret
 NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://34.132.234.56:3000
 STEAM_API_KEY=your-steam-api-key
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 STAFF_SECRET_URL=your-secret-path
 ```
 
 > See [STEAM_AUTHENTICATION_SETUP.md](STEAM_AUTHENTICATION_SETUP.md) for Steam integration details.
+
+---
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs, and set environment variables accordingly.
 
 ---
 
@@ -106,7 +110,7 @@ npm start        # For production
 ```
 
 - The backend will auto-create the SQLite database on first run.
-- API available at `http://localhost:3001/api/`
+- API available at `http://34.132.234.56:3001/api/`
 
 ---
 
@@ -115,7 +119,7 @@ npm start        # For production
 ```sh
 cd frontend
 npm install
-npm start        # Runs on http://localhost:3000
+npm start        # Runs on http://34.132.234.56:3000
 ```
 
 - Uses [React Scripts](https://www.npmjs.com/package/react-scripts).
@@ -154,7 +158,7 @@ Follow [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for best practices including e
 
 ## Staff Dashboard & Authentication
 
-- Staff dashboard is available at: `http://yourdomain.com/staff/{STAFF_SECRET_URL}/dashboard`
+- Staff dashboard is available at: `http://34.132.234.56:3001/staff/{STAFF_SECRET_URL}/dashboard` (replace with your domain if using a custom domain)
 - Requires Steam login (OAuth); only whitelisted users or those with sufficient permission level may access staff tools.
 - All authentication and permission logic handled by backend.
 - Staff tools include rule/announcement editors, analytics, image uploads, and Discord notifications.

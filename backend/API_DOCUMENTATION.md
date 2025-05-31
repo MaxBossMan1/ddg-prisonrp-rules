@@ -4,8 +4,8 @@
 
 This document provides comprehensive documentation for the DDG PrisonRP backend API system. The API is built with Node.js/Express and uses SQLite for data storage.
 
-**Base URL**: `http://localhost:3001`  
-**Environment**: Development  
+**Base URL**: `http://34.132.234.56:3001`  
+**Environment**: Production (see below for development setup)  
 **Authentication**: Steam OpenID with session-based auth  
 **Database**: SQLite with activity logging  
 **Version**: 1.2.1 - Complete Visual Design and Footer Integration  
@@ -958,6 +958,10 @@ Comprehensive rate limiting system implemented to prevent abuse and ensure fair 
 
 #### Rate Limiting Strategy
 - **Development Environment**: Rate limiting is disabled for localhost (127.0.0.1) to facilitate development
+
+---
+
+> **NOTE:** In all API examples, replace `localhost` with `34.132.234.56` for production/cloud deployments.
 - **Production Environment**: Full rate limiting enforced for all clients
 - **Headers**: Standard rate limit headers included in responses (`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`)
 - **Error Handling**: 429 status code with detailed error messages and retry information

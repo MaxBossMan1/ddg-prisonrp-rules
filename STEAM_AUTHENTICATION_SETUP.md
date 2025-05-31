@@ -10,7 +10,7 @@ The DigitalDeltaGaming PrisonRP Rules System now includes a complete Steam authe
 
 1. Go to [Steam Web API Key Registration](https://steamcommunity.com/dev/apikey)
 2. Log in with your Steam account
-3. Enter your domain name (for development: `localhost`)
+3. Enter your domain name (for development: `localhost`, for production: `34.132.234.56`)
 4. Copy the generated API key
 
 ### 2. Configure Environment Variables
@@ -21,7 +21,7 @@ Create or update `backend/.env` with the following:
 # Server Configuration
 NODE_ENV=development
 PORT=3001
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://34.132.234.56:3000
 
 # Database Configuration
 DATABASE_PATH=./database/ddg_prisonrp.db
@@ -31,8 +31,8 @@ SESSION_SECRET=your-super-secret-session-key-change-this-in-production
 
 # Steam Authentication Configuration
 STEAM_API_KEY=your-steam-api-key-here
-STEAM_REALM=http://localhost:3001
-STEAM_RETURN_URL=http://localhost:3001/auth/steam/return
+STEAM_REALM=http://34.132.234.56:3001
+STEAM_RETURN_URL=http://34.132.234.56:3001/auth/steam/return
 
 # Staff Management
 STAFF_SECRET_URL=staff-management-2024
@@ -72,7 +72,7 @@ npm start
 
 ### Accessing the Staff Panel
 
-**Secret URL**: `http://localhost:3001/staff/staff-management-2024`
+**Secret URL**: `http://34.132.234.56:3001/staff/staff-management-2024`
 
 > **Security Note**: The staff panel is only accessible through this secret URL. There are no login buttons or links on the public site.
 
@@ -232,11 +232,14 @@ The system uses these tables for authentication:
 ### Environment Variables for Production
 ```env
 NODE_ENV=production
-STEAM_REALM=https://yourdomain.com
-STEAM_RETURN_URL=https://yourdomain.com/auth/steam/return
+FRONTEND_URL=http://34.132.234.56:3000
+STEAM_REALM=http://34.132.234.56:3001
+STEAM_RETURN_URL=http://34.132.234.56:3001/auth/steam/return
 SESSION_SECRET=a-very-long-random-string-for-production
 STAFF_SECRET_URL=your-custom-secret-url-here
 ```
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs.
 
 ### Security Checklist
 - [ ] Change default session secret
@@ -249,6 +252,6 @@ STAFF_SECRET_URL=your-custom-secret-url-here
 
 ---
 
-**Staff Panel URL**: `http://localhost:3001/staff/staff-management-2024`
+**Staff Panel URL**: `http://34.132.234.56:3001/staff/staff-management-202`
 
 **Need Help?** Check the troubleshooting section or contact the development team. 

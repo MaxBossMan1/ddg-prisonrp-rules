@@ -72,18 +72,10 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
                 if (parts.length >= 3) {
                     // Sub-rule like "C.7.1" -> /rules/C/7/1
                     const subRuleNumber = parts[2]; // "1"
-                    ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
-                } else {
-                    // Main rule like "C.7" -> /rules/C/7
-                    ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}`;
-                }
-            } else {
-                // Fallback if format is unexpected
-                ruleUrl = `http://localhost:3000/rules/${rule.full_code}`;
-            }
-        } else {
-            // Fallback to rule ID if no full_code
-            ruleUrl = `http://localhost:3000/rules/id-${rule.id}`;
+                    ruleUrl = `http://34.132.234.56:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
+ruleUrl = `http://34.132.234.56:3000/rules/${category}/${ruleNumber}`;
+ruleUrl = `http://34.132.234.56:3000/rules/${rule.full_code}`;
+ruleUrl = `http://34.132.234.56:3000/rules/id-${rule.id}`;
         }
         
         const embed = {

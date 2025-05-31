@@ -69,8 +69,8 @@ app.use((req, res, next) => {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:", "https:", "http://localhost:3000", "http://localhost:3001", "http://34.132.234.56:3000", "http://34.132.234.56:3001"],
-                connectSrc: ["'self'", "http://localhost:3001", "http://34.132.234.56:3001"],
+                imgSrc: ["'self'", "data:", "https:", "http://34.132.234.56:3000", "http://34.132.234.56:3001"],
+                connectSrc: ["'self'", "http://34.132.234.56:3001"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
@@ -83,7 +83,6 @@ app.use((req, res, next) => {
 
 // CORS configuration
 const allowedOrigins = [
-    'http://localhost:3000',
     'http://34.132.234.56:3000',
     process.env.FRONTEND_URL
 ].filter(Boolean); // Remove any undefined values
@@ -305,7 +304,7 @@ app.get(`/staff/${staffSecretUrl}/dashboard`, async (req, res) => {
     }
     
     // Redirect to React app which will handle the staff dashboard
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://34.132.234.56:3000';
     res.redirect(`${frontendUrl}/staff/${staffSecretUrl}/dashboard`);
 });
 
@@ -370,7 +369,7 @@ initializeServer().then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+        console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://34.132.234.56:3000'}`);
         
         // Start scheduled announcements processor
         startScheduledAnnouncementsProcessor();

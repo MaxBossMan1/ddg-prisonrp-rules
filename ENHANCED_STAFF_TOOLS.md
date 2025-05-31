@@ -67,7 +67,7 @@ We've just implemented a comprehensive **Enhanced Staff Tools** system for your 
 ## 🚀 **How to Use the New Features**
 
 ### **Access Enhanced Dashboard**
-1. Visit your staff dashboard: `http://localhost:3001/staff/staff-management-2024/dashboard`
+1. Visit your staff dashboard: `http://34.132.234.56:3001/staff/staff-management-2024/dashboard`
 2. Login with Steam (if not already logged in)
 3. See the new enhanced dashboard with activity insights
 
@@ -222,5 +222,7 @@ This enhanced staff tools system provides the foundation for:
 ---
 
 Your DigitalDeltaGaming PrisonRP server now has **enterprise-grade staff management and auditing capabilities**! 🎯
+
+> **Note:** For local development, replace `34.132.234.56` with `localhost` in all URLs.
 
 The system automatically tracks everything staff members do, provides powerful analytics, and gives you complete oversight of your server management. This is exactly what you need for a professional PrisonRP community with proper accountability and performance monitoring. 
