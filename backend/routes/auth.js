@@ -4,7 +4,6 @@ const SteamStrategy = require('passport-steam').Strategy;
 const ActivityLogger = require('../middleware/activityLogger');
 const router = express.Router();
 
-// Dynamic URL configuration - Auto-detect environment
 const getDynamicUrls = () => {
   const serverIp = process.env.SERVER_IP || '34.132.234.56';
   const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
@@ -24,12 +23,13 @@ const getDynamicUrls = () => {
   }
 };
 
-const steamUrls = getDynamicUrls();
+// Get dynamic URLs at runtime
+const dynamicUrls = getDynamicUrls();
 
 console.log('🔧 Steam Auth Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
   LOCAL_DEV: process.env.LOCAL_DEV,
-  steamUrls
+  steamUrls: dynamicUrls
 });
 
 // Check if Steam API key is configured
@@ -42,8 +42,8 @@ if (!process.env.STEAM_API_KEY || process.env.STEAM_API_KEY === 'your-steam-api-
 
 // Initialize Passport Steam Strategy
 passport.use(new SteamStrategy({
-    returnURL: steamUrls.returnURL,
-    realm: steamUrls.realm,
+    returnURL: dynamicUrls.returnURL,
+    realm: dynamicUrls.realm,
     apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
 }, async (identifier, profile, done) => {
     try {
@@ -234,7 +234,7 @@ router.get('/steam', (req, res, next) => {
 
 router.get('/steam/return', 
     passport.authenticate('steam', { 
-        failureRedirect: `${steamUrls.frontendUrl}/staff/login-failed` 
+        failureRedirect: `${dynamicUrls.frontendUrl}/staff/login-failed` 
     }),
     async (req, res) => {
         try {
@@ -243,12 +243,12 @@ router.get('/steam/return',
             
             const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
             // Use dynamic frontend URL for redirect
-            res.redirect(`${steamUrls.frontendUrl}/staff/${staffSecretUrl}`);
+            res.redirect(`${dynamicUrls.frontendUrl}/staff/${staffSecretUrl}`);
         } catch (error) {
             console.error('Login logging error:', error);
             // Don't fail the login because of logging issues
             const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
-            res.redirect(`${steamUrls.frontendUrl}/staff/${staffSecretUrl}`);
+            res.redirect(`${dynamicUrls.frontendUrl}/staff/${staffSecretUrl}`);
         }
     }
 );
