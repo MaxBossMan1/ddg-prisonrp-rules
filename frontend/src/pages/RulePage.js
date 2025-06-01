@@ -7,10 +7,20 @@ import ImageModal from '../components/ImageModal';
 import { resolveImagesInContent, extractImagesFromContent } from '../utils/imageUtils';
 import { markdownToHtml } from '../utils/markdownUtils';
 
-// Base URL configuration for API calls
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // In production, API calls will be relative to the same domain
-  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
+// Dynamic API configuration - Auto-detect environment
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // If we're running on localhost or 127.0.0.1, use local backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  // If we're on the server IP or any other domain, use the same host with port 3001
+  return `http://${hostname}:3001`;
+};
+
+const BASE_URL = getApiBaseUrl();
 
 const Container = styled.div`
   max-width: 1200px;

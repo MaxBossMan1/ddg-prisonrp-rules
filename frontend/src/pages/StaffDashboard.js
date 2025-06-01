@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import MDEditor from '@uiw/react-md-editor';
 import { commands } from '@uiw/react-md-editor';
@@ -7,11 +8,27 @@ import '@uiw/react-markdown-preview/markdown.css';
 import { markdownToHtml } from '../utils/markdownUtils';
 import { SketchPicker } from 'react-color';
 import { buildApiUrl, API_ENDPOINTS } from '../utils/apiConfig';
+import { apiService } from '../services/api';
 
-// Base URL configuration for API calls
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // In production, API calls will be relative to the same domain
-  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
+// Dynamic API configuration - Auto-detect environment
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // If we're running on localhost or 127.0.0.1, use local backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  // If we're on the server IP or any other domain, use the same host with port 3001
+  return `http://${hostname}:3001`;
+};
+
+const BASE_URL = getApiBaseUrl();
+
+console.log('🔧 StaffDashboard API Configuration:', { 
+  hostname: window.location.hostname,
+  BASE_URL 
+});
 
 const DashboardContainer = styled.div`
   max-width: 1400px;
@@ -5779,6 +5796,97 @@ For questions, contact staff immediately.`,
                 }}
               >
                 Add Cross-Reference
+              </Button>
+            </ModalActions>
+          </ModalContainer>
+        </ModalBackdrop>
+      )}
+
+      {/* Category Modal */}
+      {showCategoryModal && (
+        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeCategoryModal()}>
+          <ModalContainer onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>
+                {categoryModalType === 'create' ? '📁 Create New Category' : '📝 Edit Category'}
+              </ModalTitle>
+              <CloseButton onClick={closeCategoryModal}>&times;</CloseButton>
+            </ModalHeader>
+            
+            <FormGroup>
+              <Label>Category Name *</Label>
+              <Input
+                type="text"
+                value={categoryFormData.name}
+                onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                placeholder="Enter category name..."
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Category Code *</Label>
+              <Input
+                type="text"
+                value={categoryFormData.code}
+                onChange={(e) => setCategoryFormData({...categoryFormData, code: e.target.value.toUpperCase()})}
+                placeholder="Enter category code (e.g., A, B, C)..."
+                maxLength="3"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Description</Label>
+              <textarea
+                value={categoryFormData.description}
+                onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
+                placeholder="Enter category description..."
+                style={{
+                  width: '100%',
+                  minHeight: '100px',
+                  backgroundColor: '#2c3e50',
+                  color: '#ecf0f1',
+                  border: '1px solid #445566',
+                  borderRadius: '4px',
+                  padding: '0.75rem',
+                  fontSize: '1rem',
+                  resize: 'vertical'
+                }}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Category Color</Label>
+              <Input
+                type="color"
+                value={categoryFormData.color || '#3498db'}
+                onChange={(e) => setCategoryFormData({...categoryFormData, color: e.target.value})}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={categoryFormData.is_active}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
+                />
+                <span style={{ color: '#ecf0f1' }}>Active</span>
+              </label>
+            </FormGroup>
+            
+            <ModalActions>
+              <Button onClick={closeCategoryModal} style={{ backgroundColor: '#95a5a6' }}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={saveCategory}
+                disabled={!categoryFormData.name || !categoryFormData.code}
+                style={{ 
+                  backgroundColor: categoryFormData.name && categoryFormData.code ? '#27ae60' : '#95a5a6',
+                  opacity: categoryFormData.name && categoryFormData.code ? 1 : 0.6
+                }}
+              >
+                {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
               </Button>
             </ModalActions>
           </ModalContainer>
