@@ -10,7 +10,26 @@
  */
 
 require('dotenv').config();
-const Database = require('../database/init');
+
+// Dynamic URL configuration - Auto-detect environment
+const getDynamicUrls = () => {
+  const serverIp = process.env.SERVER_IP || '34.132.234.56';
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
+  
+  if (isLocal) {
+    return {
+      frontend: 'http://localhost:3000',
+      backend: 'http://localhost:3001'
+    };
+  } else {
+    return {
+      frontend: `http://${serverIp}:3000`,
+      backend: `http://${serverIp}:3001`
+    };
+  }
+};
+
+const dynamicUrls = getDynamicUrls();
 
 async function addStaffUser(steamId, username, permissionLevel) {
     if (!steamId || !username || !permissionLevel) {
@@ -25,37 +44,50 @@ async function addStaffUser(steamId, username, permissionLevel) {
     }
 
     try {
-        const database = new Database(process.env.DATABASE_PATH || './database/ddg_prisonrp.db');
-        await database.initialize();
+        const Database = require('../database/init');
+        const db = new Database('./database/ddg_prisonrp.db');
+        await db.initialize();
 
         // Check if user already exists
-        const existingUser = await database.get(
-            'SELECT id FROM staff_users WHERE steam_id = ?',
+        const existingUser = await db.get(
+            'SELECT * FROM staff_users WHERE steam_id = ?',
             [steamId]
         );
 
         if (existingUser) {
-            console.error(`Error: User with Steam ID ${steamId} already exists!`);
-            process.exit(1);
+            if (existingUser.is_active) {
+                console.log('❌ User already exists and is active');
+                console.log(`   Steam ID: ${steamId}`);
+                console.log(`   Username: ${existingUser.steam_username}`);
+                console.log(`   Permission: ${existingUser.permission_level}`);
+                console.log(`   Staff Dashboard: ${dynamicUrls.backend}/staff/${process.env.STAFF_SECRET_URL || 'staff-dashboard-2025'}`);
+                await db.close();
+                return;
+            } else {
+                // Reactivate inactive user
+                await db.run(
+                    'UPDATE staff_users SET steam_username = ?, permission_level = ?, is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE steam_id = ?',
+                    [username, permissionLevel, steamId]
+                );
+                console.log('✅ Reactivated existing user:');
+            }
+        } else {
+            // Create new user
+            await db.run(
+                'INSERT INTO staff_users (steam_id, steam_username, permission_level, is_active) VALUES (?, ?, ?, 1)',
+                [steamId, username, permissionLevel]
+            );
+            console.log('✅ Created new staff user:');
         }
 
-        // Add the user
-        const result = await database.run(
-            'INSERT INTO staff_users (steam_id, steam_username, permission_level) VALUES (?, ?, ?)',
-            [steamId, username, permissionLevel]
-        );
-
-        console.log(`✅ Staff user added successfully!`);
         console.log(`   Steam ID: ${steamId}`);
         console.log(`   Username: ${username}`);
         console.log(`   Permission Level: ${permissionLevel}`);
-        console.log(`   Database ID: ${result.id}`);
-        console.log(`\n🔐 They can now access the staff panel at:`);
-        console.log(`   http://localhost:3001/staff/${process.env.STAFF_SECRET_URL || 'staff-management-2024'}`);
+        console.log(`   Staff Dashboard: ${dynamicUrls.backend}/staff/${process.env.STAFF_SECRET_URL || 'staff-dashboard-2025'}`);
 
-        await database.close();
+        await db.close();
     } catch (error) {
-        console.error('Error adding staff user:', error);
+        console.error('❌ Error adding staff user:', error);
         process.exit(1);
     }
 }

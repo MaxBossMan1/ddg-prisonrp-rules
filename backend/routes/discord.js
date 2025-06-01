@@ -4,6 +4,32 @@ const ActivityLogger = require('../middleware/activityLogger');
 const axios = require('axios');
 const router = express.Router();
 
+// Dynamic URL configuration - Auto-detect environment
+const getDynamicUrls = () => {
+  const serverIp = process.env.SERVER_IP || '34.132.234.56';
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
+  
+  if (isLocal) {
+    return {
+      frontend: 'http://localhost:3000',
+      backend: 'http://localhost:3001'
+    };
+  } else {
+    return {
+      frontend: `http://${serverIp}:3000`,
+      backend: `http://${serverIp}:3001`
+    };
+  }
+};
+
+const dynamicUrls = getDynamicUrls();
+
+console.log('🔧 Discord Dynamic URLs:', {
+  NODE_ENV: process.env.NODE_ENV,
+  LOCAL_DEV: process.env.LOCAL_DEV,
+  dynamicUrls
+});
+
 // Activity logging middleware for all Discord routes
 router.use(ActivityLogger.middleware('access', 'discord'));
 
@@ -510,7 +536,7 @@ function createAnnouncementEmbed(announcement, settings) {
     };
 
     const color = priorityColors[announcement.priority] || parseInt(settings.embed_color.replace('#', ''), 16);
-    const homepageUrl = 'http://localhost:3000'; // Link to homepage where announcements are displayed
+    const homepageUrl = dynamicUrls.frontend; // Link to homepage where announcements are displayed
 
     return {
         title: announcement.title,
@@ -578,18 +604,18 @@ function createRuleEmbed(rule, settings, action) {
             if (parts.length >= 3) {
                 // Sub-rule like "C.7.1" -> /rules/C/7/1
                 const subRuleNumber = parts[2]; // "1"
-                ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
+                ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}/${subRuleNumber}`;
             } else {
                 // Main rule like "C.7" -> /rules/C/7
-                ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}`;
+                ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}`;
             }
         } else {
             // Fallback if format is unexpected
-            ruleUrl = `http://localhost:3000/rules/${rule.full_code}`;
+            ruleUrl = `${dynamicUrls.frontend}/rules/${rule.full_code}`;
         }
     } else {
         // Fallback to rule ID if no full_code
-        ruleUrl = `http://localhost:3000/rules/id-${rule.id}`;
+        ruleUrl = `${dynamicUrls.frontend}/rules/id-${rule.id}`;
     }
 
     return {

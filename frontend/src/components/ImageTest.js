@@ -1,23 +1,28 @@
 import React from 'react';
 
+// Test component for verifying image loading
+const testImageUrl = "/uploads/images/1748367530368_8hp556t7jd6.webp"; // Use relative path for dynamic resolution
+
 const ImageTest = () => {
-  const testImageUrl = "http://34.132.234.56:3001/uploads/images/1748367530368_8hp556t7jd6.webp";
-  
   return (
-    <div style={{ padding: '20px', border: '2px solid red', margin: '20px' }}>
-      <h3>Image Test Component</h3>
-      <p>Testing direct image load:</p>
+    <div style={{ padding: '20px' }}>
+      <h3>Image Loading Test</h3>
+      <p>Testing if images load correctly from the backend:</p>
       <img 
         src={testImageUrl} 
-        alt="Test" 
-        style={{ maxWidth: '300px', border: '1px solid blue' }}
-        onLoad={() => console.log('TEST IMAGE LOADED SUCCESSFULLY')}
+        alt="Test upload" 
+        style={{ 
+          maxWidth: '200px', 
+          border: '1px solid #ccc',
+          borderRadius: '4px'
+        }}
+        onLoad={() => console.log('✅ Image loaded successfully')}
         onError={(e) => {
-          console.error('TEST IMAGE FAILED TO LOAD:', testImageUrl);
-          console.error('Error event:', e);
+          console.error('❌ Image failed to load:', e.target.src);
+          e.target.style.border = '2px solid red';
         }}
       />
-      <p>Image URL: {testImageUrl}</p>
+      <p><small>Path: {testImageUrl}</small></p>
     </div>
   );
 };

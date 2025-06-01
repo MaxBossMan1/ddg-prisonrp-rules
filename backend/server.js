@@ -36,6 +36,32 @@ const PORT = process.env.PORT || 3001;
 // Initialize database
 let db;
 
+// Dynamic URL configuration - Auto-detect environment
+const getDynamicUrls = () => {
+  const serverIp = process.env.SERVER_IP || '34.132.234.56';
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
+  
+  if (isLocal) {
+    return {
+      frontend: 'http://localhost:3000',
+      backend: 'http://localhost:3001'
+    };
+  } else {
+    return {
+      frontend: `http://${serverIp}:3000`,
+      backend: `http://${serverIp}:3001`
+    };
+  }
+};
+
+const dynamicUrls = getDynamicUrls();
+
+console.log('🔧 Server Dynamic URLs:', {
+  NODE_ENV: process.env.NODE_ENV,
+  LOCAL_DEV: process.env.LOCAL_DEV,
+  dynamicUrls
+});
+
 async function initializeServer() {
     try {
         // Initialize database
@@ -55,22 +81,22 @@ async function initializeServer() {
     }
 }
 
-// Security middleware - relaxed CSP for staff dashboard and uploads
+// Security middleware with dynamic CSP
 app.use((req, res, next) => {
     // Disable CSP for staff dashboard routes and uploads
     if (req.path.includes('/staff/') || req.path.includes('/uploads/')) {
         return next();
     }
     
-    // Apply helmet for other routes
+    // Apply helmet for other routes with dynamic URLs
     helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'"],
-                imgSrc: ["'self'", "data:", "https:", "http://localhost:3000", "http://localhost:3001", "http://34.132.234.56:3000", "http://34.132.234.56:3001"],
-                connectSrc: ["'self'", "http://localhost:3001", "http://34.132.234.56:3001"],
+                imgSrc: ["'self'", "data:", "https:", dynamicUrls.frontend, dynamicUrls.backend],
+                connectSrc: ["'self'", dynamicUrls.backend],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
@@ -81,11 +107,10 @@ app.use((req, res, next) => {
     })(req, res, next);
 });
 
-// CORS configuration
+// CORS configuration with dynamic URLs
 const allowedOrigins = [
-    'http://localhost:3000',
-    'http://34.132.234.56:3000',
-    process.env.FRONTEND_URL
+    dynamicUrls.frontend,
+    process.env.FRONTEND_URL // Keep for backward compatibility
 ].filter(Boolean); // Remove any undefined values
 
 app.use(cors({

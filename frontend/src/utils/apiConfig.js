@@ -1,7 +1,20 @@
+// Dynamic API configuration - Auto-detect environment
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // If we're running on localhost or 127.0.0.1, use local backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  // If we're on the server IP or any other domain, use the same host with port 3001
+  return `http://${hostname}:3001`;
+};
+
 // Centralized API configuration
 export const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '' // In production, API calls will be relative to the same domain
-  : 'http://34.132.234.56:3001'; // Development backend on Google Cloud
+  : getApiBaseUrl(); // Dynamic detection for development
 
 // Helper function to build API URLs
 export const buildApiUrl = (path) => {

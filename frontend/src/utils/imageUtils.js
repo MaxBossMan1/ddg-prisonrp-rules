@@ -1,10 +1,23 @@
+// Dynamic backend URL configuration - Auto-detect environment
+const getBackendUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // If we're running on localhost or 127.0.0.1, use local backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  // If we're on the server IP or any other domain, use the same host with port 3001
+  return `http://${hostname}:3001`;
+};
+
 // Utility function to resolve image URLs for development vs production
 export const resolveImageUrl = (relativePath) => {
   // In development, proxy images to backend server
   // In production, images will be served from the same domain
   if (process.env.NODE_ENV === 'development') {
-    // For development, images are served from backend on Google Cloud
-    return `http://34.132.234.56:3001${relativePath}`;
+    // Use dynamic backend URL detection
+    return `${getBackendUrl()}${relativePath}`;
   } else {
     // For production, use relative paths (same domain)
     return relativePath;

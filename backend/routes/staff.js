@@ -1,7 +1,36 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
 const { requireAuth, requirePermission, canManageUser, getValidPermissionLevels } = require('./auth');
 const ActivityLogger = require('../middleware/activityLogger');
 const router = express.Router();
+
+// Dynamic URL configuration - Auto-detect environment
+const getDynamicUrls = () => {
+  const serverIp = process.env.SERVER_IP || '34.132.234.56';
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
+  
+  if (isLocal) {
+    return {
+      frontend: 'http://localhost:3000',
+      backend: 'http://localhost:3001'
+    };
+  } else {
+    return {
+      frontend: `http://${serverIp}:3000`,
+      backend: `http://${serverIp}:3001`
+    };
+  }
+};
+
+const dynamicUrls = getDynamicUrls();
+
+console.log('🔧 Staff Routes Dynamic URLs:', {
+  NODE_ENV: process.env.NODE_ENV,
+  LOCAL_DEV: process.env.LOCAL_DEV,
+  dynamicUrls
+});
 
 // Helper function to automatically send Discord notifications for rules
 async function sendRuleToDiscord(ruleId, action = 'update') {
@@ -72,18 +101,18 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
                 if (parts.length >= 3) {
                     // Sub-rule like "C.7.1" -> /rules/C/7/1
                     const subRuleNumber = parts[2]; // "1"
-                    ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}/${subRuleNumber}`;
+                    ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}/${subRuleNumber}`;
                 } else {
                     // Main rule like "C.7" -> /rules/C/7
-                    ruleUrl = `http://localhost:3000/rules/${category}/${ruleNumber}`;
+                    ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}`;
                 }
             } else {
                 // Fallback if format is unexpected
-                ruleUrl = `http://localhost:3000/rules/${rule.full_code}`;
+                ruleUrl = `${dynamicUrls.frontend}/rules/${rule.full_code}`;
             }
         } else {
             // Fallback to rule ID if no full_code
-            ruleUrl = `http://localhost:3000/rules/id-${rule.id}`;
+            ruleUrl = `${dynamicUrls.frontend}/rules/id-${rule.id}`;
         }
         
         const embed = {

@@ -4,6 +4,34 @@ const SteamStrategy = require('passport-steam').Strategy;
 const ActivityLogger = require('../middleware/activityLogger');
 const router = express.Router();
 
+// Dynamic URL configuration - Auto-detect environment
+const getDynamicUrls = () => {
+  const serverIp = process.env.SERVER_IP || '34.132.234.56';
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
+  
+  if (isLocal) {
+    return {
+      returnURL: 'http://localhost:3001/auth/steam/return',
+      realm: 'http://localhost:3001',
+      frontendUrl: 'http://localhost:3000'
+    };
+  } else {
+    return {
+      returnURL: `http://${serverIp}:3001/auth/steam/return`,
+      realm: `http://${serverIp}:3001`,
+      frontendUrl: `http://${serverIp}:3000`
+    };
+  }
+};
+
+const steamUrls = getDynamicUrls();
+
+console.log('🔧 Steam Auth Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  LOCAL_DEV: process.env.LOCAL_DEV,
+  steamUrls
+});
+
 // Check if Steam API key is configured
 if (!process.env.STEAM_API_KEY || process.env.STEAM_API_KEY === 'your-steam-api-key-here') {
     console.error('🚨 STEAM AUTHENTICATION ERROR: Steam API key not configured!');
@@ -14,8 +42,8 @@ if (!process.env.STEAM_API_KEY || process.env.STEAM_API_KEY === 'your-steam-api-
 
 // Initialize Passport Steam Strategy
 passport.use(new SteamStrategy({
-    returnURL: process.env.STEAM_RETURN_URL || 'http://localhost:3001/auth/steam/return',
-    realm: process.env.STEAM_REALM || 'http://localhost:3001',
+    returnURL: steamUrls.returnURL,
+    realm: steamUrls.realm,
     apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
 }, async (identifier, profile, done) => {
     try {
@@ -205,19 +233,22 @@ router.get('/steam', (req, res, next) => {
 });
 
 router.get('/steam/return', 
-    passport.authenticate('steam', { failureRedirect: '/staff/login-failed' }),
+    passport.authenticate('steam', { 
+        failureRedirect: `${steamUrls.frontendUrl}/staff/login-failed` 
+    }),
     async (req, res) => {
         try {
             // Log successful login
             await ActivityLogger.logLogin(req.user.id, req, true);
             
-            const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-management-2024';
-            res.redirect(`/staff/${staffSecretUrl}/dashboard`);
+            const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
+            // Use dynamic frontend URL for redirect
+            res.redirect(`${steamUrls.frontendUrl}/staff/${staffSecretUrl}`);
         } catch (error) {
             console.error('Login logging error:', error);
             // Don't fail the login because of logging issues
-            const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-management-2024';
-            res.redirect(`/staff/${staffSecretUrl}/dashboard`);
+            const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
+            res.redirect(`${steamUrls.frontendUrl}/staff/${staffSecretUrl}`);
         }
     }
 );
