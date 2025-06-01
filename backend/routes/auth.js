@@ -23,13 +23,11 @@ const getDynamicUrls = () => {
   }
 };
 
-// Get dynamic URLs at runtime
-const dynamicUrls = getDynamicUrls();
-
 console.log('🔧 Steam Auth Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
   LOCAL_DEV: process.env.LOCAL_DEV,
-  steamUrls: dynamicUrls
+  SERVER_IP: process.env.SERVER_IP,
+  steamUrls: getDynamicUrls()
 });
 
 // Check if Steam API key is configured
@@ -40,53 +38,61 @@ if (!process.env.STEAM_API_KEY || process.env.STEAM_API_KEY === 'your-steam-api-
     console.error('   Copy backend/env.example to backend/.env and update the values');
 }
 
-// Initialize Passport Steam Strategy
-passport.use(new SteamStrategy({
-    returnURL: dynamicUrls.returnURL,
-    realm: dynamicUrls.realm,
-    apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
-}, async (identifier, profile, done) => {
-    try {
-        const steamId = identifier.split('/').pop();
-        
-        // Check if user exists in staff_users table
-        const db = require('../database/init').getInstance();
-        const user = await db.get(
-            'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
-            [steamId]
-        );
-        
-        if (user) {
-            // Update last login
-            await db.run(
-                'UPDATE staff_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
-                [user.id]
+// Function to create Steam strategy with current dynamic URLs
+const createSteamStrategy = () => {
+    const currentUrls = getDynamicUrls();
+    console.log('🔧 Creating Steam Strategy with URLs:', currentUrls);
+    
+    return new SteamStrategy({
+        returnURL: currentUrls.returnURL,
+        realm: currentUrls.realm,
+        apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
+    }, async (identifier, profile, done) => {
+        try {
+            const steamId = identifier.split('/').pop();
+            
+            // Check if user exists in staff_users table
+            const db = require('../database/init').getInstance();
+            const user = await db.get(
+                'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
+                [steamId]
             );
             
-            // Update username if it changed
-            if (user.steam_username !== profile.displayName) {
+            if (user) {
+                // Update last login
                 await db.run(
-                    'UPDATE staff_users SET steam_username = ? WHERE id = ?',
-                    [profile.displayName, user.id]
+                    'UPDATE staff_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
+                    [user.id]
                 );
+                
+                // Update username if it changed
+                if (user.steam_username !== profile.displayName) {
+                    await db.run(
+                        'UPDATE staff_users SET steam_username = ? WHERE id = ?',
+                        [profile.displayName, user.id]
+                    );
+                }
+                
+                return done(null, {
+                    id: user.id,
+                    steamId: user.steam_id,
+                    username: profile.displayName,
+                    permissionLevel: user.permission_level,
+                    profile: profile
+                });
+            } else {
+                // User not authorized
+                return done(null, false, { message: 'Access denied. Contact administrator.' });
             }
-            
-            return done(null, {
-                id: user.id,
-                steamId: user.steam_id,
-                username: profile.displayName,
-                permissionLevel: user.permission_level,
-                profile: profile
-            });
-        } else {
-            // User not authorized
-            return done(null, false, { message: 'Access denied. Contact administrator.' });
+        } catch (error) {
+            console.error('Steam authentication error:', error);
+            return done(error);
         }
-    } catch (error) {
-        console.error('Steam authentication error:', error);
-        return done(error);
-    }
-}));
+    });
+};
+
+// Initialize with current strategy
+passport.use('steam', createSteamStrategy());
 
 // Passport serialization
 passport.serializeUser((user, done) => {
@@ -229,12 +235,15 @@ router.get('/steam', (req, res, next) => {
         `);
     }
     
+    // Recreate Steam strategy with current dynamic URLs
+    passport.use('steam', createSteamStrategy());
+    
     passport.authenticate('steam')(req, res, next);
 });
 
 router.get('/steam/return', 
     passport.authenticate('steam', { 
-        failureRedirect: `${dynamicUrls.frontendUrl}/staff/login-failed` 
+        failureRedirect: `${getDynamicUrls().frontendUrl}/staff/login-failed` 
     }),
     async (req, res) => {
         try {
@@ -243,12 +252,12 @@ router.get('/steam/return',
             
             const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
             // Use dynamic frontend URL for redirect
-            res.redirect(`${dynamicUrls.frontendUrl}/staff/${staffSecretUrl}`);
+            res.redirect(`${getDynamicUrls().frontendUrl}/staff/${staffSecretUrl}`);
         } catch (error) {
             console.error('Login logging error:', error);
             // Don't fail the login because of logging issues
             const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
-            res.redirect(`${dynamicUrls.frontendUrl}/staff/${staffSecretUrl}`);
+            res.redirect(`${getDynamicUrls().frontendUrl}/staff/${staffSecretUrl}`);
         }
     }
 );
