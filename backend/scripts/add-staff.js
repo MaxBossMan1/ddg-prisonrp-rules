@@ -34,12 +34,12 @@ const dynamicUrls = getDynamicUrls();
 async function addStaffUser(steamId, username, permissionLevel) {
     if (!steamId || !username || !permissionLevel) {
         console.error('Usage: node add-staff.js <steam_id> <username> <permission_level>');
-        console.error('Permission levels: admin, moderator, editor');
+        console.error('Permission levels: owner, admin, moderator, editor');
         process.exit(1);
     }
 
-    if (!['admin', 'moderator', 'editor'].includes(permissionLevel)) {
-        console.error('Invalid permission level. Use: admin, moderator, or editor');
+    if (!['owner', 'admin', 'moderator', 'editor'].includes(permissionLevel)) {
+        console.error('Invalid permission level. Use: owner, admin, moderator, or editor');
         process.exit(1);
     }
 
@@ -147,7 +147,7 @@ if (args.length === 0 || args[0] === 'list') {
     console.log('List all staff users:');
     console.log('  node scripts/add-staff.js list');
     console.log('');
-    console.log('Permission levels: admin, moderator, editor');
+    console.log('Permission levels: owner, admin, moderator, editor');
     console.log('');
     console.log('Example:');
     console.log('  node scripts/add-staff.js 76561198123456789 "John Doe" admin');
