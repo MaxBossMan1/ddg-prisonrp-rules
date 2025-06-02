@@ -41,8 +41,8 @@ const publicApiLimiter = createRateLimitHandler('public API', 50, 1); // 50 requ
 // Search endpoints - Allow frequent searches
 const searchLimiter = createRateLimitHandler('search', 30, 1); // 30 requests per minute
 
-// Authentication endpoints - Still need some protection but shorter window
-const authLimiter = createRateLimitHandler('authentication', 20, 2); // 20 attempts per 2 minutes
+// Authentication endpoints - Temporarily disabled for testing
+const authLimiter = createRateLimitHandler('authentication', 1000, 1); // 1000 attempts per 1 minute (essentially disabled)
 
 // Staff endpoints - Very lenient for authenticated users
 const staffLimiter = createRateLimitHandler('staff', 150, 1); // 150 requests per minute

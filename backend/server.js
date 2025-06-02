@@ -140,9 +140,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Set to false to work with HTTP (not just HTTPS)
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax' // Allow cross-site cookies for different ports
     }
 }));
 
@@ -191,7 +192,7 @@ app.get('/health', healthLimiter, (req, res) => {
             limits: {
                 public: '50 requests per minute',
                 search: '30 requests per minute',
-                auth: '20 requests per 2 minutes',
+                auth: '1000 requests per 1 minute (disabled for testing)',
                 staff: '150 requests per minute',
                 upload: '15 requests per minute',
                 health: '50 requests per minute',
@@ -215,7 +216,7 @@ app.get('/api/rate-limit-status', staffLimiter, (req, res) => {
         limits: {
             publicApi: { requests: 50, window: '1 minute' },
             search: { requests: 30, window: '1 minute' },
-            authentication: { requests: 20, window: '2 minutes' },
+            authentication: { requests: 1000, window: '1 minute (disabled for testing)' },
             staff: { requests: 150, window: '1 minute' },
             upload: { requests: 15, window: '1 minute' },
             health: { requests: 50, window: '1 minute' },
