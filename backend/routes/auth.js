@@ -80,6 +80,15 @@ const createSteamStrategy = () => {
                 
                 const allUsers = await db.all('SELECT steam_id, steam_username, is_active FROM staff_users');
                 console.log('  - All users in database:', JSON.stringify(allUsers, null, 2));
+                
+                // Let's also check if the table exists and has the right schema
+                const tableInfo = await db.all("PRAGMA table_info(staff_users)");
+                console.log('  - Table schema:', JSON.stringify(tableInfo, null, 2));
+                
+                // Let's check if we can find this specific user with any method
+                const exactUser = await db.get('SELECT * FROM staff_users WHERE steam_id = ?', ['76561198157812847']);
+                console.log('  - Direct lookup for 76561198157812847:', exactUser);
+                
             } catch (verifyError) {
                 console.error('  - Database verification error:', verifyError);
             }
