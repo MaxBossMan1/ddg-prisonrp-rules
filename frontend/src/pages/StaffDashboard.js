@@ -5270,74 +5270,74 @@ For questions, contact staff immediately.`,
                   )}
                 </FormGroup>
 
-                {/* Approval Workflow Section - Only for Editors */}
-                {user.permissionLevel === 'editor' && (
-                  <FormGroup>
-                    <Label>Submission Type</Label>
-                    <div style={{ 
+                {/* Approval Workflow Section - Available for all staff levels */}
+                <FormGroup>
+                  <Label>Submission Type</Label>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    backgroundColor: '#2c3e50',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    border: '1px solid #445566'
+                  }}>
+                    <label style={{ 
                       display: 'flex', 
-                      gap: '1rem', 
-                      backgroundColor: '#2c3e50',
-                      padding: '1rem',
-                      borderRadius: '8px',
-                      border: '1px solid #445566'
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      cursor: 'pointer'
                     }}>
-                      <label style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        cursor: 'pointer'
-                      }}>
-                        <input
-                          type="radio"
-                          name="submissionMode"
-                          value="draft"
-                          checked={submissionMode === 'draft'}
-                          onChange={(e) => {
-                            setSubmissionMode(e.target.value);
-                            setSaveAsDraft(true);
-                          }}
-                        />
-                        <span style={{ color: '#3498db', fontWeight: '500' }}>
-                          📝 Save as Draft
-                        </span>
-                      </label>
-                      
-                      <label style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        cursor: 'pointer'
-                      }}>
-                        <input
-                          type="radio"
-                          name="submissionMode"
-                          value="submit"
-                          checked={submissionMode === 'submit'}
-                          onChange={(e) => {
-                            setSubmissionMode(e.target.value);
-                            setSaveAsDraft(false);
-                          }}
-                        />
-                        <span style={{ color: '#f39c12', fontWeight: '500' }}>
-                          ⏳ Submit for Approval
-                        </span>
-                      </label>
-                    </div>
+                      <input
+                        type="radio"
+                        name="submissionMode"
+                        value="draft"
+                        checked={submissionMode === 'draft'}
+                        onChange={(e) => {
+                          setSubmissionMode(e.target.value);
+                          setSaveAsDraft(true);
+                        }}
+                      />
+                      <span style={{ color: '#3498db', fontWeight: '500' }}>
+                        📝 Save as Draft
+                      </span>
+                    </label>
                     
-                    <div style={{ 
-                      color: '#8a9dc9', 
-                      fontSize: '0.85rem', 
-                      marginTop: '0.5rem',
-                      fontStyle: 'italic'
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      cursor: 'pointer'
                     }}>
-                      {submissionMode === 'draft' ? 
-                        '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
-                        '⏳ Submit for approval by moderators. Rule will be reviewed before going live.'
-                      }
-                    </div>
-                  </FormGroup>
-                )}
+                      <input
+                        type="radio"
+                        name="submissionMode"
+                        value="submit"
+                        checked={submissionMode === 'submit'}
+                        onChange={(e) => {
+                          setSubmissionMode(e.target.value);
+                          setSaveAsDraft(false);
+                        }}
+                      />
+                      <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
+                        {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <div style={{ 
+                    color: '#8a9dc9', 
+                    fontSize: '0.85rem', 
+                    marginTop: '0.5rem',
+                    fontStyle: 'italic'
+                  }}>
+                    {submissionMode === 'draft' ? 
+                      '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
+                      user.permissionLevel === 'editor' ? 
+                        '⏳ Submit for approval by moderators. Rule will be reviewed before going live.' :
+                        '✅ Publish immediately. Rule will be live and visible to players right away.'
+                    }
+                  </div>
+                </FormGroup>
 
                 {/* Status Information for Moderators+ */}
                 {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
@@ -5353,6 +5353,7 @@ For questions, contact staff immediately.`,
                     </div>
                     <div style={{ color: '#bdc3c7', fontSize: '0.85rem', lineHeight: '1.4' }}>
                       As a {user.permissionLevel}, your rules are automatically approved and will be live immediately upon saving.
+                      You can also save drafts for work-in-progress that you want to continue editing later.
                       {modalType === 'edit' && editingRule?.status && (
                         <>
                           <br />
@@ -5423,74 +5424,74 @@ For questions, contact staff immediately.`,
                   </Select>
                 </FormGroup>
 
-                {/* Approval Workflow Section for Announcements - Only for Editors */}
-                {user.permissionLevel === 'editor' && (
-                  <FormGroup>
-                    <Label>Submission Type</Label>
-                    <div style={{ 
+                {/* Approval Workflow Section for Announcements - Available for all staff levels */}
+                <FormGroup>
+                  <Label>Submission Type</Label>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '1rem', 
+                    backgroundColor: '#2c3e50',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    border: '1px solid #445566'
+                  }}>
+                    <label style={{ 
                       display: 'flex', 
-                      gap: '1rem', 
-                      backgroundColor: '#2c3e50',
-                      padding: '1rem',
-                      borderRadius: '8px',
-                      border: '1px solid #445566'
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      cursor: 'pointer'
                     }}>
-                      <label style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        cursor: 'pointer'
-                      }}>
-                        <input
-                          type="radio"
-                          name="announcementSubmissionMode"
-                          value="draft"
-                          checked={submissionMode === 'draft'}
-                          onChange={(e) => {
-                            setSubmissionMode(e.target.value);
-                            setSaveAsDraft(true);
-                          }}
-                        />
-                        <span style={{ color: '#3498db', fontWeight: '500' }}>
-                          📝 Save as Draft
-                        </span>
-                      </label>
-                      
-                      <label style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '0.5rem',
-                        cursor: 'pointer'
-                      }}>
-                        <input
-                          type="radio"
-                          name="announcementSubmissionMode"
-                          value="submit"
-                          checked={submissionMode === 'submit'}
-                          onChange={(e) => {
-                            setSubmissionMode(e.target.value);
-                            setSaveAsDraft(false);
-                          }}
-                        />
-                        <span style={{ color: '#f39c12', fontWeight: '500' }}>
-                          ⏳ Submit for Approval
-                        </span>
-                      </label>
-                    </div>
+                      <input
+                        type="radio"
+                        name="announcementSubmissionMode"
+                        value="draft"
+                        checked={submissionMode === 'draft'}
+                        onChange={(e) => {
+                          setSubmissionMode(e.target.value);
+                          setSaveAsDraft(true);
+                        }}
+                      />
+                      <span style={{ color: '#3498db', fontWeight: '500' }}>
+                        📝 Save as Draft
+                      </span>
+                    </label>
                     
-                    <div style={{ 
-                      color: '#8a9dc9', 
-                      fontSize: '0.85rem', 
-                      marginTop: '0.5rem',
-                      fontStyle: 'italic'
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      cursor: 'pointer'
                     }}>
-                      {submissionMode === 'draft' ? 
-                        '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
-                        '⏳ Submit for approval by moderators. Announcement will be reviewed before going live.'
-                      }
-                    </div>
-                  </FormGroup>
-                )}
+                      <input
+                        type="radio"
+                        name="announcementSubmissionMode"
+                        value="submit"
+                        checked={submissionMode === 'submit'}
+                        onChange={(e) => {
+                          setSubmissionMode(e.target.value);
+                          setSaveAsDraft(false);
+                        }}
+                      />
+                      <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
+                        {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
+                      </span>
+                    </label>
+                  </div>
+                  
+                  <div style={{ 
+                    color: '#8a9dc9', 
+                    fontSize: '0.85rem', 
+                    marginTop: '0.5rem',
+                    fontStyle: 'italic'
+                  }}>
+                    {submissionMode === 'draft' ? 
+                      '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
+                      user.permissionLevel === 'editor' ? 
+                        '⏳ Submit for approval by moderators. Announcement will be reviewed before going live.' :
+                        '✅ Publish immediately. Announcement will be live and visible to players right away.'
+                    }
+                  </div>
+                </FormGroup>
 
                 {/* Status Information for Moderators+ */}
                 {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (

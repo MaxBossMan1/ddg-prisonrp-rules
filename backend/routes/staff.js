@@ -701,20 +701,20 @@ router.post('/announcements', requireAuth, requirePermission('editor'), async (r
             // Determine status and approval fields based on user level and request
             let finalStatus, submittedBy, submittedAt, isActive;
             
-            // If status is explicitly provided, respect it regardless of user level (for debug UI and explicit workflow)
+            // If status is explicitly provided (draft or pending_approval), respect it for ALL user levels
             if (status && (status === 'draft' || status === 'pending_approval')) {
                 finalStatus = status;
                 submittedBy = req.user.id;
                 submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
                 isActive = 0; // Not active until approved
             } else if (userLevel === 'editor') {
-                // Editors create drafts or submit for approval based on status parameter
-                finalStatus = status || 'pending_approval'; // Default to pending if no status specified
+                // Editors default to pending approval when no status specified
+                finalStatus = 'pending_approval';
                 submittedBy = req.user.id;
-                submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
+                submittedAt = new Date().toISOString();
                 isActive = 0; // Not active until approved
             } else {
-                // Moderators+ can create approved rules directly (when no explicit draft/pending status is provided)
+                // Moderators+ default to approved when no explicit draft/pending status is provided
                 finalStatus = 'approved';
                 submittedBy = req.user.id;
                 submittedAt = new Date().toISOString();
@@ -868,28 +868,20 @@ router.put('/announcements/:id', requireAuth, requirePermission('editor'), async
                 // Determine new status and approval fields based on user level and request
                 let finalStatus, submittedBy, submittedAt, isActive;
                 
-                // If status is explicitly provided, respect it regardless of user level (for debug UI and explicit workflow)
+                // If status is explicitly provided (draft or pending_approval), respect it for ALL user levels
                 if (status && (status === 'draft' || status === 'pending_approval')) {
                     finalStatus = status;
                     submittedBy = req.user.id;
                     submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
                     isActive = 0; // Not active until approved
                 } else if (userLevel === 'editor') {
-                    if (status) {
-                        // Editor specified a status (draft or submit for approval)
-                        finalStatus = status;
-                        submittedBy = req.user.id;
-                        submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
-                        isActive = 0; // Not active until approved
-                    } else {
-                        // No status specified, keep existing status for editors
-                        finalStatus = regularAnnouncement.status || 'approved';
-                        submittedBy = regularAnnouncement.submitted_by;
-                        submittedAt = regularAnnouncement.submitted_at;
-                        isActive = regularAnnouncement.is_active;
-                    }
+                    // No status specified, keep existing status for editors
+                    finalStatus = regularAnnouncement.status || 'approved';
+                    submittedBy = regularAnnouncement.submitted_by;
+                    submittedAt = regularAnnouncement.submitted_at;
+                    isActive = regularAnnouncement.is_active;
                 } else {
-                    // Moderators+ can edit approved rules directly (when no explicit draft/pending status is provided)
+                    // Moderators+ default to approved when no explicit draft/pending status is provided
                     finalStatus = 'approved';
                     submittedBy = regularAnnouncement.submitted_by || req.user.id;
                     submittedAt = regularAnnouncement.submitted_at || new Date().toISOString();
@@ -1195,20 +1187,20 @@ router.post('/rules', requireAuth, requirePermission('editor'), async (req, res)
         // Determine status and approval fields based on user level and request
         let finalStatus, submittedBy, submittedAt, isActive;
         
-        // If status is explicitly provided, respect it regardless of user level (for debug UI and explicit workflow)
+        // If status is explicitly provided (draft or pending_approval), respect it for ALL user levels
         if (status && (status === 'draft' || status === 'pending_approval')) {
             finalStatus = status;
             submittedBy = req.user.id;
             submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
             isActive = 0; // Not active until approved
         } else if (userLevel === 'editor') {
-            // Editors create drafts or submit for approval based on status parameter
-            finalStatus = status || 'pending_approval'; // Default to pending if no status specified
+            // Editors default to pending approval when no status specified
+            finalStatus = 'pending_approval';
             submittedBy = req.user.id;
-            submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
+            submittedAt = new Date().toISOString();
             isActive = 0; // Not active until approved
         } else {
-            // Moderators+ can create approved rules directly (when no explicit draft/pending status is provided)
+            // Moderators+ default to approved when no explicit draft/pending status is provided
             finalStatus = 'approved';
             submittedBy = req.user.id;
             submittedAt = new Date().toISOString();
@@ -1317,28 +1309,20 @@ router.put('/rules/:id', requireAuth, requirePermission('editor'), async (req, r
         // Determine new status and approval fields based on user level and request
         let finalStatus, submittedBy, submittedAt, isActive;
         
-        // If status is explicitly provided, respect it regardless of user level (for debug UI and explicit workflow)
+        // If status is explicitly provided (draft or pending_approval), respect it for ALL user levels
         if (status && (status === 'draft' || status === 'pending_approval')) {
             finalStatus = status;
             submittedBy = req.user.id;
             submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
             isActive = 0; // Not active until approved
         } else if (userLevel === 'editor') {
-            if (status) {
-                // Editor specified a status (draft or submit for approval)
-                finalStatus = status;
-                submittedBy = req.user.id;
-                submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
-                isActive = 0; // Not active until approved
-            } else {
-                // No status specified, keep existing status for editors
-                finalStatus = existingRule.status || 'approved';
-                submittedBy = existingRule.submitted_by;
-                submittedAt = existingRule.submitted_at;
-                isActive = existingRule.is_active;
-            }
+            // No status specified, keep existing status for editors
+            finalStatus = existingRule.status || 'approved';
+            submittedBy = existingRule.submitted_by;
+            submittedAt = existingRule.submitted_at;
+            isActive = existingRule.is_active;
         } else {
-            // Moderators+ can edit approved rules directly (when no explicit draft/pending status is provided)
+            // Moderators+ default to approved when no explicit draft/pending status is provided
             finalStatus = 'approved';
             submittedBy = existingRule.submitted_by || req.user.id;
             submittedAt = existingRule.submitted_at || new Date().toISOString();
