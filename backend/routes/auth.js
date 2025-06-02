@@ -49,16 +49,25 @@ const createSteamStrategy = () => {
         apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
     }, async (identifier, profile, done) => {
         try {
+            console.log('🔍 Steam Authentication Debug:');
+            console.log('  - Identifier:', identifier);
+            console.log('  - Profile:', JSON.stringify(profile, null, 2));
+            
             const steamId = identifier.split('/').pop();
+            console.log('  - Extracted Steam ID:', steamId);
             
             // Check if user exists in staff_users table
             const db = require('../database/init').getInstance();
+            console.log('  - Searching for user in database...');
             const user = await db.get(
                 'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
                 [steamId]
             );
             
+            console.log('  - Database lookup result:', user);
+            
             if (user) {
+                console.log('  ✅ User found! Logging in...');
                 // Update last login
                 await db.run(
                     'UPDATE staff_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
@@ -67,6 +76,7 @@ const createSteamStrategy = () => {
                 
                 // Update username if it changed
                 if (user.steam_username !== profile.displayName) {
+                    console.log('  - Updating username from', user.steam_username, 'to', profile.displayName);
                     await db.run(
                         'UPDATE staff_users SET steam_username = ? WHERE id = ?',
                         [profile.displayName, user.id]
@@ -81,17 +91,26 @@ const createSteamStrategy = () => {
                     profile: profile
                 });
             } else {
+                console.log('  ❌ User not found in database!');
+                console.log('  - Looking for Steam ID:', steamId);
+                console.log('  - In database with is_active = 1');
+                
+                // Let's also check without the is_active filter to see if user exists but is inactive
+                const inactiveUser = await db.get('SELECT * FROM staff_users WHERE steam_id = ?', [steamId]);
+                console.log('  - User without is_active filter:', inactiveUser);
+                
                 // User not authorized
                 return done(null, false, { message: 'Access denied. Contact administrator.' });
             }
         } catch (error) {
-            console.error('Steam authentication error:', error);
+            console.error('❌ Steam authentication error:', error);
             return done(error);
         }
     });
 };
 
-// Initialize with current strategy
+// Initialize with current strategy - ensure it uses dynamic URLs
+console.log('🔧 Initializing Steam Strategy at startup with URLs:', getDynamicUrls());
 passport.use('steam', createSteamStrategy());
 
 // Passport serialization
