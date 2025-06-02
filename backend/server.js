@@ -33,6 +33,9 @@ const analyticsRoutes = require('./routes/analytics');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Make app available globally for database access from other modules
+global.app = app;
+
 // Initialize database
 let db;
 

@@ -57,17 +57,26 @@ const createSteamStrategy = () => {
             console.log('  - Extracted Steam ID:', steamId);
             
             // Check if user exists in staff_users table
-            const db = require('../database/init').getInstance();
+            let db = require('../database/init').getInstance();
+            
+            // If singleton not available, try to get from global app as fallback
+            if (!db && global.app && global.app.locals && global.app.locals.db) {
+                db = global.app.locals.db;
+                console.log('  - Using global app.locals.db fallback');
+            }
+            
             console.log('  - Database instance:', db ? 'Found' : 'NULL');
+            console.log('  - Database path:', db ? db.dbPath : 'N/A');
             if (!db) {
                 console.error('  ❌ Database instance is null! Check server initialization.');
                 return done(new Error('Database not available'));
             }
             console.log('  - Searching for user in database...');
-            const user = await db.get(
-                'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
-                [steamId]
-            );
+            const query = 'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1';
+            const params = [steamId];
+            console.log('  - Query:', query);
+            console.log('  - Params:', params);
+            const user = await db.get(query, params);
             
             console.log('  - Database lookup result:', user);
             
@@ -125,7 +134,17 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
     try {
-        const db = require('../database/init').getInstance();
+        let db = require('../database/init').getInstance();
+        
+        // If singleton not available, try to get from global app as fallback
+        if (!db && global.app && global.app.locals && global.app.locals.db) {
+            db = global.app.locals.db;
+        }
+        
+        if (!db) {
+            return done(new Error('Database not available'));
+        }
+        
         const user = await db.get(
             'SELECT * FROM staff_users WHERE id = ? AND is_active = 1',
             [id]
