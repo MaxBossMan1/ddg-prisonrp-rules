@@ -290,45 +290,6 @@ app.get('/api/announcements', publicApiLimiter, async (req, res) => {
     }
 });
 
-app.get('/api/changes', publicApiLimiter, async (req, res) => {
-    try {
-        const days = parseInt(req.query.days) || 30;
-        const limit = parseInt(req.query.limit) || 20;
-        
-        // Calculate date threshold
-        const dateThreshold = new Date();
-        dateThreshold.setDate(dateThreshold.getDate() - days);
-        const thresholdISO = dateThreshold.toISOString();
-        
-        // Get recent changes from rule_changes table with rule details
-        const changes = await app.locals.db.all(`
-            SELECT 
-                rc.id,
-                rc.change_type,
-                rc.change_description,
-                rc.created_at,
-                r.id as rule_id,
-                r.title as rule_title,
-                r.full_code,
-                c.name as category_name,
-                c.letter_code as category_letter,
-                su.steam_username as changed_by
-            FROM rule_changes rc
-            LEFT JOIN rules r ON rc.rule_id = r.id
-            LEFT JOIN categories c ON r.category_id = c.id
-            LEFT JOIN staff_users su ON rc.staff_user_id = su.id
-            WHERE rc.created_at >= ?
-            ORDER BY rc.created_at DESC
-            LIMIT ?
-        `, [thresholdISO, limit]);
-        
-        res.json(changes);
-    } catch (error) {
-        console.error('Error fetching recent changes:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // Staff panel routes (secret URL access)
 const staffSecretUrl = process.env.STAFF_SECRET_URL || 'staff-management-2024';
 

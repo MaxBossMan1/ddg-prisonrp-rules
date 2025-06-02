@@ -275,16 +275,21 @@ function HomePage() {
       });
 
       // Try to fetch recent changes (optional)
-      const fetchRecentChanges = apiService.getRecentChanges().then(res => {
-        setRecentChanges(res.data);
-        setLoadingStates(prev => ({ ...prev, recentChanges: false }));
-      }).catch(error => {
-        console.log('Recent changes not available yet:', error);
-        setRecentChanges([]);
-        setLoadingStates(prev => ({ ...prev, recentChanges: false }));
-      });
+      // TODO: Implement this feature later
+      // const fetchRecentChanges = apiService.getRecentChanges().then(res => {
+      //   setRecentChanges(res.data);
+      //   setLoadingStates(prev => ({ ...prev, recentChanges: false }));
+      // }).catch(error => {
+      //   console.log('Recent changes not available yet:', error);
+      //   setRecentChanges([]);
+      //   setLoadingStates(prev => ({ ...prev, recentChanges: false }));
+      // });
 
-      await Promise.all([fetchCategories, fetchAnnouncements, fetchRecentChanges]);
+      // For now, just set recent changes as empty and not loading
+      setRecentChanges([]);
+      setLoadingStates(prev => ({ ...prev, recentChanges: false }));
+
+      await Promise.all([fetchCategories, fetchAnnouncements]);
 
     } catch (err) {
       console.error('Error fetching data:', err);
