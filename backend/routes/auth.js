@@ -58,6 +58,11 @@ const createSteamStrategy = () => {
             
             // Check if user exists in staff_users table
             const db = require('../database/init').getInstance();
+            console.log('  - Database instance:', db ? 'Found' : 'NULL');
+            if (!db) {
+                console.error('  ❌ Database instance is null! Check server initialization.');
+                return done(new Error('Database not available'));
+            }
             console.log('  - Searching for user in database...');
             const user = await db.get(
                 'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
