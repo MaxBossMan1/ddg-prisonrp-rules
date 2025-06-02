@@ -235,33 +235,63 @@ router.get('/steam', (req, res, next) => {
         `);
     }
     
-    // Build Steam OpenID URL manually to bypass passport-steam caching issues
+    // Recreate Steam strategy with current dynamic URLs to ensure fresh configuration
     const currentUrls = getDynamicUrls();
-    console.log('🔧 Manual Steam URL generation with:', currentUrls);
+    console.log('🔧 Recreating Steam Strategy with URLs:', currentUrls);
     
-    const steamOpenIdUrl = 'https://steamcommunity.com/openid/login';
-    const params = new URLSearchParams({
-        'openid.mode': 'checkid_setup',
-        'openid.ns': 'http://specs.openid.net/auth/2.0',
-        'openid.ns.sreg': 'http://openid.net/extensions/sreg/1.1',
-        'openid.sreg.optional': 'nickname,email,fullname,dob,gender,postcode,country,language,timezone',
-        'openid.ns.ax': 'http://openid.net/srv/ax/1.0',
-        'openid.ax.mode': 'fetch_request',
-        'openid.ax.type.fullname': 'http://axschema.org/namePerson',
-        'openid.ax.type.firstname': 'http://axschema.org/namePerson/first',
-        'openid.ax.type.lastname': 'http://axschema.org/namePerson/last',
-        'openid.ax.type.email': 'http://axschema.org/contact/email',
-        'openid.ax.required': 'fullname,firstname,lastname,email',
-        'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
-        'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
-        'openid.return_to': currentUrls.returnURL,
-        'openid.realm': currentUrls.realm
+    const freshSteamStrategy = new SteamStrategy({
+        returnURL: currentUrls.returnURL,
+        realm: currentUrls.realm,
+        apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
+    }, async (identifier, profile, done) => {
+        try {
+            const steamId = identifier.split('/').pop();
+            
+            // Check if user exists in staff_users table
+            const db = require('../database/init').getInstance();
+            const user = await db.get(
+                'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
+                [steamId]
+            );
+            
+            if (user) {
+                // Update last login
+                await db.run(
+                    'UPDATE staff_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
+                    [user.id]
+                );
+                
+                // Update username if it changed
+                if (user.steam_username !== profile.displayName) {
+                    await db.run(
+                        'UPDATE staff_users SET steam_username = ? WHERE id = ?',
+                        [profile.displayName, user.id]
+                    );
+                }
+                
+                return done(null, {
+                    id: user.id,
+                    steamId: user.steam_id,
+                    username: profile.displayName,
+                    permissionLevel: user.permission_level,
+                    profile: profile
+                });
+            } else {
+                // User not authorized
+                return done(null, false, { message: 'Access denied. Contact administrator.' });
+            }
+        } catch (error) {
+            console.error('Steam authentication error:', error);
+            return done(error);
+        }
     });
     
-    const redirectUrl = `${steamOpenIdUrl}?${params.toString()}`;
-    console.log('🔧 Redirecting to Steam with return URL:', currentUrls.returnURL);
+    // Replace the current strategy with fresh one
+    passport.unuse('steam');
+    passport.use('steam', freshSteamStrategy);
     
-    res.redirect(redirectUrl);
+    // Now use passport authentication normally
+    passport.authenticate('steam')(req, res, next);
 });
 
 router.get('/steam/return', 
