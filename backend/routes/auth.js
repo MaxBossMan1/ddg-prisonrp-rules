@@ -235,62 +235,9 @@ router.get('/steam', (req, res, next) => {
         `);
     }
     
-    // Recreate Steam strategy with current dynamic URLs to ensure fresh configuration
-    const currentUrls = getDynamicUrls();
-    console.log('🔧 Recreating Steam Strategy with URLs:', currentUrls);
+    console.log('🔧 Steam authentication requested with current URLs:', getDynamicUrls());
     
-    const freshSteamStrategy = new SteamStrategy({
-        returnURL: currentUrls.returnURL,
-        realm: currentUrls.realm,
-        apiKey: process.env.STEAM_API_KEY || 'your-steam-api-key-here'
-    }, async (identifier, profile, done) => {
-        try {
-            const steamId = identifier.split('/').pop();
-            
-            // Check if user exists in staff_users table
-            const db = require('../database/init').getInstance();
-            const user = await db.get(
-                'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1',
-                [steamId]
-            );
-            
-            if (user) {
-                // Update last login
-                await db.run(
-                    'UPDATE staff_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
-                    [user.id]
-                );
-                
-                // Update username if it changed
-                if (user.steam_username !== profile.displayName) {
-                    await db.run(
-                        'UPDATE staff_users SET steam_username = ? WHERE id = ?',
-                        [profile.displayName, user.id]
-                    );
-                }
-                
-                return done(null, {
-                    id: user.id,
-                    steamId: user.steam_id,
-                    username: profile.displayName,
-                    permissionLevel: user.permission_level,
-                    profile: profile
-                });
-            } else {
-                // User not authorized
-                return done(null, false, { message: 'Access denied. Contact administrator.' });
-            }
-        } catch (error) {
-            console.error('Steam authentication error:', error);
-            return done(error);
-        }
-    });
-    
-    // Replace the current strategy with fresh one
-    passport.unuse('steam');
-    passport.use('steam', freshSteamStrategy);
-    
-    // Now use passport authentication normally
+    // Use passport authentication normally without recreating strategy
     passport.authenticate('steam')(req, res, next);
 });
 
