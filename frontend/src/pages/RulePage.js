@@ -764,8 +764,8 @@ function RulePage() {
       } else {
         // If no rules found, try to get category info from categories API
         try {
-          const categoriesResponse = await fetch('/api/categories');
-          const categories = await categoriesResponse.json();
+          const categoriesResponse = await apiService.getCategories();
+          const categories = categoriesResponse.data;
           const categoryData = categories.find(cat => cat.letter_code.toLowerCase() === category.toLowerCase());
           
           if (categoryData) {
