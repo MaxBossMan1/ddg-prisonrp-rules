@@ -268,7 +268,7 @@ router.get('/steam/return',
         next();
     },
     passport.authenticate('steam', { 
-        failureRedirect: `${getDynamicUrls().frontendUrl}/staff/login-failed` 
+        failureRedirect: '/staff/login-failed' 
     }),
     async (req, res) => {
         try {
