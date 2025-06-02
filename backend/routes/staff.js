@@ -1093,7 +1093,9 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
         const rules = await db.all(`
             SELECT r.*, c.name as category_name, c.letter_code, rc.full_code,
                    su_submitted.steam_username as submitted_by_username,
-                   su_reviewed.steam_username as reviewed_by_username
+                   su_reviewed.steam_username as reviewed_by_username,
+                   (SELECT COUNT(*) FROM rule_cross_references rcr 
+                    WHERE rcr.source_rule_id = r.id OR rcr.target_rule_id = r.id) as cross_references_count
             FROM rules r
             LEFT JOIN categories c ON r.category_id = c.id
             LEFT JOIN rule_codes rc ON r.id = rc.rule_id

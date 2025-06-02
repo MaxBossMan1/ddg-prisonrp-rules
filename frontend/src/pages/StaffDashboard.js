@@ -1660,6 +1660,21 @@ For questions, contact staff immediately.`,
     }
 
     try {
+      // Build a flat array of all rules including sub-rules
+      const allRules = [];
+      
+      rules.forEach(rule => {
+        // Add main rule
+        allRules.push(rule);
+        
+        // Add sub-rules if they exist
+        if (rule.sub_rules && Array.isArray(rule.sub_rules)) {
+          allRules.push(...rule.sub_rules);
+        }
+      });
+      
+      console.log('🔍 Total rules including sub-rules:', allRules.length);
+      
       // Filter out current rule and already cross-referenced rules
       // Ensure crossReferences is always an array
       const crossRefsArray = Array.isArray(crossReferences) ? crossReferences : [];
@@ -1670,7 +1685,7 @@ For questions, contact staff immediately.`,
 
       console.log('🔍 Existing target IDs to exclude:', Array.from(existingTargetIds));
 
-      const filteredRules = rules.filter(rule => 
+      const filteredRules = allRules.filter(rule => 
         !existingTargetIds.has(rule.id) &&
         (rule.full_code.toLowerCase().includes(query.toLowerCase()) ||
          (rule.title && rule.title.toLowerCase().includes(query.toLowerCase())) ||
@@ -3976,7 +3991,7 @@ For questions, contact staff immediately.`,
                           ) : (
                             <ActionButton onClick={() => openSubRuleModal(rule)}>Add Sub-Rule</ActionButton>
                           )}
-                          <ActionButton onClick={() => openCrossReferencesModal(rule)}>Cross-References ({rule.cross_references?.length || 0})</ActionButton>
+                          <ActionButton onClick={() => openCrossReferencesModal(rule)}>Cross-References ({rule.cross_references_count || 0})</ActionButton>
                           {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
                             <ActionButton danger onClick={() => deleteRule(rule.id)}>Delete</ActionButton>
                           )}
