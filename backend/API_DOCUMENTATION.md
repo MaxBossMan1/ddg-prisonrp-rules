@@ -975,7 +975,7 @@ Comprehensive rate limiting system implemented to prevent abuse and ensure fair 
 - **Purpose**: Prevent search spam while allowing reasonable autocomplete usage
 
 #### Authentication Endpoints
-- **Limit**: 5 requests per 2 minutes
+- **Limit**: 20 requests per 2 minutes
 - **Applies to**: `/auth/*`
 - **Purpose**: Prevent brute force authentication attacks
 
@@ -1037,7 +1037,7 @@ RateLimit-Reset: 1643723460
   "limits": {
     "publicApi": { "requests": 50, "window": "1 minute" },
     "search": { "requests": 30, "window": "1 minute" },
-    "authentication": { "requests": 5, "window": "2 minutes" },
+    "authentication": { "requests": 20, "window": "2 minutes" },
     "staff": { "requests": 150, "window": "1 minute" },
     "upload": { "requests": 15, "window": "1 minute" },
     "health": { "requests": 50, "window": "1 minute" },
@@ -1061,7 +1061,7 @@ RateLimit-Reset: 1643723460
     "limits": {
       "public": "50 requests per minute",
       "search": "30 requests per minute",
-      "auth": "5 requests per 2 minutes",
+      "auth": "20 requests per 2 minutes",
       "staff": "150 requests per minute",
       "upload": "15 requests per minute",
       "health": "50 requests per minute",
