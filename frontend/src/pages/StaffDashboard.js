@@ -1878,14 +1878,14 @@ For questions, contact staff immediately.`,
       }
       
       // Determine status based on user permission and submission mode
-      let status = 'approved'; // Default for moderators and above
+      let status;
       
-      if (user.permissionLevel === 'editor') {
-        if (submissionMode === 'draft') {
-          status = 'draft';
-        } else {
-          status = 'pending_approval';
-        }
+      if (submissionMode === 'draft') {
+        status = 'draft';
+      } else if (user.permissionLevel === 'editor') {
+        status = 'pending_approval';
+      } else {
+        status = 'approved';
       }
       
       console.log('Saving rule with data:', {
@@ -2478,14 +2478,14 @@ For questions, contact staff immediately.`,
       }
 
       // Determine status based on user permission and submission mode
-      let status = 'approved'; // Default for moderators and above
+      let status;
       
-      if (user.permissionLevel === 'editor') {
-        if (submissionMode === 'draft') {
-          status = 'draft';
-        } else {
-          status = 'pending_approval';
-        }
+      if (submissionMode === 'draft') {
+        status = 'draft';
+      } else if (user.permissionLevel === 'editor') {
+        status = 'pending_approval';
+      } else {
+        status = 'approved';
       }
 
       const url = modalType === 'edit-announcement' 
