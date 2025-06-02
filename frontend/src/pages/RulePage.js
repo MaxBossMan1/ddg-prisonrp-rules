@@ -931,11 +931,39 @@ function RulePage() {
 
   const copyToClipboard = async (text) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedRuleCode(text);
-      setTimeout(() => setCopiedRuleCode(null), 2000);
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        setCopiedRuleCode(text);
+        setTimeout(() => setCopiedRuleCode(null), 2000);
+        return;
+      }
+      
+      // Fallback for HTTP or older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        setCopiedRuleCode(text);
+        setTimeout(() => setCopiedRuleCode(null), 2000);
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+        // Show user-friendly message
+        alert(`Please copy this rule code manually: ${text}`);
+      } finally {
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
+      // Show user-friendly message as last resort
+      alert(`Please copy this rule code manually: ${text}`);
     }
   };
 
@@ -955,11 +983,48 @@ function RulePage() {
         url = `${window.location.origin}/rules/${category}`;
       }
       
-      await navigator.clipboard.writeText(url);
-      setCopiedLinkId(ruleId);
-      setTimeout(() => setCopiedLinkId(null), 2000);
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        setCopiedLinkId(ruleId);
+        setTimeout(() => setCopiedLinkId(null), 2000);
+        return;
+      }
+      
+      // Fallback for HTTP or older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        setCopiedLinkId(ruleId);
+        setTimeout(() => setCopiedLinkId(null), 2000);
+      } catch (err) {
+        console.error('Fallback copy failed:', err);
+        // Show user-friendly message
+        alert(`Please copy this link manually: ${url}`);
+      } finally {
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error('Failed to copy link to clipboard:', err);
+      // Show user-friendly message as last resort
+      const parts = ruleCode.split('.');
+      let url;
+      if (parts.length >= 3) {
+        url = `${window.location.origin}/rules/${parts[0]}/${parts[1]}/${parts[2]}`;
+      } else if (parts.length >= 2) {
+        url = `${window.location.origin}/rules/${parts[0]}/${parts[1]}`;
+      } else {
+        url = `${window.location.origin}/rules/${category}`;
+      }
+      alert(`Please copy this link manually: ${url}`);
     }
   };
 

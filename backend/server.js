@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const session = require('express-session');
 const passport = require('passport');
 const path = require('path');
+const fs = require('fs');
 
 // Import database
 const Database = require('./database/init');
@@ -67,6 +68,20 @@ console.log('🔧 Server Dynamic URLs:', {
 
 async function initializeServer() {
     try {
+        // Ensure upload directories exist
+        const uploadsDir = path.join(__dirname, 'uploads');
+        const imagesDir = path.join(__dirname, 'uploads', 'images');
+        
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+            console.log('Created uploads directory');
+        }
+        
+        if (!fs.existsSync(imagesDir)) {
+            fs.mkdirSync(imagesDir, { recursive: true });
+            console.log('Created uploads/images directory');
+        }
+        
         // Initialize database
         const database = new Database(process.env.DATABASE_PATH || './database/ddg_prisonrp.db');
         db = await database.initialize();
