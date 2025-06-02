@@ -150,18 +150,6 @@ class Database {
 
                 console.log('Default staff users inserted (demo accounts)');
             }
-            
-            // Always ensure MaxBossMan1 is in the database (for main admin)
-            const maxUser = await this.get('SELECT * FROM staff_users WHERE steam_id = ?', ['76561198157812847']);
-            if (!maxUser) {
-                await this.run(
-                    'INSERT INTO staff_users (steam_id, steam_username, permission_level, is_active) VALUES (?, ?, ?, ?)',
-                    ['76561198157812847', 'MaxBossMan1', 'owner', 1]
-                );
-                console.log('Added MaxBossMan1 as owner user');
-            } else {
-                console.log('MaxBossMan1 user already exists');
-            }
 
         } catch (error) {
             console.error('Error inserting default data:', error);
