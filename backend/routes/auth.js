@@ -72,11 +72,34 @@ const createSteamStrategy = () => {
                 return done(new Error('Database not available'));
             }
             console.log('  - Searching for user in database...');
+            
+            // First, let's verify the database has users at all
+            try {
+                const userCount = await db.get('SELECT COUNT(*) as count FROM staff_users');
+                console.log('  - Total users in database:', userCount.count);
+                
+                const allUsers = await db.all('SELECT steam_id, steam_username, is_active FROM staff_users');
+                console.log('  - All users in database:', JSON.stringify(allUsers, null, 2));
+            } catch (verifyError) {
+                console.error('  - Database verification error:', verifyError);
+            }
+            
             const query = 'SELECT * FROM staff_users WHERE steam_id = ? AND is_active = 1';
             const params = [steamId];
             console.log('  - Query:', query);
             console.log('  - Params:', params);
-            const user = await db.get(query, params);
+            
+            let user;
+            try {
+                console.log('  - Executing database query...');
+                user = await db.get(query, params);
+                console.log('  - Query executed successfully');
+                console.log('  - Raw result type:', typeof user);
+                console.log('  - Raw result:', user);
+            } catch (queryError) {
+                console.error('  - Database query error:', queryError);
+                return done(queryError);
+            }
             
             console.log('  - Database lookup result:', user);
             
