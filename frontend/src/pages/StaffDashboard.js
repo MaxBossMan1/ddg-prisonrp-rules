@@ -4872,8 +4872,6 @@ For questions, contact staff immediately.`,
                               ❌ Reject
                             </ActionButton>
                           </RuleActions>
-                        </div>
-                      </div>
                     </RuleCard>
                   ))}
                 </RulesList>
