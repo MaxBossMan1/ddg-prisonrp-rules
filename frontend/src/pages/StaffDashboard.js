@@ -612,21 +612,34 @@ const CloseButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
   
   &:hover {
     color: #ecf0f1;
+    background: rgba(103, 123, 174, 0.2);
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 `;
 
 const FormGroup = styled.div`
   margin-bottom: 1.5rem;
+  position: relative;
 `;
 
 const Label = styled.label`
   display: block;
   color: #ecf0f1;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
 `;
 
 const Input = styled.input`
