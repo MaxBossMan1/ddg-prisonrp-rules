@@ -124,6 +124,31 @@ const HeaderTitle = styled.h1`
   margin: 0;
   font-size: 2rem;
   font-weight: 600;
+  background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 50%, #ecf0f1 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titleShimmer 4s ease-in-out infinite alternate;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #677bae 0%, #8a9dc9 100%);
+    border-radius: 1px;
+    opacity: 0.8;
+  }
+  
+  @keyframes titleShimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
 `;
 
 const UserInfo = styled.div`
@@ -144,32 +169,98 @@ const UserRole = styled.div`
 `;
 
 const TabContainer = styled.div`
-  background-color: #34495e;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 50%, #34495e 100%);
+  background-size: 200% 100%;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(103, 123, 174, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(103, 123, 174, 0.2);
+  position: relative;
+  transition: all 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 20%, rgba(103, 123, 174, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const TabNavigation = styled.div`
   display: flex;
-  background-color: #2c3e50;
-  border-bottom: 1px solid #445566;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+  background-size: 200% 100%;
+  border-bottom: 1px solid rgba(103, 123, 174, 0.3);
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(103, 123, 174, 0.5) 50%, transparent 100%);
+  }
 `;
 
 const TabButton = styled.button`
-  padding: 1rem 2rem;
-  background: ${props => props.active ? '#34495e' : 'transparent'};
-  color: ${props => props.active ? '#ecf0f1' : '#bdc3c7'};
+  padding: 1.25rem 2rem;
+  background: ${props => props.active ? 
+    'linear-gradient(135deg, #677bae 0%, #8a9dc9 100%)' : 
+    'transparent'};
+  background-size: 200% 100%;
+  color: ${props => props.active ? '#ffffff' : '#bdc3c7'};
   border: none;
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.3s ease;
-  border-bottom: 3px solid ${props => props.active ? '#677bae' : 'transparent'};
+  border-bottom: 3px solid ${props => props.active ? '#8a9dc9' : 'transparent'};
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    right: 100%;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(103, 123, 174, 0.2), transparent);
+    transition: all 0.5s ease;
+  }
   
   &:hover {
-    background-color: #34495e;
-    color: #ecf0f1;
+    background: ${props => props.active ? 
+      'linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%)' : 
+      'linear-gradient(135deg, rgba(103, 123, 174, 0.2) 0%, rgba(138, 157, 201, 0.3) 100%)'};
+    background-position: right center;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(103, 123, 174, 0.3);
+    
+    &::before {
+      left: -50%;
+      right: -50%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
