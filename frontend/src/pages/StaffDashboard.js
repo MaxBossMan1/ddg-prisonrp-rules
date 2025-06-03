@@ -268,8 +268,43 @@ const RulesHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.6) 0%, rgba(44, 62, 80, 0.6) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(103, 123, 174, 0.2);
   flex-wrap: wrap;
   gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  
+  h2 {
+    margin: 0;
+    color: #ecf0f1;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    &::before {
+      content: '';
+      width: 3px;
+      height: 1.5rem;
+      background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
+      border-radius: 2px;
+    }
+  }
 `;
 
 const Button = styled.button`
@@ -736,6 +771,10 @@ const ModalActions = styled.div`
 const SearchContainer = styled.div`
   margin-bottom: 2rem;
   position: relative;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.3) 0%, rgba(44, 62, 80, 0.3) 100%);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(103, 123, 174, 0.2);
 `;
 
 const SearchInput = styled(Input)`
@@ -889,18 +928,37 @@ const DeleteButton = styled.button`
 
 // Categories specific styled components
 const CategoryCard = styled.div`
-  background-color: #2c3e50;
-  border: 2px solid ${props => props.isDragging ? '#677bae' : '#445566'};
-  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);
+  border: 2px solid ${props => props.isDragging ? '#677bae' : 'rgba(103, 123, 174, 0.2)'};
+  border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
   cursor: ${props => props.isDraggable ? 'move' : 'default'};
-  opacity: ${props => props.isDragging ? 0.5 : 1};
-  transform: ${props => props.isDragging ? 'rotate(2deg)' : 'none'};
+  opacity: ${props => props.isDragging ? 0.8 : 1};
+  transform: ${props => props.isDragging ? 'rotate(2deg) scale(1.02)' : 'none'};
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
 
   &:hover {
     border-color: #677bae;
-    box-shadow: 0 4px 12px rgba(103, 123, 174, 0.2);
+    transform: translateY(-2px) ${props => props.isDragging ? 'rotate(2deg) scale(1.02)' : ''};
+    box-shadow: 
+      0 8px 24px rgba(103, 123, 174, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 `;
 
@@ -1671,6 +1729,38 @@ const StatusBadge = styled.span`
         default: return 'rgba(149, 165, 166, 0.4)';
       }
     }};
+  }
+`;
+
+const SectionTitle = styled.h2`
+  color: #ecf0f1;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  &::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, #677bae 0%, rgba(103, 123, 174, 0.3) 100%);
+    border-radius: 1px;
+  }
+  
+  &::before {
+    content: '';
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
+    border-radius: 2px;
+    position: absolute;
+    left: -1rem;
+    top: 0;
+    bottom: 0;
   }
 `;
 
