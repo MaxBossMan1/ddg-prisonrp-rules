@@ -213,32 +213,45 @@ const UserRole = styled.div`
 `;
 
 const TabContainer = styled.div`
-  background-color: #34495e;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(103, 123, 174, 0.2);
 `;
 
 const TabNavigation = styled.div`
   display: flex;
-  background-color: #2c3e50;
-  border-bottom: 1px solid #445566;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  border-bottom: 1px solid rgba(103, 123, 174, 0.3);
 `;
 
 const TabButton = styled.button`
   padding: 1rem 2rem;
-  background: ${props => props.active ? '#34495e' : 'transparent'};
-  color: ${props => props.active ? '#ecf0f1' : '#bdc3c7'};
+  background: ${props => props.active ? 
+    'linear-gradient(135deg, #677bae 0%, #8a9dc9 100%)' : 
+    'transparent'};
+  color: ${props => props.active ? '#ffffff' : '#bdc3c7'};
   border: none;
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
   transition: all 0.3s ease;
   border-bottom: 3px solid ${props => props.active ? '#677bae' : 'transparent'};
+  position: relative;
   
   &:hover {
-    background-color: #34495e;
-    color: #ecf0f1;
+    background: ${props => props.active ? 
+      'linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%)' : 
+      'linear-gradient(135deg, rgba(103, 123, 174, 0.2) 0%, rgba(138, 157, 201, 0.2) 100%)'};
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
