@@ -34,19 +34,89 @@ const DashboardContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
-  background-color: #1a1d23;
+  background: linear-gradient(135deg, #1a1d23 0%, #2c3e50 50%, #34495e 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(103, 123, 174, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 157, 201, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(103, 123, 174, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(103,123,174,0.03)"/><circle cx="75" cy="75" r="1" fill="rgba(138,157,201,0.02)"/><circle cx="50" cy="10" r="0.5" fill="rgba(103,123,174,0.02)"/><circle cx="10" cy="60" r="0.5" fill="rgba(138,157,201,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(103,123,174,0.02)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 `;
 
 const Header = styled.div`
-  background-color: #34495e;
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 50%, #34495e 100%);
+  background-size: 200% 100%;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 16px;
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(103, 123, 174, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(103, 123, 174, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(103, 123, 174, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  
+  &:hover {
+    background-position: right center;
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 6px 20px rgba(103, 123, 174, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+  }
 `;
 
 const HeaderTitle = styled.h1`
@@ -1148,6 +1218,100 @@ const DebugFeatureList = styled.div`
     }
   }
 `;
+
+// Floating particles animation system
+const ParticlesContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+`;
+
+const Particle = styled.div`
+  position: absolute;
+  width: ${props => props.size}px;
+  height: ${props => props.size}px;
+  background: radial-gradient(circle, rgba(103, 123, 174, ${props => props.opacity}) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float ${props => props.duration}s linear infinite;
+  
+  @keyframes float {
+    0% {
+      transform: translateY(100vh) translateX(${props => props.startX}px) rotate(0deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: ${props => props.opacity};
+    }
+    90% {
+      opacity: ${props => props.opacity};
+    }
+    100% {
+      transform: translateY(-100px) translateX(${props => props.endX}px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+`;
+
+const FloatingParticles = () => {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = [];
+      for (let i = 0; i < 50; i++) {
+        const size = Math.random() * 3 + 1; // 1-4px
+        const startX = Math.random() * window.innerWidth;
+        const endX = startX + (Math.random() - 0.5) * 200; // drift ±100px
+        const duration = Math.random() * 20 + 15; // 15-35s
+        const delay = Math.random() * 20; // 0-20s delay
+        const opacity = Math.random() * 0.6 + 0.1; // 0.1-0.7 opacity
+        
+        newParticles.push({
+          id: i,
+          size,
+          startX,
+          endX,
+          duration,
+          delay,
+          opacity
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+    
+    // Regenerate particles periodically
+    const interval = setInterval(generateParticles, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <ParticlesContainer>
+      {particles.map(particle => (
+        <Particle
+          key={particle.id}
+          size={particle.size}
+          startX={particle.startX}
+          endX={particle.endX}
+          duration={particle.duration}
+          opacity={particle.opacity}
+          style={{
+            animationDelay: `${particle.delay}s`,
+            left: 0,
+            bottom: 0
+          }}
+        />
+      ))}
+    </ParticlesContainer>
+  );
+};
 
 function StaffDashboard() {
   const [user, setUser] = useState(null);
@@ -3443,6 +3607,7 @@ For questions, contact staff immediately.`,
 
   return (
     <DashboardContainer>
+      <FloatingParticles />
       <Header>
         <HeaderTitle>Staff Management Dashboard</HeaderTitle>
         <UserInfo>
