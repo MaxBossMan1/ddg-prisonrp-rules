@@ -566,14 +566,31 @@ const NotificationModalBackdrop = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background-color: #34495e;
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.95) 0%, rgba(44, 62, 80, 0.95) 100%);
+  border: 1px solid rgba(103, 123, 174, 0.2);
+  border-radius: 16px;
   padding: 2rem;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 30%, rgba(103, 123, 174, 0.1) 0%, transparent 70%);
+    border-radius: 16px;
+    pointer-events: none;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -614,16 +631,26 @@ const Label = styled.label`
 
 const Input = styled.input`
   width: 100%;
-  background-color: #2c3e50;
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.9) 100%);
   color: #ecf0f1;
-  border: 1px solid #445566;
+  border: 1px solid rgba(103, 123, 174, 0.3);
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
   
   &:focus {
     border-color: #677bae;
-    outline: none;
+    box-shadow: 0 0 0 2px rgba(103, 123, 174, 0.2);
+  }
+  
+  &:hover {
+    border-color: rgba(103, 123, 174, 0.5);
+  }
+  
+  &::placeholder {
+    color: rgba(236, 240, 241, 0.5);
   }
 `;
 
