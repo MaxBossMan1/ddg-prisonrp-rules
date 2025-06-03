@@ -489,17 +489,31 @@ const RuleContent = styled.div`
     border-collapse: collapse;
     margin: 1rem 0;
     font-size: 0.85rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     
     th, td {
-      border: 1px solid #445566;
-      padding: 0.5rem;
+      border: 1px solid rgba(103, 123, 174, 0.2);
+      padding: 0.75rem;
       text-align: left;
     }
     
     th {
-      background-color: #2c3e50;
+      background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);
       font-weight: 600;
       color: #ecf0f1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.5) 0%, rgba(52, 73, 94, 0.5) 100%);
+      transition: background-color 0.3s ease;
+    }
+    
+    tr:hover td {
+      background: linear-gradient(135deg, rgba(103, 123, 174, 0.2) 0%, rgba(138, 157, 201, 0.2) 100%);
     }
   }
   
@@ -1231,27 +1245,33 @@ const ActivityTime = styled.div`
 const ChangesList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-height: 300px;
+  gap: 1rem;
+  max-height: 400px;
   overflow-y: auto;
+  padding-right: 0.5rem;
   
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   
   &::-webkit-scrollbar-track {
-    background: #34495e;
-    border-radius: 3px;
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.5) 0%, rgba(52, 73, 94, 0.5) 100%);
+    border-radius: 4px;
   }
   
   &::-webkit-scrollbar-thumb {
-    background: #677bae;
-    border-radius: 3px;
+    background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
+    border-radius: 4px;
+    
+    &:hover {
+      background: linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%);
+    }
   }
 `;
 
 const ChangeItem = styled.div`
-  background-color: #34495e;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);
+  border: 1px solid rgba(103, 123, 174, 0.2);
   border-left: 4px solid ${props => {
     switch(props.type) {
       case 'create': return '#27ae60';
@@ -1260,8 +1280,42 @@ const ChangeItem = styled.div`
       default: return '#677bae';
     }
   }};
-  padding: 0.75rem;
-  border-radius: 0 6px 6px 0;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => {
+      switch(props.type) {
+        case 'create': return 'radial-gradient(circle at 10% 20%, rgba(39, 174, 96, 0.05) 0%, transparent 50%)';
+        case 'update': return 'radial-gradient(circle at 10% 20%, rgba(243, 156, 18, 0.05) 0%, transparent 50%)';
+        case 'delete': return 'radial-gradient(circle at 10% 20%, rgba(231, 76, 60, 0.05) 0%, transparent 50%)';
+        default: return 'radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%)';
+      }
+    }};
+    pointer-events: none;
+  }
+  
+  &:hover {
+    border-color: ${props => {
+      switch(props.type) {
+        case 'create': return 'rgba(39, 174, 96, 0.5)';
+        case 'update': return 'rgba(243, 156, 18, 0.5)';
+        case 'delete': return 'rgba(231, 76, 60, 0.5)';
+        default: return 'rgba(103, 123, 174, 0.5)';
+      }
+    }};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const ChangeHeader = styled.div`
@@ -1272,20 +1326,42 @@ const ChangeHeader = styled.div`
 `;
 
 const ChangeAction = styled.span`
-  background-color: ${props => {
+  background: ${props => {
     switch(props.type) {
-      case 'create': return '#27ae60';
-      case 'update': return '#f39c12';
-      case 'delete': return '#e74c3c';
-      default: return '#677bae';
+      case 'create': return 'linear-gradient(135deg, #27ae60 0%, #229954 100%)';
+      case 'update': return 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)';
+      case 'delete': return 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+      default: return 'linear-gradient(135deg, #677bae 0%, #8a9dc9 100%)';
     }
   }};
   color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px ${props => {
+    switch(props.type) {
+      case 'create': return 'rgba(39, 174, 96, 0.3)';
+      case 'update': return 'rgba(243, 156, 18, 0.3)';
+      case 'delete': return 'rgba(231, 76, 60, 0.3)';
+      default: return 'rgba(103, 123, 174, 0.3)';
+    }
+  }};
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px ${props => {
+      switch(props.type) {
+        case 'create': return 'rgba(39, 174, 96, 0.4)';
+        case 'update': return 'rgba(243, 156, 18, 0.4)';
+        case 'delete': return 'rgba(231, 76, 60, 0.4)';
+        default: return 'rgba(103, 123, 174, 0.4)';
+      }
+    }};
+  }
 `;
 
 const ChangeTarget = styled.div`
@@ -1299,10 +1375,24 @@ const ChangeTime = styled.div`
 `;
 
 const RefreshButton = styled(Button)`
-  background-color: #3498db;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  box-shadow: 
+    0 2px 8px rgba(52, 152, 219, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   
   &:hover {
-    background-color: #2980b9;
+    background: linear-gradient(135deg, #2980b9 0%, #1f618d 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 16px rgba(52, 152, 219, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
   }
 `;
 
