@@ -1709,6 +1709,7 @@ const ChangeItem = styled.div`
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-width: 0; /* Allow flex items to shrink */
   
   &::before {
     content: '';
@@ -1749,6 +1750,14 @@ const ChangeHeader = styled.div`
   align-items: center;
   margin-bottom: 0.75rem;
   gap: 1rem;
+  flex-wrap: wrap;
+  min-width: 0; /* Allow flex items to shrink */
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 const ChangeAction = styled.span`
@@ -5469,7 +5478,7 @@ For questions, contact staff immediately.`,
                               color: 'white',
                               textTransform: 'capitalize'
                             }}>
-                              {staffUser.permissionLevel}
+                              {staffUser.permission_level}
                             </RuleCode>
                             <RuleCode style={{ 
                               backgroundColor: staffUser.is_active ? '#27ae60' : '#95a5a6',
@@ -6810,6 +6819,108 @@ For questions, contact staff immediately.`,
                 }}
               >
                 {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
+              </Button>
+            </ModalActions>
+          </ModalContainer>
+        </ModalBackdrop>
+      )}
+
+      {/* User Modal */}
+      {showUserModal && (
+        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeUserModal()}>
+          <ModalContainer onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>
+                {userModalType === 'create' ? '👤 Add Staff User' : '✏️ Edit Staff User'}
+              </ModalTitle>
+              <CloseButton onClick={closeUserModal}>&times;</CloseButton>
+            </ModalHeader>
+            
+            {userModalType === 'create' && (
+              <>
+                <FormGroup>
+                  <Label>Steam ID *</Label>
+                  <Input
+                    type="text"
+                    value={userFormData.steamId}
+                    onChange={(e) => setUserFormData({...userFormData, steamId: e.target.value})}
+                    placeholder="Enter 17-digit Steam ID (e.g., 76561198123456789)"
+                    maxLength="17"
+                  />
+                  <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
+                    You can find Steam IDs using tools like steamid.io or Steam profile URLs
+                  </small>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Username *</Label>
+                  <Input
+                    type="text"
+                    value={userFormData.username}
+                    onChange={(e) => setUserFormData({...userFormData, username: e.target.value})}
+                    placeholder="Enter Steam username"
+                  />
+                </FormGroup>
+              </>
+            )}
+
+            <FormGroup>
+              <Label>Permission Level *</Label>
+              <Select
+                value={userFormData.permissionLevel}
+                onChange={(e) => setUserFormData({...userFormData, permissionLevel: e.target.value})}
+              >
+                <option value="editor">Editor</option>
+                <option value="moderator">Moderator</option>
+                {user.permissionLevel === 'owner' && (
+                  <>
+                    <option value="admin">Admin</option>
+                    <option value="owner">Owner</option>
+                  </>
+                )}
+                {user.permissionLevel === 'admin' && (
+                  <option value="admin" disabled>Admin (Owner only)</option>
+                )}
+              </Select>
+              <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
+                Editor: Create content (needs approval) • Moderator: Approve content • Admin: User management • Owner: Full access
+              </small>
+            </FormGroup>
+
+            {userModalType === 'edit' && (
+              <FormGroup>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={userFormData.isActive}
+                    onChange={(e) => setUserFormData({...userFormData, isActive: e.target.checked})}
+                  />
+                  <span style={{ color: '#ecf0f1' }}>Active User</span>
+                </label>
+                <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
+                  Inactive users cannot access the staff dashboard
+                </small>
+              </FormGroup>
+            )}
+            
+            <ModalActions>
+              <Button onClick={closeUserModal} style={{ backgroundColor: '#95a5a6' }}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={saveUser}
+                disabled={
+                  !userFormData.permissionLevel || 
+                  (userModalType === 'create' && (!userFormData.steamId || !userFormData.username))
+                }
+                style={{ 
+                  backgroundColor: (userFormData.permissionLevel && 
+                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? '#27ae60' : '#95a5a6',
+                  opacity: (userFormData.permissionLevel && 
+                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? 1 : 0.6
+                }}
+              >
+                {userModalType === 'create' ? '✅ Add User' : '💾 Update User'}
               </Button>
             </ModalActions>
           </ModalContainer>
