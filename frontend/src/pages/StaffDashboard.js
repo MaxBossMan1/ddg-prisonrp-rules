@@ -5919,219 +5919,305 @@ For questions, contact staff immediately.`,
             <ModalContainer onClick={(e) => e.stopPropagation()}>
               <ModalHeader>
                 <ModalTitle>
-      {/* Review Modal for Approvals */}
-      {showReviewModal && (
-        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeReviewModal()}>
-          <ModalContainer onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                {reviewAction === 'approve' ? '✅ Approve' : '❌ Reject'} {reviewItem?.type === 'rule' ? 'Rule' : 'Announcement'}
-              </ModalTitle>
-              <CloseButton onClick={closeReviewModal}>&times;</CloseButton>
-            </ModalHeader>
-            
-            {reviewItem && (
-              <>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ color: '#ecf0f1', marginBottom: '0.5rem' }}>
-                    {reviewItem.type === 'rule' ? 'Rule:' : 'Announcement:'} {reviewItem.title || reviewItem.full_code || `#${reviewItem.id}`}
-                  </h4>
-                  <div style={{ 
-                    color: '#bdc3c7', 
-                    fontSize: '0.9rem',
-                    backgroundColor: '#2c3e50',
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {reviewItem.content?.substring(0, 300)}
-                    {reviewItem.content?.length > 300 && '...'}
-                  </div>
-                </div>
-                
-                <FormGroup>
-                  <Label>
-                    Review Notes {reviewAction === 'reject' ? '(Required)' : '(Optional)'}
-                  </Label>
-                  <textarea
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    placeholder={
-                      reviewAction === 'approve' 
-                        ? 'Optional notes about this approval...' 
-                        : 'Please explain why this is being rejected...'
-                    }
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      backgroundColor: '#2c3e50',
-                      color: '#ecf0f1',
-                      border: '1px solid #445566',
-                      borderRadius: '4px',
-                      padding: '0.75rem',
-                      fontSize: '1rem',
-                      resize: 'vertical'
-                    }}
-                  />
-                </FormGroup>
-              </>
-            )}
-            
-            <ModalActions>
-              <Button onClick={closeReviewModal} style={{ backgroundColor: '#95a5a6' }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={submitReview}
-                style={{ 
-                  backgroundColor: reviewAction === 'approve' ? '#27ae60' : '#e74c3c' 
-                }}
-              >
-                {reviewAction === 'approve' ? '✅ Approve' : '❌ Reject'}
-              </Button>
-            </ModalActions>
-          </ModalContainer>
-        </ModalBackdrop>
-      )}
-
-      {/* Cross-References Modal */}
-      {showCrossReferencesModal && (
-        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeCrossReferencesModal()}>
-          <ModalContainer onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                🔗 Cross-References for {currentRuleForCrossRefs?.full_code} - {currentRuleForCrossRefs?.title || 'Untitled'}
-              </ModalTitle>
-              <CloseButton onClick={closeCrossReferencesModal}>&times;</CloseButton>
-            </ModalHeader>
-            
-            {/* Existing Cross-References */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Existing Cross-References</h4>
-              {loadingCrossRefs ? (
-                <div style={{ textAlign: 'center', padding: '1rem', color: '#8a9dc9' }}>
-                  🔄 Loading cross-references...
-                </div>
-              ) : crossReferences.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {crossReferences.map((crossRef) => (
-                    <div key={crossRef.id} style={{
+                  {reviewAction === 'approve' ? '✅ Approve' : '❌ Reject'} {reviewItem?.type === 'rule' ? 'Rule' : 'Announcement'}
+                </ModalTitle>
+                <CloseButton onClick={closeReviewModal}>&times;</CloseButton>
+              </ModalHeader>
+              
+              {reviewItem && (
+                <>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ color: '#ecf0f1', marginBottom: '0.5rem' }}>
+                      {reviewItem.type === 'rule' ? 'Rule:' : 'Announcement:'} {reviewItem.title || reviewItem.full_code || `#${reviewItem.id}`}
+                    </h4>
+                    <div style={{ 
+                      color: '#bdc3c7', 
+                      fontSize: '0.9rem',
                       backgroundColor: '#2c3e50',
                       padding: '1rem',
                       borderRadius: '6px',
-                      border: '1px solid #445566',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
+                      maxHeight: '200px',
+                      overflowY: 'auto'
                     }}>
-                      <div>
-                        <div style={{ color: '#ecf0f1', fontWeight: '500', marginBottom: '0.25rem' }}>
-                          {crossRef.target_full_code} - {crossRef.target_title || 'Untitled'}
-                        </div>
-                        <div style={{ color: '#8a9dc9', fontSize: '0.85rem' }}>
-                          Type: {crossRef.reference_type} 
-                          {crossRef.is_bidirectional && ' (Bidirectional)'}
-                        </div>
-                        {crossRef.reference_context && (
-                          <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                            Context: {crossRef.reference_context}
-                          </div>
-                        )}
-                      </div>
-                      <ActionButton 
-                        danger 
-                        onClick={() => removeCrossReference(crossRef.id)}
-                        style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                      >
-                        Remove
-                      </ActionButton>
+                      {reviewItem.content?.substring(0, 300)}
+                      {reviewItem.content?.length > 300 && '...'}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '1rem', color: '#bdc3c7', fontStyle: 'italic' }}>
-                  No cross-references found for this rule.
-                </div>
+                  </div>
+                  
+                  <FormGroup>
+                    <Label>
+                      Review Notes {reviewAction === 'reject' ? '(Required)' : '(Optional)'}
+                    </Label>
+                    <textarea
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      placeholder={
+                        reviewAction === 'approve' 
+                          ? 'Optional notes about this approval...' 
+                          : 'Please explain why this is being rejected...'
+                      }
+                      style={{
+                        width: '100%',
+                        minHeight: '100px',
+                        backgroundColor: '#2c3e50',
+                        color: '#ecf0f1',
+                        border: '1px solid #445566',
+                        borderRadius: '4px',
+                        padding: '0.75rem',
+                        fontSize: '1rem',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </FormGroup>
+                </>
               )}
-            </div>
-
-            {/* Add New Cross-Reference */}
-            <div>
-              <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Add New Cross-Reference</h4>
               
-              <FormGroup>
-                <Label>Search for Rule to Link</Label>
-                <Input
-                  type="text"
-                  value={ruleSearchQuery}
-                  onChange={(e) => {
-                    setRuleSearchQuery(e.target.value);
-                    searchRulesForCrossRef(e.target.value);
+              <ModalActions>
+                <Button onClick={closeReviewModal} style={{ backgroundColor: '#95a5a6' }}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={submitReview}
+                  style={{ 
+                    backgroundColor: reviewAction === 'approve' ? '#27ae60' : '#e74c3c' 
                   }}
-                  placeholder="Search by rule code, title, or content..."
-                />
-                
-                {/* Search Results */}
-                {ruleSearchResults.length > 0 && (
-                  <div style={{
-                    marginTop: '0.5rem',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    border: '1px solid #445566',
-                    borderRadius: '4px',
-                    backgroundColor: '#2c3e50'
-                  }}>
-                    {ruleSearchResults.map((rule) => (
-                      <div
-                        key={rule.id}
-                        onClick={() => {
-                          setNewCrossRefData({...newCrossRefData, target_rule_id: rule.id});
-                          setRuleSearchQuery(`${rule.full_code} - ${rule.title || 'Untitled'}`);
-                          setRuleSearchResults([]);
-                        }}
-                        style={{
-                          padding: '0.75rem',
-                          borderBottom: '1px solid #445566',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#34495e'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                      >
-                        <div style={{ color: '#ecf0f1', fontWeight: '500' }}>
-                          {rule.full_code} - {rule.title || 'Untitled'}
+                >
+                  {reviewAction === 'approve' ? '✅ Approve' : '❌ Reject'}
+                </Button>
+              </ModalActions>
+            </ModalContainer>
+          </ModalBackdrop>
+        )}
+
+        {/* Cross-References Modal */}
+        {showCrossReferencesModal && (
+          <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeCrossReferencesModal()}>
+            <ModalContainer onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
+                  🔗 Cross-References for {currentRuleForCrossRefs?.full_code} - {currentRuleForCrossRefs?.title || 'Untitled'}
+                </ModalTitle>
+                <CloseButton onClick={closeCrossReferencesModal}>&times;</CloseButton>
+              </ModalHeader>
+              
+              {/* Existing Cross-References */}
+              <div style={{ marginBottom: '2rem' }}>
+                <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Existing Cross-References</h4>
+                {loadingCrossRefs ? (
+                  <div style={{ textAlign: 'center', padding: '1rem', color: '#8a9dc9' }}>
+                    🔄 Loading cross-references...
+                  </div>
+                ) : crossReferences.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {crossReferences.map((crossRef) => (
+                      <div key={crossRef.id} style={{
+                        backgroundColor: '#2c3e50',
+                        padding: '1rem',
+                        borderRadius: '6px',
+                        border: '1px solid #445566',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <div style={{ color: '#ecf0f1', fontWeight: '500', marginBottom: '0.25rem' }}>
+                            {crossRef.target_full_code} - {crossRef.target_title || 'Untitled'}
+                          </div>
+                          <div style={{ color: '#8a9dc9', fontSize: '0.85rem' }}>
+                            Type: {crossRef.reference_type} 
+                            {crossRef.is_bidirectional && ' (Bidirectional)'}
+                          </div>
+                          {crossRef.reference_context && (
+                            <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                              Context: {crossRef.reference_context}
+                            </div>
+                          )}
                         </div>
-                        <div style={{ color: '#8a9dc9', fontSize: '0.8rem' }}>
-                          {rule.content?.substring(0, 100)}...
-                        </div>
+                        <ActionButton 
+                          danger 
+                          onClick={() => removeCrossReference(crossRef.id)}
+                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                        >
+                          Remove
+                        </ActionButton>
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '1rem', color: '#bdc3c7', fontStyle: 'italic' }}>
+                    No cross-references found for this rule.
+                  </div>
                 )}
-              </FormGroup>
+              </div>
 
-              <FormGroup>
-                <Label>Reference Type</Label>
-                <Select
-                  value={newCrossRefData.reference_type}
-                  onChange={(e) => setNewCrossRefData({...newCrossRefData, reference_type: e.target.value})}
+              {/* Add New Cross-Reference */}
+              <div>
+                <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Add New Cross-Reference</h4>
+                
+                <FormGroup>
+                  <Label>Search for Rule to Link</Label>
+                  <Input
+                    type="text"
+                    value={ruleSearchQuery}
+                    onChange={(e) => {
+                      setRuleSearchQuery(e.target.value);
+                      searchRulesForCrossRef(e.target.value);
+                    }}
+                    placeholder="Search by rule code, title, or content..."
+                  />
+                  
+                  {/* Search Results */}
+                  {ruleSearchResults.length > 0 && (
+                    <div style={{
+                      marginTop: '0.5rem',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      border: '1px solid #445566',
+                      borderRadius: '4px',
+                      backgroundColor: '#2c3e50'
+                    }}>
+                      {ruleSearchResults.map((rule) => (
+                        <div
+                          key={rule.id}
+                          onClick={() => {
+                            setNewCrossRefData({...newCrossRefData, target_rule_id: rule.id});
+                            setRuleSearchQuery(`${rule.full_code} - ${rule.title || 'Untitled'}`);
+                            setRuleSearchResults([]);
+                          }}
+                          style={{
+                            padding: '0.75rem',
+                            borderBottom: '1px solid #445566',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#34495e'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                        >
+                          <div style={{ color: '#ecf0f1', fontWeight: '500' }}>
+                            {rule.full_code} - {rule.title || 'Untitled'}
+                          </div>
+                          <div style={{ color: '#8a9dc9', fontSize: '0.8rem' }}>
+                            {rule.content?.substring(0, 100)}...
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Reference Type</Label>
+                  <Select
+                    value={newCrossRefData.reference_type}
+                    onChange={(e) => setNewCrossRefData({...newCrossRefData, reference_type: e.target.value})}
+                  >
+                    <option value="related">Related</option>
+                    <option value="clarifies">Clarifies</option>
+                    <option value="supersedes">Supersedes</option>
+                    <option value="superseded_by">Superseded By</option>
+                    <option value="conflicts_with">Conflicts With</option>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Context (Optional)</Label>
+                  <Input
+                    type="text"
+                    value={newCrossRefData.reference_context}
+                    onChange={(e) => setNewCrossRefData({...newCrossRefData, reference_context: e.target.value})}
+                    placeholder="Additional context for this relationship..."
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={newCrossRefData.is_bidirectional}
+                      onChange={(e) => setNewCrossRefData({...newCrossRefData, is_bidirectional: e.target.checked})}
+                    />
+                    <span style={{ color: '#ecf0f1' }}>Bidirectional (show on both rules)</span>
+                  </label>
+                </FormGroup>
+              </div>
+
+              <ModalActions>
+                <Button onClick={closeCrossReferencesModal} style={{ backgroundColor: '#95a5a6' }}>
+                  Close
+                </Button>
+                <Button 
+                  onClick={addCrossReference}
+                  disabled={!newCrossRefData.target_rule_id}
+                  style={{ 
+                    backgroundColor: newCrossRefData.target_rule_id ? '#27ae60' : '#95a5a6',
+                    opacity: newCrossRefData.target_rule_id ? 1 : 0.6
+                  }}
                 >
-                  <option value="related">Related</option>
-                  <option value="clarifies">Clarifies</option>
-                  <option value="supersedes">Supersedes</option>
-                  <option value="superseded_by">Superseded By</option>
-                  <option value="conflicts_with">Conflicts With</option>
-                </Select>
-              </FormGroup>
+                  Add Cross-Reference
+                </Button>
+              </ModalActions>
+            </ModalContainer>
+          </ModalBackdrop>
+        )}
 
+        {/* Category Modal */}
+        {showCategoryModal && (
+          <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeCategoryModal()}>
+            <ModalContainer onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
+                  {categoryModalType === 'create' ? '📁 Create New Category' : '📝 Edit Category'}
+                </ModalTitle>
+                <CloseButton onClick={closeCategoryModal}>&times;</CloseButton>
+              </ModalHeader>
+              
               <FormGroup>
-                <Label>Context (Optional)</Label>
+                <Label>Category Name *</Label>
                 <Input
                   type="text"
-                  value={newCrossRefData.reference_context}
-                  onChange={(e) => setNewCrossRefData({...newCrossRefData, reference_context: e.target.value})}
-                  placeholder="Additional context for this relationship..."
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                  placeholder="Enter category name..."
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Category Code *</Label>
+                <Input
+                  type="text"
+                  value={categoryFormData.code}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, code: e.target.value.toUpperCase()})}
+                  placeholder="Enter category code (e.g., A, B, C)..."
+                  maxLength="3"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Description</Label>
+                <textarea
+                  value={categoryFormData.description}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
+                  placeholder="Enter category description..."
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    backgroundColor: '#2c3e50',
+                    color: '#ecf0f1',
+                    border: '1px solid #445566',
+                    borderRadius: '4px',
+                    padding: '0.75rem',
+                    fontSize: '1rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Category Color</Label>
+                <Input
+                  type="color"
+                  value={categoryFormData.color || '#3498db'}
+                  onChange={(e) => setCategoryFormData({...categoryFormData, color: e.target.value})}
                 />
               </FormGroup>
 
@@ -6139,123 +6225,31 @@ For questions, contact staff immediately.`,
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="checkbox"
-                    checked={newCrossRefData.is_bidirectional}
-                    onChange={(e) => setNewCrossRefData({...newCrossRefData, is_bidirectional: e.target.checked})}
+                    checked={categoryFormData.is_active}
+                    onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
                   />
-                  <span style={{ color: '#ecf0f1' }}>Bidirectional (show on both rules)</span>
+                  <span style={{ color: '#ecf0f1' }}>Active</span>
                 </label>
               </FormGroup>
-            </div>
-
-            <ModalActions>
-              <Button onClick={closeCrossReferencesModal} style={{ backgroundColor: '#95a5a6' }}>
-                Close
-              </Button>
-              <Button 
-                onClick={addCrossReference}
-                disabled={!newCrossRefData.target_rule_id}
-                style={{ 
-                  backgroundColor: newCrossRefData.target_rule_id ? '#27ae60' : '#95a5a6',
-                  opacity: newCrossRefData.target_rule_id ? 1 : 0.6
-                }}
-              >
-                Add Cross-Reference
-              </Button>
-            </ModalActions>
-          </ModalContainer>
-        </ModalBackdrop>
-      )}
-
-      {/* Category Modal */}
-      {showCategoryModal && (
-        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeCategoryModal()}>
-          <ModalContainer onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                {categoryModalType === 'create' ? '📁 Create New Category' : '📝 Edit Category'}
-              </ModalTitle>
-              <CloseButton onClick={closeCategoryModal}>&times;</CloseButton>
-            </ModalHeader>
-            
-            <FormGroup>
-              <Label>Category Name *</Label>
-              <Input
-                type="text"
-                value={categoryFormData.name}
-                onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
-                placeholder="Enter category name..."
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Category Code *</Label>
-              <Input
-                type="text"
-                value={categoryFormData.code}
-                onChange={(e) => setCategoryFormData({...categoryFormData, code: e.target.value.toUpperCase()})}
-                placeholder="Enter category code (e.g., A, B, C)..."
-                maxLength="3"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Description</Label>
-              <textarea
-                value={categoryFormData.description}
-                onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
-                placeholder="Enter category description..."
-                style={{
-                  width: '100%',
-                  minHeight: '100px',
-                  backgroundColor: '#2c3e50',
-                  color: '#ecf0f1',
-                  border: '1px solid #445566',
-                  borderRadius: '4px',
-                  padding: '0.75rem',
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Category Color</Label>
-              <Input
-                type="color"
-                value={categoryFormData.color || '#3498db'}
-                onChange={(e) => setCategoryFormData({...categoryFormData, color: e.target.value})}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={categoryFormData.is_active}
-                  onChange={(e) => setCategoryFormData({...categoryFormData, is_active: e.target.checked})}
-                />
-                <span style={{ color: '#ecf0f1' }}>Active</span>
-              </label>
-            </FormGroup>
-            
-            <ModalActions>
-              <Button onClick={closeCategoryModal} style={{ backgroundColor: '#95a5a6' }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={saveCategory}
-                disabled={!categoryFormData.name || !categoryFormData.code}
-                style={{ 
-                  backgroundColor: categoryFormData.name && categoryFormData.code ? '#27ae60' : '#95a5a6',
-                  opacity: categoryFormData.name && categoryFormData.code ? 1 : 0.6
-                }}
-              >
-                {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
-              </Button>
-            </ModalActions>
-          </ModalContainer>
-        </ModalBackdrop>
-      )}
+              
+              <ModalActions>
+                <Button onClick={closeCategoryModal} style={{ backgroundColor: '#95a5a6' }}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={saveCategory}
+                  disabled={!categoryFormData.name || !categoryFormData.code}
+                  style={{ 
+                    backgroundColor: categoryFormData.name && categoryFormData.code ? '#27ae60' : '#95a5a6',
+                    opacity: categoryFormData.name && categoryFormData.code ? 1 : 0.6
+                  }}
+                >
+                  {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
+                </Button>
+              </ModalActions>
+            </ModalContainer>
+          </ModalBackdrop>
+        )}
       </ContentWrapper>
     </DashboardContainer>
   );
