@@ -280,28 +280,108 @@ const RulesHeader = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: #677bae;
+  background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
+  background-size: 200% 100%;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  padding: 0.875rem 1.75rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(103, 123, 174, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(138, 157, 201, 0.3);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    right: 100%;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+  }
   
   &:hover {
-    background-color: #8a9dc9;
+    background: linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%);
+    background-position: right center;
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 16px rgba(103, 123, 174, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(168, 185, 214, 0.5);
+    
+    &::before {
+      left: -50%;
+      right: -50%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 2px 8px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    
+    &:hover {
+      transform: none;
+      background-position: left center;
+    }
   }
 `;
 
 const Select = styled.select`
-  background-color: #2c3e50;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
   color: #ecf0f1;
-  border: 1px solid #445566;
-  padding: 0.5rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border: 2px solid rgba(103, 123, 174, 0.3);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  &:hover {
+    border-color: rgba(138, 157, 201, 0.5);
+    background: linear-gradient(135deg, #34495e 0%, #3d566e 100%);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #677bae;
+    background: linear-gradient(135deg, #34495e 0%, #677bae 100%);
+    box-shadow: 
+      0 0 0 3px rgba(103, 123, 174, 0.2),
+      0 4px 12px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  
+  option {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 0.5rem;
+  }
 `;
 
 const RulesList = styled.div`
@@ -310,14 +390,65 @@ const RulesList = styled.div`
 `;
 
 const RuleCard = styled.div`
-  background-color: ${props => props.highlighted ? 'rgba(243, 156, 18, 0.1)' : '#2c3e50'};
-  border: 1px solid ${props => props.highlighted ? '#f39c12' : '#445566'};
-  border-radius: 8px;
-  padding: 1.5rem;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  background: ${props => props.highlighted ? 
+    'linear-gradient(135deg, rgba(243, 156, 18, 0.15) 0%, rgba(243, 156, 18, 0.05) 100%)' : 
+    'linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%)'};
+  background-size: 200% 100%;
+  border: 2px solid ${props => props.highlighted ? '#f39c12' : 'rgba(103, 123, 174, 0.3)'};
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(103, 123, 174, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(103, 123, 174, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    opacity: ${props => props.highlighted ? 0 : 1};
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, rgba(103, 123, 174, 0.2), transparent 50%, rgba(138, 157, 201, 0.1));
+    border-radius: 12px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover {
-    border-color: ${props => props.highlighted ? '#f39c12' : '#677bae'};
+    border-color: ${props => props.highlighted ? '#f39c12' : 'rgba(138, 157, 201, 0.6)'};
+    background-position: right center;
+    transform: translateY(-4px);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(103, 123, 174, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
   }
 `;
 
