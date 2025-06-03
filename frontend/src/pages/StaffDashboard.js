@@ -259,6 +259,8 @@ const TabContent = styled.div`
   padding: 2rem;
   color: #ecf0f1;
   min-height: 500px;
+  position: relative;
+  z-index: 1;
 `;
 
 const RulesHeader = styled.div`
@@ -321,14 +323,40 @@ const RulesList = styled.div`
 `;
 
 const RuleCard = styled.div`
-  background-color: ${props => props.highlighted ? 'rgba(243, 156, 18, 0.1)' : '#2c3e50'};
-  border: 1px solid ${props => props.highlighted ? '#f39c12' : '#445566'};
-  border-radius: 8px;
+  background: ${props => props.highlighted ? 
+    'linear-gradient(135deg, rgba(243, 156, 18, 0.2) 0%, rgba(243, 156, 18, 0.1) 100%)' : 
+    'linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%)'};
+  border: 1px solid ${props => props.highlighted ? 
+    'rgba(243, 156, 18, 0.4)' : 
+    'rgba(103, 123, 174, 0.2)'};
+  border-radius: 12px;
   padding: 1.5rem;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => props.highlighted ? 
+      'radial-gradient(circle at 10% 20%, rgba(243, 156, 18, 0.1) 0%, transparent 50%)' :
+      'radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%)'};
+    pointer-events: none;
+  }
 
   &:hover {
     border-color: ${props => props.highlighted ? '#f39c12' : '#677bae'};
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 `;
 
