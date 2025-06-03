@@ -309,12 +309,28 @@ const Button = styled.button`
 `;
 
 const Select = styled.select`
-  background-color: #2c3e50;
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.9) 100%);
   color: #ecf0f1;
-  border: 1px solid #445566;
-  padding: 0.5rem;
-  border-radius: 4px;
+  border: 1px solid rgba(103, 123, 174, 0.3);
+  padding: 0.75rem;
+  border-radius: 8px;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+  outline: none;
+  
+  &:focus {
+    border-color: #677bae;
+    box-shadow: 0 0 0 2px rgba(103, 123, 174, 0.2);
+  }
+  
+  &:hover {
+    border-color: rgba(103, 123, 174, 0.5);
+  }
+  
+  option {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+  }
 `;
 
 const RulesList = styled.div`
