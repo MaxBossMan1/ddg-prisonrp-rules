@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import MDEditor from '@uiw/react-md-editor';
 import { commands } from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -30,12 +30,102 @@ console.log('🔧 StaffDashboard API Configuration:', {
   BASE_URL 
 });
 
+// Background animation keyframes (matching main page)
+const backgroundPattern = keyframes`
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+`;
+
+const floatingParticles = keyframes`
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.8;
+  }
+`;
+
+const headerGlow = keyframes`
+  0%, 100% {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(103, 123, 174, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 0 40px rgba(103, 123, 174, 0.2);
+  }
+`;
+
 const DashboardContainer = styled.div`
+  min-height: 100vh;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(103, 123, 174, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(138, 157, 201, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(52, 73, 94, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #1a1d23 0%, #2c3e50 50%, #1a1d23 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: ${backgroundPattern} 20s ease-in-out infinite;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  color: #e9ecef;
+  overflow-x: hidden;
+  position: relative;
+  
+  /* Subtle pattern overlay */
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+  }
+  
+  /* Floating particles */
+  &::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.1) 1px, transparent 1px),
+      radial-gradient(circle at 80% 80%, rgba(138, 157, 201, 0.08) 1px, transparent 1px),
+      radial-gradient(circle at 40% 40%, rgba(52, 73, 94, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px, 80px 80px, 120px 120px;
+    animation: ${floatingParticles} 15s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+`;
+
+const ContentWrapper = styled.div`
+  position: relative;
+  z-index: 2;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #1a1d23;
-  min-height: 100vh;
+  padding: 3rem 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
+  }
 `;
 
 const Header = styled.div`
@@ -3443,2134 +3533,2141 @@ For questions, contact staff immediately.`,
 
   return (
     <DashboardContainer>
-      <Header>
-        <HeaderTitle>Staff Management Dashboard</HeaderTitle>
-        <UserInfo>
-          <UserName>{user.steam_username || user.username}</UserName>
-          <UserRole>{user.permissionLevel}</UserRole>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button 
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
-              style={{ 
-                backgroundColor: showDebugPanel ? '#e74c3c' : '#95a5a6',
-                color: 'white',
-                border: 'none',
-                padding: '0.4rem 0.8rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              {showDebugPanel ? '🔴 Debug' : '🔧 Debug'}
-            </button>
-            <button 
-              onClick={logout}
-              style={{ 
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </UserInfo>
-      </Header>
+      <ContentWrapper>
+        <Header>
+          <HeaderTitle>Staff Management Dashboard</HeaderTitle>
+          <UserInfo>
+            <UserName>{user.steam_username || user.username}</UserName>
+            <UserRole>{user.permissionLevel}</UserRole>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button 
+                onClick={() => setShowDebugPanel(!showDebugPanel)}
+                style={{ 
+                  backgroundColor: showDebugPanel ? '#e74c3c' : '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem'
+                }}
+              >
+                {showDebugPanel ? '🔴 Debug' : '🔧 Debug'}
+              </button>
+              <button 
+                onClick={logout}
+                style={{ 
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </UserInfo>
+        </Header>
 
-      {/* Debug Panel */}
-      {showDebugPanel && (
-        <DebugPanel>
-          <DebugHeader>
-            <DebugTitle>
-              🔧 Debug Panel
-            </DebugTitle>
-            <DebugToggle onClick={() => setShowDebugPanel(false)}>
-              ×
-            </DebugToggle>
-          </DebugHeader>
-          <DebugContent show={showDebugPanel}>
-            <DebugCurrentLevel>
-              Current: {user.permissionLevel.toUpperCase()}
-            </DebugCurrentLevel>
-            <DebugLevelGrid>
-              <DebugLevelButton 
-                active={user.permissionLevel === 'editor'}
-                onClick={() => changeDebugPermissionLevel('editor')}
-                disabled={user.permissionLevel === 'editor'}
-              >
-                Editor
-              </DebugLevelButton>
-              <DebugLevelButton 
-                active={user.permissionLevel === 'moderator'}
-                onClick={() => changeDebugPermissionLevel('moderator')}
-                disabled={user.permissionLevel === 'moderator'}
-              >
-                Moderator
-              </DebugLevelButton>
-              <DebugLevelButton 
-                active={user.permissionLevel === 'admin'}
-                onClick={() => changeDebugPermissionLevel('admin')}
-                disabled={user.permissionLevel === 'admin'}
-              >
-                Admin
-              </DebugLevelButton>
-              <DebugLevelButton 
-                active={user.permissionLevel === 'owner'}
-                onClick={() => changeDebugPermissionLevel('owner')}
-                disabled={user.permissionLevel === 'owner'}
-              >
-                Owner
-              </DebugLevelButton>
-            </DebugLevelGrid>
-            <DebugFeatureList>
-              <h5>Available Features:</h5>
-              <ul>
-                {user.permissionLevel === 'editor' && (
-                  <>
-                    <li>✅ View Rules (approved + own drafts)</li>
-                    <li>✅ Create Rules (pending approval)</li>
-                    <li>✅ View Announcements (approved only)</li>
-                    <li>✅ Create Announcements (pending approval)</li>
-                    <li>❌ Approval Dashboard</li>
-                    <li>❌ User Management</li>
-                  </>
-                )}
-                {user.permissionLevel === 'moderator' && (
-                  <>
-                    <li>✅ View All Rules</li>
-                    <li>✅ Create Rules (auto-approved)</li>
-                    <li>✅ View All Announcements</li>
-                    <li>✅ Create Announcements (auto-approved)</li>
-                    <li>✅ Approval Dashboard</li>
-                    <li>❌ User Management</li>
-                  </>
-                )}
-                {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                  <>
-                    <li>✅ Full Rule Management</li>
-                    <li>✅ Full Announcement Management</li>
-                    <li>✅ Approval Dashboard</li>
-                    <li>✅ User Management</li>
-                    <li>✅ Category Management</li>
-                  </>
-                )}
-              </ul>
-            </DebugFeatureList>
-          </DebugContent>
-        </DebugPanel>
-      )}
+        {/* Debug Panel */}
+        {showDebugPanel && (
+          <DebugPanel>
+            <DebugHeader>
+              <DebugTitle>
+                🔧 Debug Panel
+              </DebugTitle>
+              <DebugToggle onClick={() => setShowDebugPanel(false)}>
+                ×
+              </DebugToggle>
+            </DebugHeader>
+            <DebugContent show={showDebugPanel}>
+              <DebugCurrentLevel>
+                Current: {user.permissionLevel.toUpperCase()}
+              </DebugCurrentLevel>
+              <DebugLevelGrid>
+                <DebugLevelButton 
+                  active={user.permissionLevel === 'editor'}
+                  onClick={() => changeDebugPermissionLevel('editor')}
+                  disabled={user.permissionLevel === 'editor'}
+                >
+                  Editor
+                </DebugLevelButton>
+                <DebugLevelButton 
+                  active={user.permissionLevel === 'moderator'}
+                  onClick={() => changeDebugPermissionLevel('moderator')}
+                  disabled={user.permissionLevel === 'moderator'}
+                >
+                  Moderator
+                </DebugLevelButton>
+                <DebugLevelButton 
+                  active={user.permissionLevel === 'admin'}
+                  onClick={() => changeDebugPermissionLevel('admin')}
+                  disabled={user.permissionLevel === 'admin'}
+                >
+                  Admin
+                </DebugLevelButton>
+                <DebugLevelButton 
+                  active={user.permissionLevel === 'owner'}
+                  onClick={() => changeDebugPermissionLevel('owner')}
+                  disabled={user.permissionLevel === 'owner'}
+                >
+                  Owner
+                </DebugLevelButton>
+              </DebugLevelGrid>
+              <DebugFeatureList>
+                <h5>Available Features:</h5>
+                <ul>
+                  {user.permissionLevel === 'editor' && (
+                    <>
+                      <li>✅ View Rules (approved + own drafts)</li>
+                      <li>✅ Create Rules (pending approval)</li>
+                      <li>✅ View Announcements (approved only)</li>
+                      <li>✅ Create Announcements (pending approval)</li>
+                      <li>❌ Approval Dashboard</li>
+                      <li>❌ User Management</li>
+                    </>
+                  )}
+                  {user.permissionLevel === 'moderator' && (
+                    <>
+                      <li>✅ View All Rules</li>
+                      <li>✅ Create Rules (auto-approved)</li>
+                      <li>✅ View All Announcements</li>
+                      <li>✅ Create Announcements (auto-approved)</li>
+                      <li>✅ Approval Dashboard</li>
+                      <li>❌ User Management</li>
+                    </>
+                  )}
+                  {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                    <>
+                      <li>✅ Full Rule Management</li>
+                      <li>✅ Full Announcement Management</li>
+                      <li>✅ Approval Dashboard</li>
+                      <li>✅ User Management</li>
+                      <li>✅ Category Management</li>
+                    </>
+                  )}
+                </ul>
+              </DebugFeatureList>
+            </DebugContent>
+          </DebugPanel>
+        )}
 
-      <TabContainer>
-        <TabNavigation>
-          <TabButton active={activeTab === 'log'} onClick={() => setActiveTab('log')}>
-            Activity Log
-          </TabButton>
-          <TabButton active={activeTab === 'rules'} onClick={() => setActiveTab('rules')}>
-            Rules Management
-          </TabButton>
-          <TabButton active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')}>
-          Announcements
-          </TabButton>
-          {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-            <TabButton active={activeTab === 'categories'} onClick={() => setActiveTab('categories')}>
-              Categories
+        <TabContainer>
+          <TabNavigation>
+            <TabButton active={activeTab === 'log'} onClick={() => setActiveTab('log')}>
+              Activity Log
             </TabButton>
-          )}
-          {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-            <TabButton active={activeTab === 'approvals'} onClick={() => setActiveTab('approvals')}>
-              Approvals
+            <TabButton active={activeTab === 'rules'} onClick={() => setActiveTab('rules')}>
+              Rules Management
             </TabButton>
-          )}
-          {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-            <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')}>
-              User Management
+            <TabButton active={activeTab === 'announcements'} onClick={() => setActiveTab('announcements')}>
+            Announcements
             </TabButton>
-          )}
-          {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-            <TabButton active={activeTab === 'discord'} onClick={() => setActiveTab('discord')}>
-              Discord Integration
-            </TabButton>
-          )}
-        </TabNavigation>
-        
-        <TabContent>
-          {activeTab === 'log' && (
-            <div>
-              <RulesHeader>
-                <h2>Activity Log</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <RefreshButton onClick={loadActivityLog} disabled={loadingDashboard}>
-                    {loadingDashboard ? '🔄 Refreshing...' : '🔄 Refresh Log'}
-                  </RefreshButton>
-                </div>
-              </RulesHeader>
+            {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+              <TabButton active={activeTab === 'categories'} onClick={() => setActiveTab('categories')}>
+                Categories
+              </TabButton>
+            )}
+            {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+              <TabButton active={activeTab === 'approvals'} onClick={() => setActiveTab('approvals')}>
+                Approvals
+              </TabButton>
+            )}
+            {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+              <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')}>
+                User Management
+              </TabButton>
+            )}
+            {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+              <TabButton active={activeTab === 'discord'} onClick={() => setActiveTab('discord')}>
+                Discord Integration
+              </TabButton>
+            )}
+          </TabNavigation>
+          
+          <TabContent>
+            {activeTab === 'log' && (
+              <div>
+                <RulesHeader>
+                  <h2>Activity Log</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <RefreshButton onClick={loadActivityLog} disabled={loadingDashboard}>
+                      {loadingDashboard ? '🔄 Refreshing...' : '🔄 Refresh Log'}
+                    </RefreshButton>
+                  </div>
+                </RulesHeader>
 
-              {loadingDashboard ? (
-                <LoadingSpinner>
-                  <div>🔄 Loading activity log...</div>
-                </LoadingSpinner>
-              ) : (
-                <DashboardCard style={{ maxWidth: 'none' }}>
-                  <h3 style={{ margin: '0 0 1.5rem 0', color: '#ecf0f1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    📈 Recent Changes
-                  </h3>
-                  
-                  {(() => {
-                    // Combine and sort all changes/activities by date
-                    const allChanges = [];
+                {loadingDashboard ? (
+                  <LoadingSpinner>
+                    <div>🔄 Loading activity log...</div>
+                  </LoadingSpinner>
+                ) : (
+                  <DashboardCard style={{ maxWidth: 'none' }}>
+                    <h3 style={{ margin: '0 0 1.5rem 0', color: '#ecf0f1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      📈 Recent Changes
+                    </h3>
                     
-                    // Add rule changes (from rule_changes table) - these have more detail
-                    recentChanges.forEach(change => {
-                      allChanges.push({
-                        type: 'rule_change',
-                        date: new Date(change.created_at),
-                        data: change
+                    {(() => {
+                      // Combine and sort all changes/activities by date
+                      const allChanges = [];
+                      
+                      // Add rule changes (from rule_changes table) - these have more detail
+                      recentChanges.forEach(change => {
+                        allChanges.push({
+                          type: 'rule_change',
+                          date: new Date(change.created_at),
+                          data: change
+                        });
                       });
-                    });
-                    
-                    // Add meaningful activities (from activity logs) - these catch other actions
-                    const meaningfulActivity = recentActivity.filter(activity => 
-                      ['create', 'update', 'delete', 'upload', 'publish', 'schedule'].includes(activity.action_type)
-                    );
-                    
-                    meaningfulActivity.forEach(activity => {
-                      // Only add if we don't already have a rule_change for this action
-                      const existingRuleChange = recentChanges.find(change => 
-                        change.rule_id === activity.resource_id && 
-                        Math.abs(new Date(change.created_at) - new Date(activity.created_at)) < 10000 // within 10 seconds
+                      
+                      // Add meaningful activities (from activity logs) - these catch other actions
+                      const meaningfulActivity = recentActivity.filter(activity => 
+                        ['create', 'update', 'delete', 'upload', 'publish', 'schedule'].includes(activity.action_type)
                       );
                       
-                      if (!existingRuleChange) {
-                        allChanges.push({
-                          type: 'activity',
-                          date: new Date(activity.created_at),
-                          data: activity
-                        });
-                      }
-                    });
-                    
-                    // Sort by date (newest first)
-                    allChanges.sort((a, b) => b.date - a.date);
-                    
-                    // Take the most recent 20 items
-                    const combinedChanges = allChanges.slice(0, 20);
-                    
-                    if (combinedChanges.length > 0) {
-                      return (
-                        <ChangesList>
-                          {combinedChanges.map((item, index) => {
-                            if (item.type === 'rule_change') {
-                              const change = item.data;
-                              return (
-                                <ChangeItem key={`change-${index}`} type={change.change_type || 'update'}>
-                                  <ChangeHeader>
-                                    <ChangeAction type={change.change_type || 'update'}>
-                                      {(change.change_type || 'RULE UPDATE').toUpperCase()}
-                                    </ChangeAction>
-                                    <ChangeTime>
-                                      {new Date(change.created_at).toLocaleDateString()}
-                                    </ChangeTime>
-                                  </ChangeHeader>
-                                  <ChangeTarget>
-                                    {change.full_code ? (
-                                      <RuleLink onClick={() => navigateToRule(change.rule_id, change.full_code)}>
-                                        {change.full_code}
-                                      </RuleLink>
-                                    ) : (
-                                      <RuleLink onClick={() => navigateToRule(change.rule_id, `Rule #${change.rule_id}`)}>
-                                        Rule #{change.rule_id}
-                                      </RuleLink>
-                                    )}
-                                    {change.rule_title && (
-                                      <span style={{ color: '#8a9dc9', fontWeight: 'normal', marginLeft: '0.5rem' }}>
-                                        - {change.rule_title}
-                                      </span>
-                                    )}
-                                  </ChangeTarget>
-                                  <div style={{ color: '#bdc3c7', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                                    Category: {change.category_name || 'Unknown'} • By: {change.steam_username || 'Unknown Staff'}
-                                  </div>
-                                  
-                                  {/* Show detailed changes */}
-                                  {change.change_type === 'created' && (
-                                    <div style={{ 
-                                      color: '#27ae60', 
-                                      fontSize: '0.85rem', 
-                                      marginTop: '0.5rem',
-                                      backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                                      padding: '0.5rem',
-                                      borderRadius: '4px',
-                                      borderLeft: '3px solid #27ae60'
-                                    }}>
-                                      ✅ <strong>New rule created</strong>
-                                      {change.new_content && (
-                                        <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
-                                          "{change.new_content.substring(0, 100).replace(/<[^>]*>/g, '')}..."
-                                        </div>
+                      meaningfulActivity.forEach(activity => {
+                        // Only add if we don't already have a rule_change for this action
+                        const existingRuleChange = recentChanges.find(change => 
+                          change.rule_id === activity.resource_id && 
+                          Math.abs(new Date(change.created_at) - new Date(activity.created_at)) < 10000 // within 10 seconds
+                        );
+                        
+                        if (!existingRuleChange) {
+                          allChanges.push({
+                            type: 'activity',
+                            date: new Date(activity.created_at),
+                            data: activity
+                          });
+                        }
+                      });
+                      
+                      // Sort by date (newest first)
+                      allChanges.sort((a, b) => b.date - a.date);
+                      
+                      // Take the most recent 20 items
+                      const combinedChanges = allChanges.slice(0, 20);
+                      
+                      if (combinedChanges.length > 0) {
+                        return (
+                          <ChangesList>
+                            {combinedChanges.map((item, index) => {
+                              if (item.type === 'rule_change') {
+                                const change = item.data;
+                                return (
+                                  <ChangeItem key={`change-${index}`} type={change.change_type || 'update'}>
+                                    <ChangeHeader>
+                                      <ChangeAction type={change.change_type || 'update'}>
+                                        {(change.change_type || 'RULE UPDATE').toUpperCase()}
+                                      </ChangeAction>
+                                      <ChangeTime>
+                                        {new Date(change.created_at).toLocaleDateString()}
+                                      </ChangeTime>
+                                    </ChangeHeader>
+                                    <ChangeTarget>
+                                      {change.full_code ? (
+                                        <RuleLink onClick={() => navigateToRule(change.rule_id, change.full_code)}>
+                                          {change.full_code}
+                                        </RuleLink>
+                                      ) : (
+                                        <RuleLink onClick={() => navigateToRule(change.rule_id, `Rule #${change.rule_id}`)}>
+                                          Rule #{change.rule_id}
+                                        </RuleLink>
                                       )}
-                                    </div>
-                                  )}
-                                  
-                                  {change.change_type === 'updated' && (
-                                    <div style={{ 
-                                      color: '#f39c12', 
-                                      fontSize: '0.85rem', 
-                                      marginTop: '0.5rem',
-                                      backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                                      padding: '0.5rem',
-                                      borderRadius: '4px',
-                                      borderLeft: '3px solid #f39c12'
-                                    }}>
-                                      ✏️ <strong>Rule content updated</strong>
-                                      {change.old_content && change.new_content && (
-                                        <div style={{ marginTop: '0.5rem' }}>
-                                          <div style={{ marginBottom: '0.25rem' }}>
-                                            <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Before:</span>
-                                            <div style={{ fontStyle: 'italic', color: '#bdc3c7' }}>
-                                              "{change.old_content.substring(0, 80).replace(/<[^>]*>/g, '')}..."
-                                            </div>
-                                          </div>
-                                          <div>
-                                            <span style={{ color: '#27ae60', fontWeight: 'bold' }}>After:</span>
-                                            <div style={{ fontStyle: 'italic', color: '#bdc3c7' }}>
-                                              "{change.new_content.substring(0, 80).replace(/<[^>]*>/g, '')}..."
-                                            </div>
-                                          </div>
-                                        </div>
+                                      {change.rule_title && (
+                                        <span style={{ color: '#8a9dc9', fontWeight: 'normal', marginLeft: '0.5rem' }}>
+                                          - {change.rule_title}
+                                        </span>
                                       )}
-                                      {change.change_description && change.change_description !== 'Rule updated' && (
-                                        <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
-                                          Note: {change.change_description}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                  
-                                  {change.change_type === 'deleted' && (
-                                    <div style={{ 
-                                      color: '#e74c3c', 
-                                      fontSize: '0.85rem', 
-                                      marginTop: '0.5rem',
-                                      backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                                      padding: '0.5rem',
-                                      borderRadius: '4px',
-                                      borderLeft: '3px solid #e74c3c'
-                                    }}>
-                                      🗑️ <strong>Rule deleted</strong>
-                                      {change.old_content && (
-                                        <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
-                                          Previous content: "{change.old_content.substring(0, 100).replace(/<[^>]*>/g, '')}..."
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                  
-                                  {change.description && change.description !== 'Rule created' && change.description !== 'Rule updated' && change.description !== 'Rule deleted' && (
+                                    </ChangeTarget>
                                     <div style={{ color: '#bdc3c7', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                                      {change.description}
+                                      Category: {change.category_name || 'Unknown'} • By: {change.steam_username || 'Unknown Staff'}
                                     </div>
-                                  )}
-                                </ChangeItem>
-                              );
-                            } else {
-                              const activity = item.data;
-                              return (
-                                <ChangeItem key={`activity-${index}`} type={activity.action_type}>
-                                  <ChangeHeader>
-                                    <ChangeAction type={activity.action_type}>
-                                      {activity.action_type.toUpperCase()}
-                                    </ChangeAction>
-                                    <ChangeTime>
-                                      {new Date(activity.created_at).toLocaleDateString()}
-                                    </ChangeTime>
-                                  </ChangeHeader>
-                                  <ChangeTarget>
-                                    {activity.steam_username || 'Staff'} {activity.action_type}d {activity.resource_type}
-                                    {activity.resource_name && `: ${activity.resource_name}`}
-                                  </ChangeTarget>
-                                  <div style={{ color: '#bdc3c7', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                                    {activity.action_type === 'create' && 'New content created'}
-                                    {activity.action_type === 'update' && 'Content updated'}
-                                    {activity.action_type === 'delete' && 'Content deleted'}
-                                    {activity.action_type === 'upload' && 'Media uploaded'}
-                                    {activity.action_type === 'publish' && 'Published to homepage'}
-                                    {activity.action_type === 'schedule' && 'Scheduled for later'}
-                                  </div>
-                                </ChangeItem>
-                              );
-                            }
-                          })}
-                        </ChangesList>
-                      );
-                    } else {
-                      return (
-                        <EmptyState>
-                          No recent changes to display
-                          <br />
-                          <small style={{ color: '#8a9dc9', marginTop: '0.5rem', display: 'block' }}>
-                            Create, edit, or delete content to see changes here.
-                          </small>
-                        </EmptyState>
-                      );
-                    }
-                  })()}
-                </DashboardCard>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'rules' && (
-            <div>
-              <RulesHeader>
-                <h2>Rules Management</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <Select 
-                    value={selectedCategory} 
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.letter_code} - {cat.name}
-                      </option>
-                    ))}
-                  </Select>
-                  <Button onClick={openCreateModal}>Add New Rule</Button>
-                </div>
-              </RulesHeader>
-              
-              {/* Search Bar */}
-              <SearchContainer>
-                <SearchIcon>🔍</SearchIcon>
-                <SearchInput
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search rules by title, content, or rule code..."
-                  style={{ 
-                    width: '100%',
-                    maxWidth: '500px',
-                  }}
-                />
-              </SearchContainer>
-              
-              {/* Search Results Count */}
-              {searchQuery.trim() && (
-                <SearchResultsCount>
-                  Found {filteredRules.filter(rule => !selectedCategory || rule.category_id == selectedCategory).length} rule(s) matching "{searchQuery}"
-                </SearchResultsCount>
-              )}
-              
-              <RulesList>
-                {filteredRules
-                  .filter(rule => !selectedCategory || rule.category_id == selectedCategory)
-                  .map(rule => (
-                    <div key={rule.id}>
-                      <RuleCard 
-                        data-rule-id={rule.id}
-                        highlighted={highlightedRuleId === rule.id}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                            <RuleCode>{rule.full_code}</RuleCode>
-                            
-                            {/* Status Indicator */}
-                            {rule.status && (
-                              <RuleCode style={{ 
-                                backgroundColor: rule.status === 'approved' ? '#27ae60' : 
-                                                rule.status === 'pending_approval' ? '#f39c12' : 
-                                                rule.status === 'draft' ? '#3498db' : 
-                                                rule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                color: 'white',
-                                fontSize: '0.7rem'
-                              }}>
-                                {rule.status === 'approved' && '✅ Live'}
-                                {rule.status === 'pending_approval' && '⏳ Pending'}
-                                {rule.status === 'draft' && '📝 Draft'}
-                                {rule.status === 'rejected' && '❌ Rejected'}
-                              </RuleCode>
-                            )}
-                            
-                            {/* Review Notes Indicator */}
-                            {rule.review_notes && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#8a9dc9',
-                                color: 'white',
-                                fontSize: '0.7rem',
-                                cursor: 'help'
-                              }}
-                              title={`Review Notes: ${rule.review_notes}`}>
-                                💬 Notes
-                              </RuleCode>
-                            )}
-                          </div>
-                          
-                          {rule.title && (
-                            <RuleTitle>{rule.title}</RuleTitle>
-                          )}
-                          
-                          {/* Review Notes Display */}
-                          {rule.review_notes && (
-                            <div style={{ 
-                              backgroundColor: 'rgba(138, 157, 201, 0.1)',
-                              padding: '0.75rem',
-                              borderRadius: '6px',
-                              marginBottom: '1rem',
-                              borderLeft: '3px solid #8a9dc9'
-                            }}>
-                              <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
-                                💬 Review Notes:
-                              </div>
-                              <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                                {rule.review_notes}
-                              </div>
-                              {rule.reviewed_at && (
-                                <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                                  Reviewed: {new Date(rule.reviewed_at).toLocaleDateString()}
-                                  {rule.reviewed_by_username && ` by ${rule.reviewed_by_username}`}
-                                </div>
+                                    
+                                    {/* Show detailed changes */}
+                                    {change.change_type === 'created' && (
+                                      <div style={{ 
+                                        color: '#27ae60', 
+                                        fontSize: '0.85rem', 
+                                        marginTop: '0.5rem',
+                                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                                        padding: '0.5rem',
+                                        borderRadius: '4px',
+                                        borderLeft: '3px solid #27ae60'
+                                      }}>
+                                        ✅ <strong>New rule created</strong>
+                                        {change.new_content && (
+                                          <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
+                                            "{change.new_content.substring(0, 100).replace(/<[^>]*>/g, '')}..."
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {change.change_type === 'updated' && (
+                                      <div style={{ 
+                                        color: '#f39c12', 
+                                        fontSize: '0.85rem', 
+                                        marginTop: '0.5rem',
+                                        backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                                        padding: '0.5rem',
+                                        borderRadius: '4px',
+                                        borderLeft: '3px solid #f39c12'
+                                      }}>
+                                        ✏️ <strong>Rule content updated</strong>
+                                        {change.old_content && change.new_content && (
+                                          <div style={{ marginTop: '0.5rem' }}>
+                                            <div style={{ marginBottom: '0.25rem' }}>
+                                              <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>Before:</span>
+                                              <div style={{ fontStyle: 'italic', color: '#bdc3c7' }}>
+                                                "{change.old_content.substring(0, 80).replace(/<[^>]*>/g, '')}..."
+                                              </div>
+                                            </div>
+                                            <div>
+                                              <span style={{ color: '#27ae60', fontWeight: 'bold' }}>After:</span>
+                                              <div style={{ fontStyle: 'italic', color: '#bdc3c7' }}>
+                                                "{change.new_content.substring(0, 80).replace(/<[^>]*>/g, '')}..."
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                        {change.change_description && change.change_description !== 'Rule updated' && (
+                                          <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
+                                            Note: {change.change_description}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {change.change_type === 'deleted' && (
+                                      <div style={{ 
+                                        color: '#e74c3c', 
+                                        fontSize: '0.85rem', 
+                                        marginTop: '0.5rem',
+                                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                        padding: '0.5rem',
+                                        borderRadius: '4px',
+                                        borderLeft: '3px solid #e74c3c'
+                                      }}>
+                                        🗑️ <strong>Rule deleted</strong>
+                                        {change.old_content && (
+                                          <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
+                                            Previous content: "{change.old_content.substring(0, 100).replace(/<[^>]*>/g, '')}..."
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {change.description && change.description !== 'Rule created' && change.description !== 'Rule updated' && change.description !== 'Rule deleted' && (
+                                      <div style={{ color: '#bdc3c7', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                        {change.description}
+                                      </div>
+                                    )}
+                                  </ChangeItem>
+                                );
+                              } else {
+                                const activity = item.data;
+                                return (
+                                  <ChangeItem key={`activity-${index}`} type={activity.action_type}>
+                                    <ChangeHeader>
+                                      <ChangeAction type={activity.action_type}>
+                                        {activity.action_type.toUpperCase()}
+                                      </ChangeAction>
+                                      <ChangeTime>
+                                        {new Date(activity.created_at).toLocaleDateString()}
+                                      </ChangeTime>
+                                    </ChangeHeader>
+                                    <ChangeTarget>
+                                      {activity.steam_username || 'Staff'} {activity.action_type}d {activity.resource_type}
+                                      {activity.resource_name && `: ${activity.resource_name}`}
+                                    </ChangeTarget>
+                                    <div style={{ color: '#bdc3c7', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                      {activity.action_type === 'create' && 'New content created'}
+                                      {activity.action_type === 'update' && 'Content updated'}
+                                      {activity.action_type === 'delete' && 'Content deleted'}
+                                      {activity.action_type === 'upload' && 'Media uploaded'}
+                                      {activity.action_type === 'publish' && 'Published to homepage'}
+                                      {activity.action_type === 'schedule' && 'Scheduled for later'}
+                                    </div>
+                                  </ChangeItem>
+                                );
+                              }
+                            })}
+                          </ChangesList>
+                        );
+                      } else {
+                        return (
+                          <EmptyState>
+                            No recent changes to display
+                            <br />
+                            <small style={{ color: '#8a9dc9', marginTop: '0.5rem', display: 'block' }}>
+                              Create, edit, or delete content to see changes here.
+                            </small>
+                          </EmptyState>
+                        );
+                      }
+                    })()}
+                  </DashboardCard>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'rules' && (
+              <div>
+                <RulesHeader>
+                  <h2>Rules Management</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <Select 
+                      value={selectedCategory} 
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.letter_code} - {cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button onClick={openCreateModal}>Add New Rule</Button>
+                  </div>
+                </RulesHeader>
+                
+                {/* Search Bar */}
+                <SearchContainer>
+                  <SearchIcon>🔍</SearchIcon>
+                  <SearchInput
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search rules by title, content, or rule code..."
+                    style={{ 
+                      width: '100%',
+                      maxWidth: '500px',
+                    }}
+                  />
+                </SearchContainer>
+                
+                {/* Search Results Count */}
+                {searchQuery.trim() && (
+                  <SearchResultsCount>
+                    Found {filteredRules.filter(rule => !selectedCategory || rule.category_id == selectedCategory).length} rule(s) matching "{searchQuery}"
+                  </SearchResultsCount>
+                )}
+                
+                <RulesList>
+                  {filteredRules
+                    .filter(rule => !selectedCategory || rule.category_id == selectedCategory)
+                    .map(rule => (
+                      <div key={rule.id}>
+                        <RuleCard 
+                          data-rule-id={rule.id}
+                          highlighted={highlightedRuleId === rule.id}
+                        >
+                          <div>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                              <RuleCode>{rule.full_code}</RuleCode>
+                              
+                              {/* Status Indicator */}
+                              {rule.status && (
+                                <RuleCode style={{ 
+                                  backgroundColor: rule.status === 'approved' ? '#27ae60' : 
+                                                  rule.status === 'pending_approval' ? '#f39c12' : 
+                                                  rule.status === 'draft' ? '#3498db' : 
+                                                  rule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
+                                  color: 'white',
+                                  fontSize: '0.7rem'
+                                }}>
+                                  {rule.status === 'approved' && '✅ Live'}
+                                  {rule.status === 'pending_approval' && '⏳ Pending'}
+                                  {rule.status === 'draft' && '📝 Draft'}
+                                  {rule.status === 'rejected' && '❌ Rejected'}
+                                </RuleCode>
+                              )}
+                              
+                              {/* Review Notes Indicator */}
+                              {rule.review_notes && (
+                                <RuleCode style={{ 
+                                  backgroundColor: '#8a9dc9',
+                                  color: 'white',
+                                  fontSize: '0.7rem',
+                                  cursor: 'help'
+                                }}
+                                title={`Review Notes: ${rule.review_notes}`}>
+                                  💬 Notes
+                                </RuleCode>
                               )}
                             </div>
-                          )}
-                        </div>
-                        <RuleContent 
-                          dangerouslySetInnerHTML={{ __html: markdownToHtml(rule.content) }}
-                        />
-                        
-                        {(() => {
-                          let images = [];
-                          try {
-                            if (rule.images) {
-                              images = Array.isArray(rule.images) ? rule.images : JSON.parse(rule.images);
-                            }
-                          } catch (e) {
-                            console.error('Error parsing rule images:', e, 'Raw images:', rule.images);
-                            images = [];
-                          }
-                          
-                          return images && images.length > 0 && (
-                            <div style={{ 
-                              display: 'grid', 
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-                              gap: '0.5rem',
-                              marginTop: '1rem',
-                              marginBottom: '1rem'
-                            }}>
-                              {images.map((image, index) => (
-                                <img 
-                                  key={index}
-                                  src={`${BASE_URL}${image.thumbnailUrl}`}
-                                  alt={image.originalName}
-                                  style={{ 
-                                    width: '100%', 
-                                    height: '80px', 
-                                    objectFit: 'cover',
-                                    borderRadius: '4px',
-                                    border: '1px solid #445566',
-                                    cursor: 'pointer'
-                                  }}
-                                  onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
-                                />
-                              ))}
-                            </div>
-                          );
-                        })()}
-                        
-                        <RuleActions>
-                          <ActionButton onClick={() => openEditModal(rule)}>Edit</ActionButton>
-                          {rule.sub_rules && rule.sub_rules.length > 0 ? (
-                            <ExpandButton 
-                              onClick={() => toggleRuleExpansion(rule.id)}
-                              $expanded={expandedRules.has(rule.id)}
-                            >
-                              {expandedRules.has(rule.id) ? 'Hide Sub-Rules' : `Show Sub-Rules (${rule.sub_rules.length})`}
-                            </ExpandButton>
-                          ) : (
-                            <ActionButton onClick={() => openSubRuleModal(rule)}>Add Sub-Rule</ActionButton>
-                          )}
-                          <ActionButton onClick={() => openCrossReferencesModal(rule)}>Cross-References ({rule.cross_references_count || 0})</ActionButton>
-                          {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                            <ActionButton danger onClick={() => deleteRule(rule.id)}>Delete</ActionButton>
-                          )}
-                        </RuleActions>
-                      </RuleCard>
-                      
-                      {/* Display sub-rules - only when expanded */}
-                      {rule.sub_rules && rule.sub_rules.length > 0 && expandedRules.has(rule.id) && (
-                        <SubRuleContainer>
-                          {rule.sub_rules.map(subRule => (
-                            <SubRuleCard 
-                              key={subRule.id}
-                              data-rule-id={subRule.id}
-                              highlighted={highlightedRuleId === subRule.id}
-                            >
+                            
+                            {rule.title && (
+                              <RuleTitle>{rule.title}</RuleTitle>
+                            )}
+                            
+                            {/* Review Notes Display */}
+                            {rule.review_notes && (
                               <div style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'flex-start',
-                                marginBottom: '0.5rem'
+                                backgroundColor: 'rgba(138, 157, 201, 0.1)',
+                                padding: '0.75rem',
+                                borderRadius: '6px',
+                                marginBottom: '1rem',
+                                borderLeft: '3px solid #8a9dc9'
                               }}>
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                                    <RuleCode style={{ backgroundColor: '#5a6c7d', fontSize: '0.8rem' }}>
-                                      {subRule.full_code}
-                                    </RuleCode>
-                                    
-                                    {/* Status Indicator for Sub-Rule */}
-                                    {subRule.status && (
-                                      <RuleCode style={{ 
-                                        backgroundColor: subRule.status === 'approved' ? '#27ae60' : 
-                                                        subRule.status === 'pending_approval' ? '#f39c12' : 
-                                                        subRule.status === 'draft' ? '#3498db' : 
-                                                        subRule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                        color: 'white',
-                                        fontSize: '0.6rem'
-                                      }}>
-                                        {subRule.status === 'approved' && '✅ Live'}
-                                        {subRule.status === 'pending_approval' && '⏳ Pending'}
-                                        {subRule.status === 'draft' && '📝 Draft'}
-                                        {subRule.status === 'rejected' && '❌ Rejected'}
-                                      </RuleCode>
-                                    )}
-                                    
-                                    {/* Review Notes Indicator for Sub-Rule */}
-                                    {subRule.review_notes && (
-                                      <RuleCode style={{ 
-                                        backgroundColor: '#8a9dc9',
-                                        color: 'white',
-                                        fontSize: '0.6rem',
-                                        cursor: 'help'
-                                      }}
-                                      title={`Review Notes: ${subRule.review_notes}`}>
-                                        💬 Notes
-                                      </RuleCode>
-                                    )}
+                                <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                                  💬 Review Notes:
+                                </div>
+                                <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                                  {rule.review_notes}
+                                </div>
+                                {rule.reviewed_at && (
+                                  <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                                    Reviewed: {new Date(rule.reviewed_at).toLocaleDateString()}
+                                    {rule.reviewed_by_username && ` by ${rule.reviewed_by_username}`}
                                   </div>
-                                  
-                                  {subRule.title && (
-                                    <RuleTitle style={{ fontSize: '1rem', marginTop: '0.5rem' }}>
-                                      {subRule.title}
-                                    </RuleTitle>
-                                  )}
-                                  
-                                  {/* Review Notes Display for Sub-Rule */}
-                                  {subRule.review_notes && (
-                                    <div style={{ 
-                                      backgroundColor: 'rgba(138, 157, 201, 0.1)',
-                                      padding: '0.75rem',
-                                      borderRadius: '6px',
-                                      marginBottom: '1rem',
-                                      borderLeft: '3px solid #8a9dc9'
-                                    }}>
-                                      <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
-                                        💬 Review Notes:
-                                      </div>
-                                      <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                                        {subRule.review_notes}
-                                      </div>
-                                      {subRule.reviewed_at && (
-                                        <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                                          Reviewed: {new Date(subRule.reviewed_at).toLocaleDateString()}
-                                          {subRule.reviewed_by_username && ` by ${subRule.reviewed_by_username}`}
-                                        </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <RuleContent 
+                            dangerouslySetInnerHTML={{ __html: markdownToHtml(rule.content) }}
+                          />
+                          
+                          {(() => {
+                            let images = [];
+                            try {
+                              if (rule.images) {
+                                images = Array.isArray(rule.images) ? rule.images : JSON.parse(rule.images);
+                              }
+                            } catch (e) {
+                              console.error('Error parsing rule images:', e, 'Raw images:', rule.images);
+                              images = [];
+                            }
+                            
+                            return images && images.length > 0 && (
+                              <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                                gap: '0.5rem',
+                                marginTop: '1rem',
+                                marginBottom: '1rem'
+                              }}>
+                                {images.map((image, index) => (
+                                  <img 
+                                    key={index}
+                                    src={`${BASE_URL}${image.thumbnailUrl}`}
+                                    alt={image.originalName}
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '80px', 
+                                      objectFit: 'cover',
+                                      borderRadius: '4px',
+                                      border: '1px solid #445566',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
+                                  />
+                                ))}
+                              </div>
+                            );
+                          })()}
+                          
+                          <RuleActions>
+                            <ActionButton onClick={() => openEditModal(rule)}>Edit</ActionButton>
+                            {rule.sub_rules && rule.sub_rules.length > 0 ? (
+                              <ExpandButton 
+                                onClick={() => toggleRuleExpansion(rule.id)}
+                                $expanded={expandedRules.has(rule.id)}
+                              >
+                                {expandedRules.has(rule.id) ? 'Hide Sub-Rules' : `Show Sub-Rules (${rule.sub_rules.length})`}
+                              </ExpandButton>
+                            ) : (
+                              <ActionButton onClick={() => openSubRuleModal(rule)}>Add Sub-Rule</ActionButton>
+                            )}
+                            <ActionButton onClick={() => openCrossReferencesModal(rule)}>Cross-References ({rule.cross_references_count || 0})</ActionButton>
+                            {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                              <ActionButton danger onClick={() => deleteRule(rule.id)}>Delete</ActionButton>
+                            )}
+                          </RuleActions>
+                        </RuleCard>
+                        
+                        {/* Display sub-rules - only when expanded */}
+                        {rule.sub_rules && rule.sub_rules.length > 0 && expandedRules.has(rule.id) && (
+                          <SubRuleContainer>
+                            {rule.sub_rules.map(subRule => (
+                              <SubRuleCard 
+                                key={subRule.id}
+                                data-rule-id={subRule.id}
+                                highlighted={highlightedRuleId === subRule.id}
+                              >
+                                <div style={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between', 
+                                  alignItems: 'flex-start',
+                                  marginBottom: '0.5rem'
+                                }}>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                                      <RuleCode style={{ backgroundColor: '#5a6c7d', fontSize: '0.8rem' }}>
+                                        {subRule.full_code}
+                                      </RuleCode>
+                                      
+                                      {/* Status Indicator for Sub-Rule */}
+                                      {subRule.status && (
+                                        <RuleCode style={{ 
+                                          backgroundColor: subRule.status === 'approved' ? '#27ae60' : 
+                                                          subRule.status === 'pending_approval' ? '#f39c12' : 
+                                                          subRule.status === 'draft' ? '#3498db' : 
+                                                          subRule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
+                                          color: 'white',
+                                          fontSize: '0.6rem'
+                                        }}>
+                                          {subRule.status === 'approved' && '✅ Live'}
+                                          {subRule.status === 'pending_approval' && '⏳ Pending'}
+                                          {subRule.status === 'draft' && '📝 Draft'}
+                                          {subRule.status === 'rejected' && '❌ Rejected'}
+                                        </RuleCode>
+                                      )}
+                                      
+                                      {/* Review Notes Indicator for Sub-Rule */}
+                                      {subRule.review_notes && (
+                                        <RuleCode style={{ 
+                                          backgroundColor: '#8a9dc9',
+                                          color: 'white',
+                                          fontSize: '0.6rem',
+                                          cursor: 'help'
+                                        }}
+                                        title={`Review Notes: ${subRule.review_notes}`}>
+                                          💬 Notes
+                                        </RuleCode>
                                       )}
                                     </div>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <RuleContent 
-                                dangerouslySetInnerHTML={{ __html: markdownToHtml(subRule.content) }}
-                              />
-                              
-                              {(() => {
-                                let subImages = [];
-                                try {
-                                  if (subRule.images) {
-                                    subImages = Array.isArray(subRule.images) ? subRule.images : JSON.parse(subRule.images);
-                                  }
-                                } catch (e) {
-                                  console.error('Error parsing sub-rule images:', e);
-                                  subImages = [];
-                                }
-                                
-                                return subImages && subImages.length > 0 && (
-                                  <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
-                                    gap: '0.5rem',
-                                    marginTop: '1rem',
-                                    marginBottom: '1rem'
-                                  }}>
-                                    {subImages.map((image, index) => (
-                                      <img 
-                                        key={index}
-                                        src={`${BASE_URL}${image.thumbnailUrl}`}
-                                        alt={image.originalName}
-                                        style={{ 
-                                          width: '100%', 
-                                          height: '80px', 
-                                          objectFit: 'cover',
-                                          borderRadius: '4px',
-                                          border: '1px solid #445566',
-                                          cursor: 'pointer'
-                                        }}
-                                        onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
-                                      />
-                                    ))}
+                                    
+                                    {subRule.title && (
+                                      <RuleTitle style={{ fontSize: '1rem', marginTop: '0.5rem' }}>
+                                        {subRule.title}
+                                      </RuleTitle>
+                                    )}
+                                    
+                                    {/* Review Notes Display for Sub-Rule */}
+                                    {subRule.review_notes && (
+                                      <div style={{ 
+                                        backgroundColor: 'rgba(138, 157, 201, 0.1)',
+                                        padding: '0.75rem',
+                                        borderRadius: '6px',
+                                        marginBottom: '1rem',
+                                        borderLeft: '3px solid #8a9dc9'
+                                      }}>
+                                        <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                                          💬 Review Notes:
+                                        </div>
+                                        <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                                          {subRule.review_notes}
+                                        </div>
+                                        {subRule.reviewed_at && (
+                                          <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                                            Reviewed: {new Date(subRule.reviewed_at).toLocaleDateString()}
+                                            {subRule.reviewed_by_username && ` by ${subRule.reviewed_by_username}`}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
-                                );
-                              })()}
-                              
-                              <RuleActions>
-                                <ActionButton onClick={() => openEditModal(subRule)}>Edit</ActionButton>
-                                <ActionButton onClick={() => openCrossReferencesModal(subRule)}>Cross-References</ActionButton>
-                                {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                                  <ActionButton danger onClick={() => deleteRule(subRule.id)}>Delete</ActionButton>
-                                )}
-                              </RuleActions>
-                            </SubRuleCard>
-                          ))}
-                          <div style={{ marginTop: '1rem' }}>
-                            <ActionButton 
-                              onClick={() => openSubRuleModal(rule)}
-                              style={{ backgroundColor: '#27ae60' }}
-                            >
-                              + Add Another Sub-Rule
-                            </ActionButton>
-                          </div>
-                        </SubRuleContainer>
-                      )}
-                    </div>
-                  ))
-                }
-              </RulesList>
-              
-              {rules.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  No rules found. Click "Add New Rule" to get started.
-                </div>
-              )}
-              
-              {rules.length > 0 && filteredRules.filter(rule => !selectedCategory || rule.category_id == selectedCategory).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  {searchQuery.trim() 
-                    ? `No rules match your search "${searchQuery}".`
-                    : selectedCategory 
-                      ? 'No rules found in the selected category.'
-                      : 'No rules found.'
+                                </div>
+                                
+                                <RuleContent 
+                                  dangerouslySetInnerHTML={{ __html: markdownToHtml(subRule.content) }}
+                                />
+                                
+                                {(() => {
+                                  let subImages = [];
+                                  try {
+                                    if (subRule.images) {
+                                      subImages = Array.isArray(subRule.images) ? subRule.images : JSON.parse(subRule.images);
+                                    }
+                                  } catch (e) {
+                                    console.error('Error parsing sub-rule images:', e);
+                                    subImages = [];
+                                  }
+                                  
+                                  return subImages && subImages.length > 0 && (
+                                    <div style={{ 
+                                      display: 'grid', 
+                                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                                      gap: '0.5rem',
+                                      marginTop: '1rem',
+                                      marginBottom: '1rem'
+                                    }}>
+                                      {subImages.map((image, index) => (
+                                        <img 
+                                          key={index}
+                                          src={`${BASE_URL}${image.thumbnailUrl}`}
+                                          alt={image.originalName}
+                                          style={{ 
+                                            width: '100%', 
+                                            height: '80px', 
+                                            objectFit: 'cover',
+                                            borderRadius: '4px',
+                                            border: '1px solid #445566',
+                                            cursor: 'pointer'
+                                          }}
+                                          onClick={() => window.open(`${BASE_URL}${image.url}`, '_blank')}
+                                        />
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+                                
+                                <RuleActions>
+                                  <ActionButton onClick={() => openEditModal(subRule)}>Edit</ActionButton>
+                                  <ActionButton onClick={() => openCrossReferencesModal(subRule)}>Cross-References</ActionButton>
+                                  {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                                    <ActionButton danger onClick={() => deleteRule(subRule.id)}>Delete</ActionButton>
+                                  )}
+                                </RuleActions>
+                              </SubRuleCard>
+                            ))}
+                            <div style={{ marginTop: '1rem' }}>
+                              <ActionButton 
+                                onClick={() => openSubRuleModal(rule)}
+                                style={{ backgroundColor: '#27ae60' }}
+                              >
+                                + Add Another Sub-Rule
+                              </ActionButton>
+                            </div>
+                          </SubRuleContainer>
+                        )}
+                      </div>
+                    ))
                   }
-                </div>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'announcements' && (
-            <div>
-              <RulesHeader>
-                <h2>Announcements Management</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <Select 
-                    value=""
-                    onChange={(e) => {
-                      // Could add filtering by priority here
+                </RulesList>
+                
+                {rules.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    No rules found. Click "Add New Rule" to get started.
+                  </div>
+                )}
+                
+                {rules.length > 0 && filteredRules.filter(rule => !selectedCategory || rule.category_id == selectedCategory).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    {searchQuery.trim() 
+                      ? `No rules match your search "${searchQuery}".`
+                      : selectedCategory 
+                        ? 'No rules found in the selected category.'
+                        : 'No rules found.'
+                    }
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'announcements' && (
+              <div>
+                <RulesHeader>
+                  <h2>Announcements Management</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <Select 
+                      value=""
+                      onChange={(e) => {
+                        // Could add filtering by priority here
+                      }}
+                    >
+                      <option value="">All Priorities</option>
+                      <option value="5">Emergency (5)</option>
+                      <option value="4">Critical (4)</option>
+                      <option value="3">High (3)</option>
+                      <option value="2">Normal (2)</option>
+                      <option value="1">Low (1)</option>
+                    </Select>
+                    <Button onClick={openCreateAnnouncementModal}>Add New Announcement</Button>
+                  </div>
+                </RulesHeader>
+
+                {/* Toggle between Published and Scheduled */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '1rem', 
+                  marginBottom: '2rem',
+                  backgroundColor: '#2c3e50',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  width: 'fit-content'
+                }}>
+                  <Button 
+                    onClick={() => {/* Toggle to published */}}
+                    style={{ 
+                      backgroundColor: '#677bae',
+                      fontSize: '0.9rem',
+                      padding: '0.5rem 1rem'
                     }}
                   >
-                    <option value="">All Priorities</option>
-                    <option value="5">Emergency (5)</option>
-                    <option value="4">Critical (4)</option>
-                    <option value="3">High (3)</option>
-                    <option value="2">Normal (2)</option>
-                    <option value="1">Low (1)</option>
-                  </Select>
-                  <Button onClick={openCreateAnnouncementModal}>Add New Announcement</Button>
+                    📢 Published ({announcements.length})
+                  </Button>
+                  <Button 
+                    onClick={() => {/* Toggle to scheduled */}}
+                    style={{ 
+                      backgroundColor: '#34495e',
+                      fontSize: '0.9rem',
+                      padding: '0.5rem 1rem'
+                    }}
+                  >
+                    ⏰ Scheduled (0)
+                  </Button>
                 </div>
-              </RulesHeader>
 
-              {/* Toggle between Published and Scheduled */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '1rem', 
-                marginBottom: '2rem',
-                backgroundColor: '#2c3e50',
-                padding: '0.5rem',
-                borderRadius: '8px',
-                width: 'fit-content'
-              }}>
-                <Button 
-                  onClick={() => {/* Toggle to published */}}
-                  style={{ 
-                    backgroundColor: '#677bae',
-                    fontSize: '0.9rem',
-                    padding: '0.5rem 1rem'
-                  }}
-                >
-                  📢 Published ({announcements.length})
-                </Button>
-                <Button 
-                  onClick={() => {/* Toggle to scheduled */}}
-                  style={{ 
-                    backgroundColor: '#34495e',
-                    fontSize: '0.9rem',
-                    padding: '0.5rem 1rem'
-                  }}
-                >
-                  ⏰ Scheduled (0)
-                </Button>
-              </div>
-
-              <RulesList>
-                {announcements.map(announcement => (
-                  <RuleCard key={announcement.id}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                          <RuleTitle>{announcement.title}</RuleTitle>
-                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                            <RuleCode>Priority: {announcement.priority}</RuleCode>
-                            
-                            {/* Status Indicator */}
-                            {announcement.status && (
-                              <RuleCode style={{ 
-                                backgroundColor: announcement.status === 'approved' ? '#27ae60' : 
-                                                announcement.status === 'pending_approval' ? '#f39c12' : 
-                                                announcement.status === 'draft' ? '#3498db' : 
-                                                announcement.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                color: 'white'
-                              }}>
-                                {announcement.status === 'approved' && '✅ Live'}
-                                {announcement.status === 'pending_approval' && '⏳ Pending'}
-                                {announcement.status === 'draft' && '📝 Draft'}
-                                {announcement.status === 'rejected' && '❌ Rejected'}
-                              </RuleCode>
-                            )}
-                            
-                            <RuleCode style={{ 
-                              backgroundColor: announcement.is_active ? '#27ae60' : '#e74c3c',
-                              color: 'white'
-                            }}>
-                              {announcement.is_active ? 'Active' : 'Inactive'}
-                            </RuleCode>
-                            
-                            {/* Review Notes Indicator */}
-                            {announcement.review_notes && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#8a9dc9',
-                                color: 'white',
-                                fontSize: '0.8rem',
-                                cursor: 'help'
-                              }}
-                              title={`Review Notes: ${announcement.review_notes}`}>
-                                💬 Notes
-                              </RuleCode>
-                            )}
-                            
-                            {announcement.announcement_type === 'scheduled' && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#f39c12',
-                                color: 'white'
-                              }}>
-                                📅 Scheduled
-                              </RuleCode>
-                            )}
-                            {announcement.is_scheduled === 1 && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#9b59b6',
-                                color: 'white'
-                              }}>
-                                ⏰ {announcement.is_published ? 'Published' : 'Pending'}
-                              </RuleCode>
-                            )}
-                          </div>
-                          
-                          {/* Review Notes Display */}
-                          {announcement.review_notes && (
-                            <div style={{ 
-                              backgroundColor: 'rgba(138, 157, 201, 0.1)',
-                              padding: '0.75rem',
-                              borderRadius: '6px',
-                              marginTop: '1rem',
-                              borderLeft: '3px solid #8a9dc9'
-                            }}>
-                              <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
-                                💬 Review Notes:
-                              </div>
-                              <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                                {announcement.review_notes}
-                              </div>
-                              {announcement.reviewed_at && (
-                                <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                                  Reviewed: {new Date(announcement.reviewed_at).toLocaleDateString()}
-                                  {announcement.reviewed_by_username && ` by ${announcement.reviewed_by_username}`}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {announcement.scheduled_for && (
-                            <div style={{ 
-                              color: '#8a9dc9', 
-                              fontSize: '0.9rem', 
-                              marginTop: '0.5rem',
-                              fontStyle: 'italic'
-                            }}>
-                              📅 Scheduled for: {new Date(announcement.scheduled_for).toLocaleString()}
-                            </div>
-                          )}
-                          {announcement.auto_expire_hours && (
-                            <div style={{ 
-                              color: '#8a9dc9', 
-                              fontSize: '0.9rem', 
-                              marginTop: '0.25rem',
-                              fontStyle: 'italic'
-                            }}>
-                              ⏱️ Auto-expires after: {announcement.auto_expire_hours} hours
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <RuleContent 
-                        dangerouslySetInnerHTML={{ __html: markdownToHtml(announcement.content) }}
-                      />
-                      
-                      <div style={{ 
-                        color: '#8a9dc9', 
-                        fontSize: '0.8rem', 
-                        marginTop: '1rem',
-                        borderTop: '1px solid #445566',
-                        paddingTop: '0.5rem'
-                      }}>
-                        Created: {new Date(announcement.created_at).toLocaleDateString()}
-                        {announcement.updated_at !== announcement.created_at && (
-                          <span> • Updated: {new Date(announcement.updated_at).toLocaleDateString()}</span>
-                        )}
-                        {announcement.published_at && (
-                          <span> • Published: {new Date(announcement.published_at).toLocaleDateString()}</span>
-                        )}
-                        {announcement.created_by_username && (
-                          <span> • Created by: {announcement.created_by_username}</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <RuleActions>
-                      {announcement.announcement_type === 'scheduled' && !announcement.is_published && (
-                        <ActionButton 
-                          onClick={() => publishScheduledAnnouncementNow(announcement.id, announcement.title)}
-                          style={{ backgroundColor: '#27ae60' }}
-                        >
-                          Publish Now
-                        </ActionButton>
-                      )}
-                      
-                      {/* Send to Discord Button - Only for approved/live announcements and moderators+ */}
-                      {(announcement.status === 'approved' || !announcement.status) && announcement.is_active && 
-                       discordSettings.announcementsEnabled && discordSettings.announcementWebhookUrl &&
-                       (user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                        <ActionButton 
-                          onClick={() => sendAnnouncementToDiscord(announcement.id)}
-                          disabled={sendingToDiscord}
-                          style={{ backgroundColor: '#5865F2' }}
-                          title="Send this announcement to Discord"
-                        >
-                          {sendingToDiscord ? '📤 Sending...' : '📢 Send to Discord'}
-                        </ActionButton>
-                      )}
-                      
-                      <ActionButton onClick={() => openEditAnnouncementModal(announcement)}>Edit</ActionButton>
-                      <ActionButton onClick={() => sendAnnouncementToDiscord(announcement.id)}>Send to Discord</ActionButton>
-                      {announcement.scheduled_for && !announcement.is_published && (
-                        <ActionButton 
-                          onClick={() => publishScheduledAnnouncementNow(announcement.id, announcement.title)}
-                          style={{ backgroundColor: '#f39c12' }}
-                        >
-                          Publish Now
-                        </ActionButton>
-                      )}
-                      {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                        <ActionButton danger onClick={() => deleteAnnouncement(announcement.id)}>Delete</ActionButton>
-                      )}
-                    </RuleActions>
-                  </RuleCard>
-                ))}
-              </RulesList>
-              
-              {announcements.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  No announcements found. Click "Add New Announcement" to get started.
-                </div>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'categories' && (
-            <div>
-              <RulesHeader>
-                <h2>Categories Management</h2>
-                {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                  <Button onClick={openCreateCategoryModal}>Add New Category</Button>
-                )}
-              </RulesHeader>
-
-              {/* Search Bar */}
-              <SearchContainer>
-                <SearchIcon>🔍</SearchIcon>
-                <SearchInput
-                  type="text"
-                  value={categorySearchQuery}
-                  onChange={(e) => setCategorySearchQuery(e.target.value)}
-                  placeholder="Search categories by letter code, name, or description..."
-                  style={{ 
-                    width: '100%',
-                    maxWidth: '500px',
-                  }}
-                />
-              </SearchContainer>
-
-              {/* Categories List */}
-              <RulesList>
-                {categoriesData
-                  .filter(category => 
-                    !categorySearchQuery.trim() || 
-                    category.letter_code.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
-                    category.name.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
-                    (category.description && category.description.toLowerCase().includes(categorySearchQuery.toLowerCase()))
-                  )
-                  .map((category, index) => (
-                    <CategoryCard 
-                      key={category.id}
-                      isDraggable={true}
-                      isDragging={draggedCategoryIndex === index}
-                      draggable={true}
-                      onDragStart={(e) => handleCategoryDragStart(e, index)}
-                      onDragOver={handleCategoryDragOver}
-                      onDrop={(e) => handleCategoryDrop(e, index)}
-                    >
-                      <CategoryHeader>
-                        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                          <DragHandle title="Drag to reorder">⋮⋮</DragHandle>
-                          <CategoryCode>{category.letter_code}</CategoryCode>
-                          <CategoryInfo>
-                            <CategoryName>{category.name}</CategoryName>
-                            {category.description && (
-                              <CategoryDescription>{category.description}</CategoryDescription>
-                            )}
-                            <CategoryStats>
-                              <span>📋 {category.rule_count || 0} rules</span>
-                              <span>📅 Created: {new Date(category.created_at).toLocaleDateString()}</span>
-                              {category.updated_at !== category.created_at && (
-                                <span>📝 Updated: {new Date(category.updated_at).toLocaleDateString()}</span>
-                              )}
-                            </CategoryStats>
-                          </CategoryInfo>
-                        </div>
-                        <CategoryActions>
-                          <div style={{ display: 'flex', gap: '1rem' }}>
-                            <ActionButton onClick={() => openEditCategoryModal(category)}>Edit</ActionButton>
-                            {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                              <ActionButton 
-                                danger 
-                                onClick={() => deleteCategory(category.id, category.name, category.rule_count)}
-                                disabled={category.rule_count > 0}
-                                title={category.rule_count > 0 ? 'Cannot delete category with rules' : 'Delete category'}
-                              >
-                                Delete
-                              </ActionButton>
-                            )}
-                          </div>
-                        </CategoryActions>
-                      </CategoryHeader>
-                    </CategoryCard>
-                  ))}
-              </RulesList>
-              
-              {/* Empty State */}
-              {categoriesData.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  No categories found. Click "Add New Category" to get started.
-                </div>
-              )}
-
-              {/* Filtered Empty State */}
-              {categoriesData.length > 0 && categorySearchQuery.trim() && 
-                categoriesData.filter(category => 
-                  category.letter_code.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
-                  category.name.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
-                  (category.description && category.description.toLowerCase().includes(categorySearchQuery.toLowerCase()))
-                ).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  No categories match your search for "{categorySearchQuery}".
-                </div>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'users' && (
-            <div>
-              <RulesHeader>
-                <h2>User Management</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <RefreshButton onClick={loadStaffUsers} disabled={loadingUsers}>
-                    {loadingUsers ? '🔄 Refreshing...' : '🔄 Refresh Users'}
-                  </RefreshButton>
-                  {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                    <Button onClick={openCreateUserModal}>Add Staff User</Button>
-                  )}
-                </div>
-              </RulesHeader>
-
-              {loadingUsers ? (
-                <LoadingSpinner>
-                  <div>🔄 Loading staff users...</div>
-                </LoadingSpinner>
-              ) : (
                 <RulesList>
-                  {staffUsers.map(staffUser => (
-                    <RuleCard key={staffUser.id}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                            <RuleTitle style={{ margin: 0 }}>{staffUser.steam_username}</RuleTitle>
-                            <RuleCode style={{ 
-                              backgroundColor: staffUser.permission_level === 'owner' ? '#9b59b6' :
-                                              staffUser.permission_level === 'admin' ? '#e74c3c' : 
-                                              staffUser.permission_level === 'moderator' ? '#f39c12' : '#27ae60',
-                              color: 'white',
-                              textTransform: 'capitalize'
-                            }}>
-                              {staffUser.permissionLevel}
-                            </RuleCode>
-                            <RuleCode style={{ 
-                              backgroundColor: staffUser.is_active ? '#27ae60' : '#95a5a6',
-                              color: 'white'
-                            }}>
-                              {staffUser.is_active ? 'Active' : 'Inactive'}
-                            </RuleCode>
+                  {announcements.map(announcement => (
+                    <RuleCard key={announcement.id}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <RuleTitle>{announcement.title}</RuleTitle>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                              <RuleCode>Priority: {announcement.priority}</RuleCode>
+                              
+                              {/* Status Indicator */}
+                              {announcement.status && (
+                                <RuleCode style={{ 
+                                  backgroundColor: announcement.status === 'approved' ? '#27ae60' : 
+                                                  announcement.status === 'pending_approval' ? '#f39c12' : 
+                                                  announcement.status === 'draft' ? '#3498db' : 
+                                                  announcement.status === 'rejected' ? '#e74c3c' : '#95a5a6',
+                                  color: 'white'
+                                }}>
+                                  {announcement.status === 'approved' && '✅ Live'}
+                                  {announcement.status === 'pending_approval' && '⏳ Pending'}
+                                  {announcement.status === 'draft' && '📝 Draft'}
+                                  {announcement.status === 'rejected' && '❌ Rejected'}
+                                </RuleCode>
+                              )}
+                              
+                              <RuleCode style={{ 
+                                backgroundColor: announcement.is_active ? '#27ae60' : '#e74c3c',
+                                color: 'white'
+                              }}>
+                                {announcement.is_active ? 'Active' : 'Inactive'}
+                              </RuleCode>
+                              
+                              {/* Review Notes Indicator */}
+                              {announcement.review_notes && (
+                                <RuleCode style={{ 
+                                  backgroundColor: '#8a9dc9',
+                                  color: 'white',
+                                  fontSize: '0.8rem',
+                                  cursor: 'help'
+                                }}
+                                title={`Review Notes: ${announcement.review_notes}`}>
+                                  💬 Notes
+                                </RuleCode>
+                              )}
+                              
+                              {announcement.announcement_type === 'scheduled' && (
+                                <RuleCode style={{ 
+                                  backgroundColor: '#f39c12',
+                                  color: 'white'
+                                }}>
+                                  📅 Scheduled
+                                </RuleCode>
+                              )}
+                              {announcement.is_scheduled === 1 && (
+                                <RuleCode style={{ 
+                                  backgroundColor: '#9b59b6',
+                                  color: 'white'
+                                }}>
+                                  ⏰ {announcement.is_published ? 'Published' : 'Pending'}
+                                </RuleCode>
+                              )}
+                            </div>
+                            
+                            {/* Review Notes Display */}
+                            {announcement.review_notes && (
+                              <div style={{ 
+                                backgroundColor: 'rgba(138, 157, 201, 0.1)',
+                                padding: '0.75rem',
+                                borderRadius: '6px',
+                                marginTop: '1rem',
+                                borderLeft: '3px solid #8a9dc9'
+                              }}>
+                                <div style={{ color: '#8a9dc9', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                                  💬 Review Notes:
+                                </div>
+                                <div style={{ color: '#bdc3c7', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                                  {announcement.review_notes}
+                                </div>
+                                {announcement.reviewed_at && (
+                                  <div style={{ color: '#8a9dc9', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                                    Reviewed: {new Date(announcement.reviewed_at).toLocaleDateString()}
+                                    {announcement.reviewed_by_username && ` by ${announcement.reviewed_by_username}`}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {announcement.scheduled_for && (
+                              <div style={{ 
+                                color: '#8a9dc9', 
+                                fontSize: '0.9rem', 
+                                marginTop: '0.5rem',
+                                fontStyle: 'italic'
+                              }}>
+                                📅 Scheduled for: {new Date(announcement.scheduled_for).toLocaleString()}
+                              </div>
+                            )}
+                            {announcement.auto_expire_hours && (
+                              <div style={{ 
+                                color: '#8a9dc9', 
+                                fontSize: '0.9rem', 
+                                marginTop: '0.25rem',
+                                fontStyle: 'italic'
+                              }}>
+                                ⏱️ Auto-expires after: {announcement.auto_expire_hours} hours
+                              </div>
+                            )}
                           </div>
-                          
-                          <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                            <strong>Steam ID:</strong> {staffUser.steam_id}
-                          </div>
-                          
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                            gap: '1rem',
-                            color: '#8a9dc9',
-                            fontSize: '0.85rem'
-                          }}>
-                            <div>
-                              📅 <strong>Joined:</strong> {new Date(staffUser.created_at).toLocaleDateString()}
-                            </div>
-                            <div>
-                              🕒 <strong>Last Login:</strong> {staffUser.last_login ? new Date(staffUser.last_login).toLocaleDateString() : 'Never'}
-                            </div>
-                            <div>
-                              📊 <strong>Total Actions:</strong> {staffUser.total_actions || 0}
-                            </div>
-                            <div>
-                              ⚡ <strong>Recent Actions:</strong> {staffUser.recent_actions || 0} (7 days)
-                            </div>
-                          </div>
+                        </div>
+                        
+                        <RuleContent 
+                          dangerouslySetInnerHTML={{ __html: markdownToHtml(announcement.content) }}
+                        />
+                        
+                        <div style={{ 
+                          color: '#8a9dc9', 
+                          fontSize: '0.8rem', 
+                          marginTop: '1rem',
+                          borderTop: '1px solid #445566',
+                          paddingTop: '0.5rem'
+                        }}>
+                          Created: {new Date(announcement.created_at).toLocaleDateString()}
+                          {announcement.updated_at !== announcement.created_at && (
+                            <span> • Updated: {new Date(announcement.updated_at).toLocaleDateString()}</span>
+                          )}
+                          {announcement.published_at && (
+                            <span> • Published: {new Date(announcement.published_at).toLocaleDateString()}</span>
+                          )}
+                          {announcement.created_by_username && (
+                            <span> • Created by: {announcement.created_by_username}</span>
+                          )}
                         </div>
                       </div>
                       
                       <RuleActions>
-                        <ActionButton 
-                          onClick={() => openEditUserModal(staffUser)}
-                          disabled={user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner')}
-                          title={
-                            user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner')
-                              ? `Cannot edit ${staffUser.permission_level}s - insufficient permissions`
-                              : 'Edit user permissions and status'
-                          }
-                        >
-                          Edit Permissions
-                        </ActionButton>
-                        {staffUser.id !== user.id && (user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                        {announcement.announcement_type === 'scheduled' && !announcement.is_published && (
                           <ActionButton 
-                            danger 
-                            onClick={() => deactivateUser(staffUser.id, staffUser.steam_username, staffUser.permission_level)}
-                            disabled={
-                              !staffUser.is_active || 
-                              (user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner'))
-                            }
-                            title={
-                              !staffUser.is_active ? 'User already inactive' :
-                              user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner') ?
-                              `Cannot deactivate ${staffUser.permission_level}s - insufficient permissions` :
-                              'Deactivate user access'
-                            }
+                            onClick={() => publishScheduledAnnouncementNow(announcement.id, announcement.title)}
+                            style={{ backgroundColor: '#27ae60' }}
                           >
-                            {staffUser.is_active ? 'Deactivate' : 'Inactive'}
+                            Publish Now
                           </ActionButton>
                         )}
-                        {staffUser.id === user.id && (
-                          <RuleCode style={{ 
-                            backgroundColor: '#677bae',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.8rem'
-                          }}>
-                            👤 This is you
-                          </RuleCode>
+                        
+                        {/* Send to Discord Button - Only for approved/live announcements and moderators+ */}
+                        {(announcement.status === 'approved' || !announcement.status) && announcement.is_active && 
+                         discordSettings.announcementsEnabled && discordSettings.announcementWebhookUrl &&
+                         (user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                          <ActionButton 
+                            onClick={() => sendAnnouncementToDiscord(announcement.id)}
+                            disabled={sendingToDiscord}
+                            style={{ backgroundColor: '#5865F2' }}
+                            title="Send this announcement to Discord"
+                          >
+                            {sendingToDiscord ? '📤 Sending...' : '📢 Send to Discord'}
+                          </ActionButton>
+                        )}
+                        
+                        <ActionButton onClick={() => openEditAnnouncementModal(announcement)}>Edit</ActionButton>
+                        <ActionButton onClick={() => sendAnnouncementToDiscord(announcement.id)}>Send to Discord</ActionButton>
+                        {announcement.scheduled_for && !announcement.is_published && (
+                          <ActionButton 
+                            onClick={() => publishScheduledAnnouncementNow(announcement.id, announcement.title)}
+                            style={{ backgroundColor: '#f39c12' }}
+                          >
+                            Publish Now
+                          </ActionButton>
+                        )}
+                        {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                          <ActionButton danger onClick={() => deleteAnnouncement(announcement.id)}>Delete</ActionButton>
                         )}
                       </RuleActions>
                     </RuleCard>
                   ))}
                 </RulesList>
-              )}
-              
-              {!loadingUsers && staffUsers.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                  No staff users found. Click "Add Staff User" to get started.
-                </div>
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'approvals' && (
-            <div>
-              <RulesHeader>
-                <h2>Approval Dashboard</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <RefreshButton onClick={loadPendingApprovals} disabled={loadingApprovals}>
-                    {loadingApprovals ? '🔄 Refreshing...' : '🔄 Refresh Pending'}
-                  </RefreshButton>
-                  <div style={{ 
-                    backgroundColor: pendingApprovals.totalPending > 0 ? '#e74c3c' : '#27ae60',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '20px',
-                    fontSize: '0.9rem',
-                    fontWeight: 'bold'
-                  }}>
-                    {pendingApprovals.totalPending} Pending
+                
+                {announcements.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    No announcements found. Click "Add New Announcement" to get started.
                   </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'categories' && (
+              <div>
+                <RulesHeader>
+                  <h2>Categories Management</h2>
+                  {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                    <Button onClick={openCreateCategoryModal}>Add New Category</Button>
+                  )}
+                </RulesHeader>
+
+                {/* Search Bar */}
+                <SearchContainer>
+                  <SearchIcon>🔍</SearchIcon>
+                  <SearchInput
+                    type="text"
+                    value={categorySearchQuery}
+                    onChange={(e) => setCategorySearchQuery(e.target.value)}
+                    placeholder="Search categories by letter code, name, or description..."
+                    style={{ 
+                      width: '100%',
+                      maxWidth: '500px',
+                    }}
+                  />
+                </SearchContainer>
+
+                {/* Categories List */}
+                <RulesList>
+                  {categoriesData
+                    .filter(category => 
+                      !categorySearchQuery.trim() || 
+                      category.letter_code.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
+                      category.name.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
+                      (category.description && category.description.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                    )
+                    .map((category, index) => (
+                      <CategoryCard 
+                        key={category.id}
+                        isDraggable={true}
+                        isDragging={draggedCategoryIndex === index}
+                        draggable={true}
+                        onDragStart={(e) => handleCategoryDragStart(e, index)}
+                        onDragOver={handleCategoryDragOver}
+                        onDrop={(e) => handleCategoryDrop(e, index)}
+                      >
+                        <CategoryHeader>
+                          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <DragHandle title="Drag to reorder">⋮⋮</DragHandle>
+                            <CategoryCode>{category.letter_code}</CategoryCode>
+                            <CategoryInfo>
+                              <CategoryName>{category.name}</CategoryName>
+                              {category.description && (
+                                <CategoryDescription>{category.description}</CategoryDescription>
+                              )}
+                              <CategoryStats>
+                                <span>📋 {category.rule_count || 0} rules</span>
+                                <span>📅 Created: {new Date(category.created_at).toLocaleDateString()}</span>
+                                {category.updated_at !== category.created_at && (
+                                  <span>📝 Updated: {new Date(category.updated_at).toLocaleDateString()}</span>
+                                )}
+                              </CategoryStats>
+                            </CategoryInfo>
+                          </div>
+                          <CategoryActions>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                              <ActionButton onClick={() => openEditCategoryModal(category)}>Edit</ActionButton>
+                              {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                                <ActionButton 
+                                  danger 
+                                  onClick={() => deleteCategory(category.id, category.name, category.rule_count)}
+                                  disabled={category.rule_count > 0}
+                                  title={category.rule_count > 0 ? 'Cannot delete category with rules' : 'Delete category'}
+                                >
+                                  Delete
+                                </ActionButton>
+                              )}
+                            </div>
+                          </CategoryActions>
+                        </CategoryHeader>
+                      </CategoryCard>
+                    ))}
+                </RulesList>
+                
+                {/* Empty State */}
+                {categoriesData.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    No categories found. Click "Add New Category" to get started.
+                  </div>
+                )}
+
+                {/* Filtered Empty State */}
+                {categoriesData.length > 0 && categorySearchQuery.trim() && 
+                  categoriesData.filter(category => 
+                    category.letter_code.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
+                    category.name.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
+                    (category.description && category.description.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                  ).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    No categories match your search for "{categorySearchQuery}".
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'users' && (
+              <div>
+                <RulesHeader>
+                  <h2>User Management</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <RefreshButton onClick={loadStaffUsers} disabled={loadingUsers}>
+                      {loadingUsers ? '🔄 Refreshing...' : '🔄 Refresh Users'}
+                    </RefreshButton>
+                    {(user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                      <Button onClick={openCreateUserModal}>Add Staff User</Button>
+                    )}
+                  </div>
+                </RulesHeader>
+
+                {loadingUsers ? (
+                  <LoadingSpinner>
+                    <div>🔄 Loading staff users...</div>
+                  </LoadingSpinner>
+                ) : (
+                  <RulesList>
+                    {staffUsers.map(staffUser => (
+                      <RuleCard key={staffUser.id}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                              <RuleTitle style={{ margin: 0 }}>{staffUser.steam_username}</RuleTitle>
+                              <RuleCode style={{ 
+                                backgroundColor: staffUser.permission_level === 'owner' ? '#9b59b6' :
+                                                staffUser.permission_level === 'admin' ? '#e74c3c' : 
+                                                staffUser.permission_level === 'moderator' ? '#f39c12' : '#27ae60',
+                                color: 'white',
+                                textTransform: 'capitalize'
+                              }}>
+                                {staffUser.permissionLevel}
+                              </RuleCode>
+                              <RuleCode style={{ 
+                                backgroundColor: staffUser.is_active ? '#27ae60' : '#95a5a6',
+                                color: 'white'
+                              }}>
+                                {staffUser.is_active ? 'Active' : 'Inactive'}
+                              </RuleCode>
+                            </div>
+                            
+                            <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                              <strong>Steam ID:</strong> {staffUser.steam_id}
+                            </div>
+                            
+                            <div style={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                              gap: '1rem',
+                              color: '#8a9dc9',
+                              fontSize: '0.85rem'
+                            }}>
+                              <div>
+                                📅 <strong>Joined:</strong> {new Date(staffUser.created_at).toLocaleDateString()}
+                              </div>
+                              <div>
+                                🕒 <strong>Last Login:</strong> {staffUser.last_login ? new Date(staffUser.last_login).toLocaleDateString() : 'Never'}
+                              </div>
+                              <div>
+                                📊 <strong>Total Actions:</strong> {staffUser.total_actions || 0}
+                              </div>
+                              <div>
+                                ⚡ <strong>Recent Actions:</strong> {staffUser.recent_actions || 0} (7 days)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <RuleActions>
+                          <ActionButton 
+                            onClick={() => openEditUserModal(staffUser)}
+                            disabled={user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner')}
+                            title={
+                              user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner')
+                                ? `Cannot edit ${staffUser.permission_level}s - insufficient permissions`
+                                : 'Edit user permissions and status'
+                            }
+                          >
+                            Edit Permissions
+                          </ActionButton>
+                          {staffUser.id !== user.id && (user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                            <ActionButton 
+                              danger 
+                              onClick={() => deactivateUser(staffUser.id, staffUser.steam_username, staffUser.permission_level)}
+                              disabled={
+                                !staffUser.is_active || 
+                                (user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner'))
+                              }
+                              title={
+                                !staffUser.is_active ? 'User already inactive' :
+                                user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner') ?
+                                `Cannot deactivate ${staffUser.permission_level}s - insufficient permissions` :
+                                'Deactivate user access'
+                              }
+                            >
+                              {staffUser.is_active ? 'Deactivate' : 'Inactive'}
+                            </ActionButton>
+                          )}
+                          {staffUser.id === user.id && (
+                            <RuleCode style={{ 
+                              backgroundColor: '#677bae',
+                              color: 'white',
+                              padding: '0.5rem 1rem',
+                              fontSize: '0.8rem'
+                            }}>
+                              👤 This is you
+                            </RuleCode>
+                          )}
+                        </RuleActions>
+                      </RuleCard>
+                    ))}
+                  </RulesList>
+                )}
+                
+                {!loadingUsers && staffUsers.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                    No staff users found. Click "Add Staff User" to get started.
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'approvals' && (
+              <div>
+                <RulesHeader>
+                  <h2>Approval Dashboard</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <RefreshButton onClick={loadPendingApprovals} disabled={loadingApprovals}>
+                      {loadingApprovals ? '🔄 Refreshing...' : '🔄 Refresh Pending'}
+                    </RefreshButton>
+                    <div style={{ 
+                      backgroundColor: pendingApprovals.totalPending > 0 ? '#e74c3c' : '#27ae60',
+                      color: 'white',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '20px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {pendingApprovals.totalPending} Pending
+                    </div>
+                  </div>
+                </RulesHeader>
+
+                {loadingApprovals ? (
+                  <LoadingSpinner>
+                    <div>🔄 Loading pending approvals...</div>
+                  </LoadingSpinner>
+                ) : (
+                  <>
+                    {/* Pending Rules Section */}
+                    {pendingApprovals.rules.length > 0 && (
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          📋 Pending Rules ({pendingApprovals.rules.length})
+                        </h3>
+                        <RulesList>
+                          {pendingApprovals.rules.map(rule => (
+                            <RuleCard key={`rule-${rule.id}`}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                                    <RuleCode>{rule.full_code || `Rule #${rule.id}`}</RuleCode>
+                                    <RuleCode style={{ 
+                                      backgroundColor: '#f39c12',
+                                      color: 'white'
+                                    }}>
+                                      {rule.status}
+                                    </RuleCode>
+                                    {rule.title && <RuleTitle style={{ margin: 0 }}>{rule.title}</RuleTitle>}
+                                  </div>
+                                  
+                                  <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                    <strong>Category:</strong> {rule.category_name || 'Unknown'} • 
+                                    <strong> Submitted by:</strong> {rule.submitted_by_username || 'Unknown'} • 
+                                    <strong> Submitted:</strong> {rule.submitted_at ? new Date(rule.submitted_at).toLocaleDateString() : 'Unknown'}
+                                  </div>
+                                  
+                                  <RuleContent 
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: markdownToHtml(rule.content ? rule.content.substring(0, 300) + (rule.content.length > 300 ? '...' : '') : '') 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <RuleActions>
+                                <ActionButton 
+                                  onClick={() => openReviewModal(rule, 'approve', 'rule')}
+                                  style={{ backgroundColor: '#27ae60' }}
+                                >
+                                  ✅ Approve
+                                </ActionButton>
+                                <ActionButton 
+                                  danger
+                                  onClick={() => openReviewModal(rule, 'reject', 'rule')}
+                                >
+                                  ❌ Reject
+                                </ActionButton>
+                              </RuleActions>
+                            </RuleCard>
+                          ))}
+                        </RulesList>
+                      </div>
+                    )}
+
+                    {/* Pending Announcements Section */}
+                    {pendingApprovals.announcements.length > 0 && (
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          📢 Pending Announcements ({pendingApprovals.announcements.length})
+                        </h3>
+                        <RulesList>
+                          {pendingApprovals.announcements.map(announcement => (
+                            <RuleCard key={`announcement-${announcement.id}`}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                                    <RuleTitle style={{ margin: 0 }}>{announcement.title}</RuleTitle>
+                                    <RuleCode style={{ 
+                                      backgroundColor: '#f39c12',
+                                      color: 'white'
+                                    }}>
+                                      {announcement.status}
+                                    </RuleCode>
+                                    <RuleCode style={{ 
+                                      backgroundColor: announcement.priority >= 4 ? '#e74c3c' : 
+                                                      announcement.priority >= 3 ? '#f39c12' : 
+                                                      announcement.priority >= 2 ? '#677bae' : '#27ae60',
+                                      color: 'white'
+                                    }}>
+                                      Priority {announcement.priority}
+                                    </RuleCode>
+                                  </div>
+                                  
+                                  <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                    <strong>Submitted by:</strong> {announcement.submitted_by_username || 'Unknown'} • 
+                                    <strong> Submitted:</strong> {announcement.submitted_at ? new Date(announcement.submitted_at).toLocaleDateString() : 'Unknown'}
+                                  </div>
+                                  
+                                  <RuleContent 
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: markdownToHtml(announcement.content ? announcement.content.substring(0, 300) + (announcement.content.length > 300 ? '...' : '') : '') 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <RuleActions>
+                                <ActionButton 
+                                  onClick={() => openReviewModal(announcement, 'approve', 'announcement')}
+                                  style={{ backgroundColor: '#27ae60' }}
+                                >
+                                  ✅ Approve
+                                </ActionButton>
+                                <ActionButton 
+                                  danger
+                                  onClick={() => openReviewModal(announcement, 'reject', 'announcement')}
+                                >
+                                  ❌ Reject
+                                </ActionButton>
+                              </RuleActions>
+                            </RuleCard>
+                          ))}
+                        </RulesList>
+                      </div>
+                    )}
+
+                    {/* No Pending Items */}
+                    {pendingApprovals.totalPending === 0 && (
+                      <div style={{ textAlign: 'center', padding: '3rem', color: '#bdc3c7' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                        <h3 style={{ color: '#ecf0f1', marginBottom: '0.5rem' }}>All Caught Up!</h3>
+                        <p>No pending submissions require your approval at this time.</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'discord' && (
+              <div>
+                <RulesHeader>
+                  <h2>Discord Integration</h2>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <Button onClick={loadDiscordSettings} disabled={loadingDiscord}>
+                      {loadingDiscord ? '🔄 Loading...' : '🔄 Refresh Settings'}
+                    </Button>
+                  </div>
+                </RulesHeader>
+
+                {/* Settings Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    ⚙️ Discord Settings
+                  </h3>
+                  
+                  <RuleCard>
+                    <div style={{ display: 'grid', gap: '1.5rem' }}>
+                      {/* Master Enable Toggle */}
+                      <div>
+                        <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Master Controls</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={discordSettings.announcementsEnabled}
+                              onChange={(e) => setDiscordSettings({...discordSettings, announcementsEnabled: e.target.checked})}
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Announcements</span>
+                          </label>
+                          
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={discordSettings.rulesEnabled}
+                              onChange={(e) => setDiscordSettings({...discordSettings, rulesEnabled: e.target.checked})}
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Rules Updates</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Webhook URLs */}
+                      <div>
+                        <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Webhook Configuration</h4>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                          <div>
+                            <Label>Announcements Webhook URL</Label>
+                            <Input
+                              type="text"
+                              value={discordSettings.announcementWebhookUrl}
+                              onChange={(e) => setDiscordSettings({...discordSettings, announcementWebhookUrl: e.target.value})}
+                              placeholder="https://discord.com/api/webhooks/..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label>Rules Webhook URL</Label>
+                            <Input
+                              type="text"
+                              value={discordSettings.rulesWebhookUrl}
+                              onChange={(e) => setDiscordSettings({...discordSettings, rulesWebhookUrl: e.target.value})}
+                              placeholder="https://discord.com/api/webhooks/..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Advanced Settings */}
+                      <div>
+                        <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Advanced Settings</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div>
+                            <Label>Emergency Role ID (Priority 5)</Label>
+                            <Input
+                              type="text"
+                              value={discordSettings.emergencyRoleId}
+                              onChange={(e) => setDiscordSettings({...discordSettings, emergencyRoleId: e.target.value})}
+                              placeholder="Role ID for emergency notifications"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label>Default Channel Type</Label>
+                            <Select
+                              value={discordSettings.defaultChannelType}
+                              onChange={(e) => setDiscordSettings({...discordSettings, defaultChannelType: e.target.value})}
+                            >
+                              <option value="announcements">Announcements</option>
+                              <option value="rules">Rules</option>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Embed Color Picker */}
+                      <div>
+                        <Label>Embed Color</Label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(8, 1fr)',
+                            gap: '0.5rem',
+                            padding: '1rem',
+                            backgroundColor: '#2c3e50',
+                            borderRadius: '8px',
+                            border: '1px solid #445566'
+                          }}>
+                            {presetColors.map((color) => (
+                              <div
+                                key={color}
+                                onClick={() => handleColorClick(color)}
+                                onMouseEnter={() => setColorHover(color)}
+                                onMouseLeave={() => setColorHover(null)}
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  backgroundColor: color,
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  border: discordSettings.embedColor === color ? '3px solid #677bae' : 
+                                          colorHover === color ? '2px solid #8a9dc9' : '2px solid transparent',
+                                  transition: 'all 0.2s ease',
+                                  position: 'relative'
+                                }}
+                                title={color}
+                              >
+                                {discordSettings.embedColor === color && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '1.2rem'
+                                  }}>
+                                    ✓
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>Custom:</span>
+                            <input
+                              type="color"
+                              value={discordSettings.embedColor}
+                              onChange={(e) => setDiscordSettings({...discordSettings, embedColor: e.target.value})}
+                              style={{
+                                width: '50px',
+                                height: '40px',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                              }}
+                            />
+                            <Input
+                              type="text"
+                              value={discordSettings.embedColor}
+                              onChange={handleColorInputChange}
+                              onFocus={() => setColorInputFocused(true)}
+                              onBlur={() => setColorInputFocused(false)}
+                              style={{
+                                width: '100px',
+                                fontFamily: 'monospace',
+                                textAlign: 'center',
+                                border: colorInputFocused ? '2px solid #677bae' : '1px solid #445566'
+                              }}
+                              placeholder="#677bae"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Color Preview */}
+                        <div style={{
+                          padding: '1rem',
+                          backgroundColor: '#2c3e50',
+                          borderRadius: '8px',
+                          border: '1px solid #445566',
+                          borderLeft: `4px solid ${discordSettings.embedColor}`
+                        }}>
+                          <div style={{ color: '#ecf0f1', fontWeight: '600', marginBottom: '0.5rem' }}>
+                            📢 Preview Embed
+                          </div>
+                          <div style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>
+                            This is how your Discord embeds will appear with the selected color.
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #445566' }}>
+                        <Button onClick={saveDiscordSettings} disabled={loadingDiscord}>
+                          {loadingDiscord ? 'Saving...' : '💾 Save Settings'}
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => testDiscordWebhook('announcements')} 
+                          disabled={testingWebhook || !discordSettings.announcementWebhookUrl}
+                          style={{ backgroundColor: '#3498db' }}
+                        >
+                          {testingWebhook ? 'Testing...' : '🧪 Test Announcements Webhook'}
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => testDiscordWebhook('rules')} 
+                          disabled={testingWebhook || !discordSettings.rulesWebhookUrl}
+                          style={{ backgroundColor: '#9b59b6' }}
+                        >
+                          {testingWebhook ? 'Testing...' : '🧪 Test Rules Webhook'}
+                        </Button>
+                      </div>
+                    </div>
+                  </RuleCard>
                 </div>
-              </RulesHeader>
 
-              {loadingApprovals ? (
-                <LoadingSpinner>
-                  <div>🔄 Loading pending approvals...</div>
-                </LoadingSpinner>
-              ) : (
+                {/* Message History Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    📋 Discord Message History
+                  </h3>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+                    <Select
+                      value={discordMessageFilter}
+                      onChange={(e) => setDiscordMessageFilter(e.target.value)}
+                    >
+                      <option value="all">All Messages</option>
+                      <option value="announcements">Announcements Only</option>
+                      <option value="rules">Rules Only</option>
+                    </Select>
+                    
+                    <Button onClick={loadDiscordMessages} disabled={loadingDiscordMessages}>
+                      {loadingDiscordMessages ? '🔄 Loading...' : '🔄 Refresh Messages'}
+                    </Button>
+                  </div>
+
+                  {loadingDiscordMessages ? (
+                    <LoadingSpinner>
+                      <div>🔄 Loading Discord messages...</div>
+                    </LoadingSpinner>
+                  ) : (
+                    <RulesList>
+                      {discordMessages.length > 0 ? (
+                        discordMessages.map((message, index) => (
+                          <RuleCard key={index}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                                  <RuleCode style={{ 
+                                    backgroundColor: message.message_type === 'announcement' ? '#677bae' : '#9b59b6'
+                                  }}>
+                                    {message.message_type === 'announcement' ? '📢 Announcement' : '📋 Rule Update'}
+                                  </RuleCode>
+                                  
+                                  <RuleCode style={{
+                                    backgroundColor: message.delivery_status === 'sent' ? '#27ae60' : 
+                                                    message.delivery_status === 'failed' ? '#e74c3c' : '#f39c12'
+                                  }}>
+                                    {message.delivery_status === 'sent' ? '✅ Sent' : 
+                                     message.delivery_status === 'failed' ? '❌ Failed' : '⏳ Pending'}
+                                  </RuleCode>
+                                </div>
+                                
+                                <div style={{ color: '#ecf0f1', fontWeight: '500', marginBottom: '0.5rem' }}>
+                                  {message.title || message.content?.substring(0, 50) + '...'}
+                                </div>
+                                
+                                <div style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>
+                                  <strong>Sent by:</strong> {message.sender_username} • 
+                                  <strong> Date:</strong> {new Date(message.created_at).toLocaleString()}
+                                  {message.webhook_url && (
+                                    <>
+                                      <br />
+                                      <strong>Webhook:</strong> {message.webhook_url.substring(0, 50)}...
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {message.error_message && (
+                              <div style={{
+                                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                color: '#e74c3c',
+                                padding: '0.75rem',
+                                borderRadius: '6px',
+                                marginTop: '1rem',
+                                borderLeft: '3px solid #e74c3c'
+                              }}>
+                                <strong>Error:</strong> {message.error_message}
+                              </div>
+                            )}
+                          </RuleCard>
+                        ))
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
+                          No Discord messages found. Messages will appear here after sending announcements or rules to Discord.
+                        </div>
+                      )}
+                    </RulesList>
+                  )}
+                </div>
+              </div>
+            )}
+          </TabContent>
+        </TabContainer>
+
+        {showModal && (
+          <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeModal()}>
+            <ModalContainer onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
+                  {modalType === 'edit' ? 'Edit Rule' : 
+                   modalType === 'create-sub' ? 'Add Sub-Rule' : 
+                   modalType === 'create-announcement' ? 'Add New Announcement' :
+                   modalType === 'edit-announcement' ? 'Edit Announcement' : 'Add New Rule'}
+                </ModalTitle>
+                <CloseButton onClick={closeModal}>&times;</CloseButton>
+              </ModalHeader>
+              
+              {/* Rule Form */}
+              {(modalType === 'create' || modalType === 'edit' || modalType === 'create-sub') && (
                 <>
-                  {/* Pending Rules Section */}
-                  {pendingApprovals.rules.length > 0 && (
-                    <div style={{ marginBottom: '2rem' }}>
-                      <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        📋 Pending Rules ({pendingApprovals.rules.length})
-                      </h3>
-                      <RulesList>
-                        {pendingApprovals.rules.map(rule => (
-                          <RuleCard key={`rule-${rule.id}`}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                  <RuleCode>{rule.full_code || `Rule #${rule.id}`}</RuleCode>
-                                  <RuleCode style={{ 
-                                    backgroundColor: '#f39c12',
-                                    color: 'white'
-                                  }}>
-                                    {rule.status}
-                                  </RuleCode>
-                                  {rule.title && <RuleTitle style={{ margin: 0 }}>{rule.title}</RuleTitle>}
-                                </div>
-                                
-                                <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                  <strong>Category:</strong> {rule.category_name || 'Unknown'} • 
-                                  <strong> Submitted by:</strong> {rule.submitted_by_username || 'Unknown'} • 
-                                  <strong> Submitted:</strong> {rule.submitted_at ? new Date(rule.submitted_at).toLocaleDateString() : 'Unknown'}
-                                </div>
-                                
-                                <RuleContent 
-                                  dangerouslySetInnerHTML={{ 
-                                    __html: markdownToHtml(rule.content ? rule.content.substring(0, 300) + (rule.content.length > 300 ? '...' : '') : '') 
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            
-                            <RuleActions>
-                              <ActionButton 
-                                onClick={() => openReviewModal(rule, 'approve', 'rule')}
-                                style={{ backgroundColor: '#27ae60' }}
-                              >
-                                ✅ Approve
-                              </ActionButton>
-                              <ActionButton 
-                                danger
-                                onClick={() => openReviewModal(rule, 'reject', 'rule')}
-                              >
-                                ❌ Reject
-                              </ActionButton>
-                            </RuleActions>
-                          </RuleCard>
-                        ))}
-                      </RulesList>
-                    </div>
-                  )}
+                  <FormGroup>
+                    <Label>Category</Label>
+                    <Select 
+                      value={formData.categoryId} 
+                      onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                      disabled={modalType === 'create-sub'}
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.letter_code} - {cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <Label>Rule Title (Optional)</Label>
+                    <Input 
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="Enter rule title (optional)"
+                    />
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <Label>Rule Content</Label>
+                    <EditorContainer>
+                      <MDEditor
+                        value={formData.content}
+                        onChange={(content) => setFormData({...formData, content})}
+                        preview="edit"
+                        hideToolbar={false}
+                        data-color-mode="dark"
+                        commands={[
+                          commands.bold,
+                          commands.italic,
+                          commands.strikethrough,
+                          commands.hr,
+                          commands.title,
+                          commands.divider,
+                          commands.link,
+                          imageCommand,
+                          textColorCommand,
+                          commands.code,
+                          commands.codeBlock,
+                          commands.divider,
+                          commands.quote,
+                          commands.unorderedListCommand,
+                          commands.orderedListCommand,
+                          commands.checkedListCommand,
+                        ]}
+                      />
+                    </EditorContainer>
+                  </FormGroup>
 
-                  {/* Pending Announcements Section */}
-                  {pendingApprovals.announcements.length > 0 && (
-                    <div style={{ marginBottom: '2rem' }}>
-                      <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        📢 Pending Announcements ({pendingApprovals.announcements.length})
-                      </h3>
-                      <RulesList>
-                        {pendingApprovals.announcements.map(announcement => (
-                          <RuleCard key={`announcement-${announcement.id}`}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                  <RuleTitle style={{ margin: 0 }}>{announcement.title}</RuleTitle>
-                                  <RuleCode style={{ 
-                                    backgroundColor: '#f39c12',
-                                    color: 'white'
-                                  }}>
-                                    {announcement.status}
-                                  </RuleCode>
-                                  <RuleCode style={{ 
-                                    backgroundColor: announcement.priority >= 4 ? '#e74c3c' : 
-                                                    announcement.priority >= 3 ? '#f39c12' : 
-                                                    announcement.priority >= 2 ? '#677bae' : '#27ae60',
-                                    color: 'white'
-                                  }}>
-                                    Priority {announcement.priority}
-                                  </RuleCode>
-                                </div>
-                                
-                                <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                  <strong>Submitted by:</strong> {announcement.submitted_by_username || 'Unknown'} • 
-                                  <strong> Submitted:</strong> {announcement.submitted_at ? new Date(announcement.submitted_at).toLocaleDateString() : 'Unknown'}
-                                </div>
-                                
-                                <RuleContent 
-                                  dangerouslySetInnerHTML={{ 
-                                    __html: markdownToHtml(announcement.content ? announcement.content.substring(0, 300) + (announcement.content.length > 300 ? '...' : '') : '') 
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            
-                            <RuleActions>
-                              <ActionButton 
-                                onClick={() => openReviewModal(announcement, 'approve', 'announcement')}
-                                style={{ backgroundColor: '#27ae60' }}
-                              >
-                                ✅ Approve
-                              </ActionButton>
-                              <ActionButton 
-                                danger
-                                onClick={() => openReviewModal(announcement, 'reject', 'announcement')}
-                              >
-                                ❌ Reject
-                              </ActionButton>
-                            </RuleActions>
-                          </RuleCard>
-                        ))}
-                      </RulesList>
+                  {/* Image Upload Section */}
+                  <FormGroup>
+                    <Label>Rule Images</Label>
+                    <div style={{ 
+                      border: '2px dashed #445566', 
+                      borderRadius: '8px', 
+                      padding: '1rem',
+                      textAlign: 'center',
+                      backgroundColor: '#2c3e50'
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files[0]) {
+                            uploadRuleImage(e.target.files[0]);
+                            e.target.value = '';
+                          }
+                        }}
+                        style={{ display: 'none' }}
+                        id="image-upload"
+                      />
+                      <label 
+                        htmlFor="image-upload" 
+                        style={{ 
+                          cursor: 'pointer',
+                          color: '#677bae',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        {uploadingImage ? '⏳ Uploading...' : '📁 Click to upload image'}
+                      </label>
+                      <div style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                        Supported formats: JPG, PNG, GIF (Max 10MB)
+                      </div>
                     </div>
-                  )}
+                    
+                    {/* Image Previews */}
+                    {ruleImages.length > 0 && (
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+                        gap: '1rem',
+                        marginTop: '1rem'
+                      }}>
+                        {ruleImages.map((image, index) => (
+                          <div key={index} style={{ position: 'relative' }}>
+                            <img 
+                              src={`${BASE_URL}${image.thumbnailUrl || image.url}`}
+                              alt={image.originalName}
+                              style={{ 
+                                width: '100%', 
+                                height: '80px', 
+                                objectFit: 'cover',
+                                borderRadius: '4px',
+                                border: '1px solid #445566'
+                              }}
+                            />
+                            <button
+                              onClick={() => removeRuleImage(image.id)}
+                              style={{
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                background: '#e74c3c',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '24px',
+                                height: '24px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              ✕
+                            </button>
+                            <div style={{ 
+                              fontSize: '0.7rem', 
+                              color: '#8a9dc9', 
+                              marginTop: '0.25rem',
+                              textAlign: 'center'
+                            }}>
+                              {image.originalName}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </FormGroup>
 
-                  {/* No Pending Items */}
-                  {pendingApprovals.totalPending === 0 && (
-                    <div style={{ textAlign: 'center', padding: '3rem', color: '#bdc3c7' }}>
-                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                      <h3 style={{ color: '#ecf0f1', marginBottom: '0.5rem' }}>All Caught Up!</h3>
-                      <p>No pending submissions require your approval at this time.</p>
+                  {/* Approval Workflow Section - Available for all staff levels */}
+                  <FormGroup>
+                    <Label>Submission Type</Label>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '1rem', 
+                      backgroundColor: '#2c3e50',
+                      padding: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #445566'
+                    }}>
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        cursor: 'pointer'
+                      }}>
+                        <input
+                          type="radio"
+                          name="submissionMode"
+                          value="draft"
+                          checked={submissionMode === 'draft'}
+                          onChange={(e) => {
+                            setSubmissionMode(e.target.value);
+                            setSaveAsDraft(true);
+                          }}
+                        />
+                        <span style={{ color: '#3498db', fontWeight: '500' }}>
+                          📝 Save as Draft
+                        </span>
+                      </label>
+                      
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        cursor: 'pointer'
+                      }}>
+                        <input
+                          type="radio"
+                          name="submissionMode"
+                          value="submit"
+                          checked={submissionMode === 'submit'}
+                          onChange={(e) => {
+                            setSubmissionMode(e.target.value);
+                            setSaveAsDraft(false);
+                          }}
+                        />
+                        <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
+                          {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
+                        </span>
+                      </label>
+                    </div>
+                    
+                    <div style={{ 
+                      color: '#8a9dc9', 
+                      fontSize: '0.85rem', 
+                      marginTop: '0.5rem',
+                      fontStyle: 'italic'
+                    }}>
+                      {submissionMode === 'draft' ? 
+                        '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
+                        user.permissionLevel === 'editor' ? 
+                          '⏳ Submit for approval by moderators. Rule will be reviewed before going live.' :
+                          '✅ Publish immediately. Rule will be live and visible to players right away.'
+                      }
+                    </div>
+                  </FormGroup>
+
+                  {/* Status Information for Moderators+ */}
+                  {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                    <div style={{ 
+                      backgroundColor: 'rgba(103, 123, 174, 0.1)',
+                      padding: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #677bae',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{ color: '#677bae', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                        ℹ️ Moderator Information
+                      </div>
+                      <div style={{ color: '#bdc3c7', fontSize: '0.85rem', lineHeight: '1.4' }}>
+                        As a {user.permissionLevel}, your rules are automatically approved and will be live immediately upon saving.
+                        You can also save drafts for work-in-progress that you want to continue editing later.
+                        {modalType === 'edit' && editingRule?.status && (
+                          <>
+                            <br />
+                            <strong>Current Status:</strong> {editingRule.status}
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
                 </>
               )}
-            </div>
-          )}
-          
-          {activeTab === 'discord' && (
-            <div>
-              <RulesHeader>
-                <h2>Discord Integration</h2>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <Button onClick={loadDiscordSettings} disabled={loadingDiscord}>
-                    {loadingDiscord ? '🔄 Loading...' : '🔄 Refresh Settings'}
-                  </Button>
-                </div>
-              </RulesHeader>
-
-              {/* Settings Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  ⚙️ Discord Settings
-                </h3>
-                
-                <RuleCard>
-                  <div style={{ display: 'grid', gap: '1.5rem' }}>
-                    {/* Master Enable Toggle */}
-                    <div>
-                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Master Controls</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <input
-                            type="checkbox"
-                            checked={discordSettings.announcementsEnabled}
-                            onChange={(e) => setDiscordSettings({...discordSettings, announcementsEnabled: e.target.checked})}
-                            style={{ marginRight: '0.5rem' }}
-                          />
-                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Announcements</span>
-                        </label>
-                        
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <input
-                            type="checkbox"
-                            checked={discordSettings.rulesEnabled}
-                            onChange={(e) => setDiscordSettings({...discordSettings, rulesEnabled: e.target.checked})}
-                            style={{ marginRight: '0.5rem' }}
-                          />
-                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Rules Updates</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Webhook URLs */}
-                    <div>
-                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Webhook Configuration</h4>
-                      <div style={{ display: 'grid', gap: '1rem' }}>
-                        <div>
-                          <Label>Announcements Webhook URL</Label>
-                          <Input
-                            type="text"
-                            value={discordSettings.announcementWebhookUrl}
-                            onChange={(e) => setDiscordSettings({...discordSettings, announcementWebhookUrl: e.target.value})}
-                            placeholder="https://discord.com/api/webhooks/..."
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label>Rules Webhook URL</Label>
-                          <Input
-                            type="text"
-                            value={discordSettings.rulesWebhookUrl}
-                            onChange={(e) => setDiscordSettings({...discordSettings, rulesWebhookUrl: e.target.value})}
-                            placeholder="https://discord.com/api/webhooks/..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Advanced Settings */}
-                    <div>
-                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Advanced Settings</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                          <Label>Emergency Role ID (Priority 5)</Label>
-                          <Input
-                            type="text"
-                            value={discordSettings.emergencyRoleId}
-                            onChange={(e) => setDiscordSettings({...discordSettings, emergencyRoleId: e.target.value})}
-                            placeholder="Role ID for emergency notifications"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label>Default Channel Type</Label>
-                          <Select
-                            value={discordSettings.defaultChannelType}
-                            onChange={(e) => setDiscordSettings({...discordSettings, defaultChannelType: e.target.value})}
-                          >
-                            <option value="announcements">Announcements</option>
-                            <option value="rules">Rules</option>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Embed Color Picker */}
-                    <div>
-                      <Label>Embed Color</Label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(8, 1fr)',
-                          gap: '0.5rem',
-                          padding: '1rem',
-                          backgroundColor: '#2c3e50',
-                          borderRadius: '8px',
-                          border: '1px solid #445566'
-                        }}>
-                          {presetColors.map((color) => (
-                            <div
-                              key={color}
-                              onClick={() => handleColorClick(color)}
-                              onMouseEnter={() => setColorHover(color)}
-                              onMouseLeave={() => setColorHover(null)}
-                              style={{
-                                width: '40px',
-                                height: '40px',
-                                backgroundColor: color,
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                border: discordSettings.embedColor === color ? '3px solid #677bae' : 
-                                        colorHover === color ? '2px solid #8a9dc9' : '2px solid transparent',
-                                transition: 'all 0.2s ease',
-                                position: 'relative'
-                              }}
-                              title={color}
-                            >
-                              {discordSettings.embedColor === color && (
-                                <div style={{
-                                  position: 'absolute',
-                                  top: '50%',
-                                  left: '50%',
-                                  transform: 'translate(-50%, -50%)',
-                                  color: 'white',
-                                  fontWeight: 'bold',
-                                  fontSize: '1.2rem'
-                                }}>
-                                  ✓
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>Custom:</span>
-                          <input
-                            type="color"
-                            value={discordSettings.embedColor}
-                            onChange={(e) => setDiscordSettings({...discordSettings, embedColor: e.target.value})}
-                            style={{
-                              width: '50px',
-                              height: '40px',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer'
-                            }}
-                          />
-                          <Input
-                            type="text"
-                            value={discordSettings.embedColor}
-                            onChange={handleColorInputChange}
-                            onFocus={() => setColorInputFocused(true)}
-                            onBlur={() => setColorInputFocused(false)}
-                            style={{
-                              width: '100px',
-                              fontFamily: 'monospace',
-                              textAlign: 'center',
-                              border: colorInputFocused ? '2px solid #677bae' : '1px solid #445566'
-                            }}
-                            placeholder="#677bae"
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Color Preview */}
-                      <div style={{
-                        padding: '1rem',
-                        backgroundColor: '#2c3e50',
-                        borderRadius: '8px',
-                        border: '1px solid #445566',
-                        borderLeft: `4px solid ${discordSettings.embedColor}`
-                      }}>
-                        <div style={{ color: '#ecf0f1', fontWeight: '600', marginBottom: '0.5rem' }}>
-                          📢 Preview Embed
-                        </div>
-                        <div style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>
-                          This is how your Discord embeds will appear with the selected color.
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #445566' }}>
-                      <Button onClick={saveDiscordSettings} disabled={loadingDiscord}>
-                        {loadingDiscord ? 'Saving...' : '💾 Save Settings'}
-                      </Button>
-                      
-                      <Button 
-                        onClick={() => testDiscordWebhook('announcements')} 
-                        disabled={testingWebhook || !discordSettings.announcementWebhookUrl}
-                        style={{ backgroundColor: '#3498db' }}
-                      >
-                        {testingWebhook ? 'Testing...' : '🧪 Test Announcements Webhook'}
-                      </Button>
-                      
-                      <Button 
-                        onClick={() => testDiscordWebhook('rules')} 
-                        disabled={testingWebhook || !discordSettings.rulesWebhookUrl}
-                        style={{ backgroundColor: '#9b59b6' }}
-                      >
-                        {testingWebhook ? 'Testing...' : '🧪 Test Rules Webhook'}
-                      </Button>
-                    </div>
-                  </div>
-                </RuleCard>
-              </div>
-
-              {/* Message History Section */}
-              <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ color: '#ecf0f1', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  📋 Discord Message History
-                </h3>
-                
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
-                  <Select
-                    value={discordMessageFilter}
-                    onChange={(e) => setDiscordMessageFilter(e.target.value)}
-                  >
-                    <option value="all">All Messages</option>
-                    <option value="announcements">Announcements Only</option>
-                    <option value="rules">Rules Only</option>
-                  </Select>
+              
+              {/* Announcement Form */}
+              {(modalType === 'create-announcement' || modalType === 'edit-announcement') && (
+                <>
+                  <FormGroup>
+                    <Label>Announcement Title</Label>
+                    <Input 
+                      type="text"
+                      value={announcementFormData.title}
+                      onChange={(e) => setAnnouncementFormData({...announcementFormData, title: e.target.value})}
+                      placeholder="Enter announcement title"
+                    />
+                  </FormGroup>
                   
-                  <Button onClick={loadDiscordMessages} disabled={loadingDiscordMessages}>
-                    {loadingDiscordMessages ? '🔄 Loading...' : '🔄 Refresh Messages'}
-                  </Button>
-                </div>
-
-                {loadingDiscordMessages ? (
-                  <LoadingSpinner>
-                    <div>🔄 Loading Discord messages...</div>
-                  </LoadingSpinner>
-                ) : (
-                  <RulesList>
-                    {discordMessages.length > 0 ? (
-                      discordMessages.map((message, index) => (
-                        <RuleCard key={index}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                <RuleCode style={{ 
-                                  backgroundColor: message.message_type === 'announcement' ? '#677bae' : '#9b59b6'
-                                }}>
-                                  {message.message_type === 'announcement' ? '📢 Announcement' : '📋 Rule Update'}
-                                </RuleCode>
-                                
-                                <RuleCode style={{
-                                  backgroundColor: message.delivery_status === 'sent' ? '#27ae60' : 
-                                                  message.delivery_status === 'failed' ? '#e74c3c' : '#f39c12'
-                                }}>
-                                  {message.delivery_status === 'sent' ? '✅ Sent' : 
-                                   message.delivery_status === 'failed' ? '❌ Failed' : '⏳ Pending'}
-                                </RuleCode>
-                              </div>
-                              
-                              <div style={{ color: '#ecf0f1', fontWeight: '500', marginBottom: '0.5rem' }}>
-                                {message.title || message.content?.substring(0, 50) + '...'}
-                              </div>
-                              
-                              <div style={{ color: '#bdc3c7', fontSize: '0.9rem' }}>
-                                <strong>Sent by:</strong> {message.sender_username} • 
-                                <strong> Date:</strong> {new Date(message.created_at).toLocaleString()}
-                                {message.webhook_url && (
-                                  <>
-                                    <br />
-                                    <strong>Webhook:</strong> {message.webhook_url.substring(0, 50)}...
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {message.error_message && (
-                            <div style={{
-                              backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                              color: '#e74c3c',
-                              padding: '0.75rem',
-                              borderRadius: '6px',
-                              marginTop: '1rem',
-                              borderLeft: '3px solid #e74c3c'
-                            }}>
-                              <strong>Error:</strong> {message.error_message}
-                            </div>
-                          )}
-                        </RuleCard>
-                      ))
-                    ) : (
-                      <div style={{ textAlign: 'center', padding: '2rem', color: '#bdc3c7' }}>
-                        No Discord messages found. Messages will appear here after sending announcements or rules to Discord.
-                      </div>
-                    )}
-                  </RulesList>
-                )}
-              </div>
-            </div>
-          )}
-        </TabContent>
-      </TabContainer>
-
-      {showModal && (
-        <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <ModalContainer onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                {modalType === 'edit' ? 'Edit Rule' : 
-                 modalType === 'create-sub' ? 'Add Sub-Rule' : 
-                 modalType === 'create-announcement' ? 'Add New Announcement' :
-                 modalType === 'edit-announcement' ? 'Edit Announcement' : 'Add New Rule'}
-              </ModalTitle>
-              <CloseButton onClick={closeModal}>&times;</CloseButton>
-            </ModalHeader>
-            
-            {/* Rule Form */}
-            {(modalType === 'create' || modalType === 'edit' || modalType === 'create-sub') && (
-              <>
-                <FormGroup>
-                  <Label>Category</Label>
-                  <Select 
-                    value={formData.categoryId} 
-                    onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                    disabled={modalType === 'create-sub'}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.letter_code} - {cat.name}
-                      </option>
-                    ))}
-                  </Select>
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>Rule Title (Optional)</Label>
-                  <Input 
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="Enter rule title (optional)"
-                  />
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>Rule Content</Label>
-                  <EditorContainer>
-                    <MDEditor
-                      value={formData.content}
-                      onChange={(content) => setFormData({...formData, content})}
-                      preview="edit"
-                      hideToolbar={false}
-                      data-color-mode="dark"
-                      commands={[
-                        commands.bold,
-                        commands.italic,
-                        commands.strikethrough,
-                        commands.hr,
-                        commands.title,
-                        commands.divider,
-                        commands.link,
-                        imageCommand,
-                        textColorCommand,
-                        commands.code,
-                        commands.codeBlock,
-                        commands.divider,
-                        commands.quote,
-                        commands.unorderedListCommand,
-                        commands.orderedListCommand,
-                        commands.checkedListCommand,
-                      ]}
-                    />
-                  </EditorContainer>
-                </FormGroup>
-
-                {/* Image Upload Section */}
-                <FormGroup>
-                  <Label>Rule Images</Label>
-                  <div style={{ 
-                    border: '2px dashed #445566', 
-                    borderRadius: '8px', 
-                    padding: '1rem',
-                    textAlign: 'center',
-                    backgroundColor: '#2c3e50'
-                  }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files[0]) {
-                          uploadRuleImage(e.target.files[0]);
-                          e.target.value = '';
-                        }
-                      }}
-                      style={{ display: 'none' }}
-                      id="image-upload"
-                    />
-                    <label 
-                      htmlFor="image-upload" 
-                      style={{ 
-                        cursor: 'pointer',
-                        color: '#677bae',
-                        textDecoration: 'underline'
-                      }}
+                  <FormGroup>
+                    <Label>Content</Label>
+                    <EditorContainer>
+                      <MDEditor
+                        value={announcementFormData.content}
+                        onChange={(content) => setAnnouncementFormData({...announcementFormData, content})}
+                        preview="edit"
+                        hideToolbar={false}
+                        data-color-mode="dark"
+                        commands={[
+                          commands.bold,
+                          commands.italic,
+                          commands.strikethrough,
+                          commands.hr,
+                          commands.title,
+                          commands.divider,
+                          commands.link,
+                          imageCommand,
+                          textColorCommand,
+                          commands.code,
+                          commands.codeBlock,
+                          commands.divider,
+                          commands.quote,
+                          commands.unorderedListCommand,
+                          commands.orderedListCommand,
+                          commands.checkedListCommand,
+                        ]}
+                      />
+                    </EditorContainer>
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <Label>Priority Level</Label>
+                    <Select
+                      value={announcementFormData.priority}
+                      onChange={(e) => setAnnouncementFormData({...announcementFormData, priority: parseInt(e.target.value)})}
                     >
-                      {uploadingImage ? '⏳ Uploading...' : '📁 Click to upload image'}
-                    </label>
-                    <div style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                      Supported formats: JPG, PNG, GIF (Max 10MB)
-                    </div>
-                  </div>
-                  
-                  {/* Image Previews */}
-                  {ruleImages.length > 0 && (
+                      <option value={1}>Low Priority (1)</option>
+                      <option value={2}>Normal Priority (2)</option>
+                      <option value={3}>High Priority (3)</option>
+                      <option value={4}>Critical Priority (4)</option>
+                      <option value={5}>Emergency Priority (5)</option>
+                    </Select>
+                  </FormGroup>
+
+                  {/* Approval Workflow Section for Announcements - Available for all staff levels */}
+                  <FormGroup>
+                    <Label>Submission Type</Label>
                     <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
-                      gap: '1rem',
-                      marginTop: '1rem'
+                      display: 'flex', 
+                      gap: '1rem', 
+                      backgroundColor: '#2c3e50',
+                      padding: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #445566'
                     }}>
-                      {ruleImages.map((image, index) => (
-                        <div key={index} style={{ position: 'relative' }}>
-                          <img 
-                            src={`${BASE_URL}${image.thumbnailUrl || image.url}`}
-                            alt={image.originalName}
-                            style={{ 
-                              width: '100%', 
-                              height: '80px', 
-                              objectFit: 'cover',
-                              borderRadius: '4px',
-                              border: '1px solid #445566'
-                            }}
-                          />
-                          <button
-                            onClick={() => removeRuleImage(image.id)}
-                            style={{
-                              position: 'absolute',
-                              top: '-8px',
-                              right: '-8px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '24px',
-                              height: '24px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            ✕
-                          </button>
-                          <div style={{ 
-                            fontSize: '0.7rem', 
-                            color: '#8a9dc9', 
-                            marginTop: '0.25rem',
-                            textAlign: 'center'
-                          }}>
-                            {image.originalName}
-                          </div>
-                        </div>
-                      ))}
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        cursor: 'pointer'
+                      }}>
+                        <input
+                          type="radio"
+                          name="announcementSubmissionMode"
+                          value="draft"
+                          checked={submissionMode === 'draft'}
+                          onChange={(e) => {
+                            setSubmissionMode(e.target.value);
+                            setSaveAsDraft(true);
+                          }}
+                        />
+                        <span style={{ color: '#3498db', fontWeight: '500' }}>
+                          📝 Save as Draft
+                        </span>
+                      </label>
+                      
+                      <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        cursor: 'pointer'
+                      }}>
+                        <input
+                          type="radio"
+                          name="announcementSubmissionMode"
+                          value="submit"
+                          checked={submissionMode === 'submit'}
+                          onChange={(e) => {
+                            setSubmissionMode(e.target.value);
+                            setSaveAsDraft(false);
+                          }}
+                        />
+                        <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
+                          {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
+                        </span>
+                      </label>
+                    </div>
+                    
+                    <div style={{ 
+                      color: '#8a9dc9', 
+                      fontSize: '0.85rem', 
+                      marginTop: '0.5rem',
+                      fontStyle: 'italic'
+                    }}>
+                      {submissionMode === 'draft' ? 
+                        '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
+                        user.permissionLevel === 'editor' ? 
+                          '⏳ Submit for approval by moderators. Announcement will be reviewed before going live.' :
+                          '✅ Publish immediately. Announcement will be live and visible to players right away.'
+                      }
+                    </div>
+                  </FormGroup>
+
+                  {/* Status Information for Moderators+ */}
+                  {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
+                    <div style={{ 
+                      backgroundColor: 'rgba(103, 123, 174, 0.1)',
+                      padding: '1rem',
+                      borderRadius: '8px',
+                      border: '1px solid #677bae',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{ color: '#677bae', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                        ℹ️ Moderator Information
+                      </div>
+                      <div style={{ color: '#bdc3c7', fontSize: '0.85rem', lineHeight: '1.4' }}>
+                        As a {user.permissionLevel}, your announcements are automatically approved and will be live immediately upon saving.
+                        {modalType === 'edit-announcement' && editingAnnouncement?.status && (
+                          <>
+                            <br />
+                            <strong>Current Status:</strong> {editingAnnouncement.status}
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
-                </FormGroup>
+                </>
+              )}
+              
+              <ModalActions>
+                <Button onClick={(modalType === 'create-announcement' || modalType === 'edit-announcement') ? closeAnnouncementModal : closeModal} style={{ backgroundColor: '#95a5a6' }}>
+                  Cancel
+                </Button>
+                <Button onClick={(modalType === 'create-announcement' || modalType === 'edit-announcement') ? saveAnnouncement : saveRule}>
+                  {modalType === 'edit' ? 'Update Rule' : 
+                   modalType === 'edit-announcement' ? 'Update Announcement' :
+                   modalType === 'create-announcement' ? 'Save Announcement' : 'Save Rule'}
+                </Button>
+              </ModalActions>
+            </ModalContainer>
+          </ModalBackdrop>
+        )}
 
-                {/* Approval Workflow Section - Available for all staff levels */}
-                <FormGroup>
-                  <Label>Submission Type</Label>
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '1rem', 
-                    backgroundColor: '#2c3e50',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #445566'
-                  }}>
-                    <label style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="radio"
-                        name="submissionMode"
-                        value="draft"
-                        checked={submissionMode === 'draft'}
-                        onChange={(e) => {
-                          setSubmissionMode(e.target.value);
-                          setSaveAsDraft(true);
-                        }}
-                      />
-                      <span style={{ color: '#3498db', fontWeight: '500' }}>
-                        📝 Save as Draft
-                      </span>
-                    </label>
-                    
-                    <label style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="radio"
-                        name="submissionMode"
-                        value="submit"
-                        checked={submissionMode === 'submit'}
-                        onChange={(e) => {
-                          setSubmissionMode(e.target.value);
-                          setSaveAsDraft(false);
-                        }}
-                      />
-                      <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
-                        {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div style={{ 
-                    color: '#8a9dc9', 
-                    fontSize: '0.85rem', 
-                    marginTop: '0.5rem',
-                    fontStyle: 'italic'
-                  }}>
-                    {submissionMode === 'draft' ? 
-                      '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
-                      user.permissionLevel === 'editor' ? 
-                        '⏳ Submit for approval by moderators. Rule will be reviewed before going live.' :
-                        '✅ Publish immediately. Rule will be live and visible to players right away.'
-                    }
-                  </div>
-                </FormGroup>
-
-                {/* Status Information for Moderators+ */}
-                {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                  <div style={{ 
-                    backgroundColor: 'rgba(103, 123, 174, 0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #677bae',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{ color: '#677bae', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                      ℹ️ Moderator Information
-                    </div>
-                    <div style={{ color: '#bdc3c7', fontSize: '0.85rem', lineHeight: '1.4' }}>
-                      As a {user.permissionLevel}, your rules are automatically approved and will be live immediately upon saving.
-                      You can also save drafts for work-in-progress that you want to continue editing later.
-                      {modalType === 'edit' && editingRule?.status && (
-                        <>
-                          <br />
-                          <strong>Current Status:</strong> {editingRule.status}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            
-            {/* Announcement Form */}
-            {(modalType === 'create-announcement' || modalType === 'edit-announcement') && (
-              <>
-                <FormGroup>
-                  <Label>Announcement Title</Label>
-                  <Input 
-                    type="text"
-                    value={announcementFormData.title}
-                    onChange={(e) => setAnnouncementFormData({...announcementFormData, title: e.target.value})}
-                    placeholder="Enter announcement title"
-                  />
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>Content</Label>
-                  <EditorContainer>
-                    <MDEditor
-                      value={announcementFormData.content}
-                      onChange={(content) => setAnnouncementFormData({...announcementFormData, content})}
-                      preview="edit"
-                      hideToolbar={false}
-                      data-color-mode="dark"
-                      commands={[
-                        commands.bold,
-                        commands.italic,
-                        commands.strikethrough,
-                        commands.hr,
-                        commands.title,
-                        commands.divider,
-                        commands.link,
-                        imageCommand,
-                        textColorCommand,
-                        commands.code,
-                        commands.codeBlock,
-                        commands.divider,
-                        commands.quote,
-                        commands.unorderedListCommand,
-                        commands.orderedListCommand,
-                        commands.checkedListCommand,
-                      ]}
-                    />
-                  </EditorContainer>
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>Priority Level</Label>
-                  <Select
-                    value={announcementFormData.priority}
-                    onChange={(e) => setAnnouncementFormData({...announcementFormData, priority: parseInt(e.target.value)})}
+        {/* Notification Modal */}
+        {showNotificationModal && (
+          <NotificationModalBackdrop onClick={(e) => e.target === e.currentTarget && closeNotificationModal()}>
+            <NotificationModalContainer type={notificationConfig.type} onClick={(e) => e.stopPropagation()}>
+              <NotificationHeader>
+                <NotificationIcon type={notificationConfig.type}>
+                  {getNotificationIcon(notificationConfig.type)}
+                </NotificationIcon>
+                <NotificationTitle>{notificationConfig.title}</NotificationTitle>
+              </NotificationHeader>
+              <NotificationMessage>{notificationConfig.message}</NotificationMessage>
+              <NotificationActions>
+                {notificationConfig.showCancel && (
+                  <NotificationButton 
+                    variant="secondary" 
+                    onClick={() => {
+                      if (notificationConfig.onCancel) notificationConfig.onCancel();
+                      setShowNotificationModal(false);
+                    }}
                   >
-                    <option value={1}>Low Priority (1)</option>
-                    <option value={2}>Normal Priority (2)</option>
-                    <option value={3}>High Priority (3)</option>
-                    <option value={4}>Critical Priority (4)</option>
-                    <option value={5}>Emergency Priority (5)</option>
-                  </Select>
-                </FormGroup>
-
-                {/* Approval Workflow Section for Announcements - Available for all staff levels */}
-                <FormGroup>
-                  <Label>Submission Type</Label>
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '1rem', 
-                    backgroundColor: '#2c3e50',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #445566'
-                  }}>
-                    <label style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="radio"
-                        name="announcementSubmissionMode"
-                        value="draft"
-                        checked={submissionMode === 'draft'}
-                        onChange={(e) => {
-                          setSubmissionMode(e.target.value);
-                          setSaveAsDraft(true);
-                        }}
-                      />
-                      <span style={{ color: '#3498db', fontWeight: '500' }}>
-                        📝 Save as Draft
-                      </span>
-                    </label>
-                    
-                    <label style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem',
-                      cursor: 'pointer'
-                    }}>
-                      <input
-                        type="radio"
-                        name="announcementSubmissionMode"
-                        value="submit"
-                        checked={submissionMode === 'submit'}
-                        onChange={(e) => {
-                          setSubmissionMode(e.target.value);
-                          setSaveAsDraft(false);
-                        }}
-                      />
-                      <span style={{ color: user.permissionLevel === 'editor' ? '#f39c12' : '#27ae60', fontWeight: '500' }}>
-                        {user.permissionLevel === 'editor' ? '⏳ Submit for Approval' : '✅ Publish Live'}
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div style={{ 
-                    color: '#8a9dc9', 
-                    fontSize: '0.85rem', 
-                    marginTop: '0.5rem',
-                    fontStyle: 'italic'
-                  }}>
-                    {submissionMode === 'draft' ? 
-                      '📝 Save as draft to continue editing later. Drafts are not visible to players.' :
-                      user.permissionLevel === 'editor' ? 
-                        '⏳ Submit for approval by moderators. Announcement will be reviewed before going live.' :
-                        '✅ Publish immediately. Announcement will be live and visible to players right away.'
-                    }
-                  </div>
-                </FormGroup>
-
-                {/* Status Information for Moderators+ */}
-                {(user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
-                  <div style={{ 
-                    backgroundColor: 'rgba(103, 123, 174, 0.1)',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #677bae',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{ color: '#677bae', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-                      ℹ️ Moderator Information
-                    </div>
-                    <div style={{ color: '#bdc3c7', fontSize: '0.85rem', lineHeight: '1.4' }}>
-                      As a {user.permissionLevel}, your announcements are automatically approved and will be live immediately upon saving.
-                      {modalType === 'edit-announcement' && editingAnnouncement?.status && (
-                        <>
-                          <br />
-                          <strong>Current Status:</strong> {editingAnnouncement.status}
-                        </>
-                      )}
-                    </div>
-                  </div>
+                    {notificationConfig.cancelText}
+                  </NotificationButton>
                 )}
-              </>
-            )}
-            
-            <ModalActions>
-              <Button onClick={(modalType === 'create-announcement' || modalType === 'edit-announcement') ? closeAnnouncementModal : closeModal} style={{ backgroundColor: '#95a5a6' }}>
-                Cancel
-              </Button>
-              <Button onClick={(modalType === 'create-announcement' || modalType === 'edit-announcement') ? saveAnnouncement : saveRule}>
-                {modalType === 'edit' ? 'Update Rule' : 
-                 modalType === 'edit-announcement' ? 'Update Announcement' :
-                 modalType === 'create-announcement' ? 'Save Announcement' : 'Save Rule'}
-              </Button>
-            </ModalActions>
-          </ModalContainer>
-        </ModalBackdrop>
-      )}
-
-      {/* Notification Modal */}
-      {showNotificationModal && (
-        <NotificationModalBackdrop onClick={(e) => e.target === e.currentTarget && closeNotificationModal()}>
-          <NotificationModalContainer type={notificationConfig.type} onClick={(e) => e.stopPropagation()}>
-            <NotificationHeader>
-              <NotificationIcon type={notificationConfig.type}>
-                {getNotificationIcon(notificationConfig.type)}
-              </NotificationIcon>
-              <NotificationTitle>{notificationConfig.title}</NotificationTitle>
-            </NotificationHeader>
-            <NotificationMessage>{notificationConfig.message}</NotificationMessage>
-            <NotificationActions>
-              {notificationConfig.showCancel && (
                 <NotificationButton 
-                  variant="secondary" 
+                  variant="primary" 
+                  type={notificationConfig.type}
                   onClick={() => {
-                    if (notificationConfig.onCancel) notificationConfig.onCancel();
+                    if (notificationConfig.onConfirm) notificationConfig.onConfirm();
                     setShowNotificationModal(false);
                   }}
                 >
-                  {notificationConfig.cancelText}
+                  {notificationConfig.confirmText}
                 </NotificationButton>
-              )}
-              <NotificationButton 
-                variant="primary" 
-                type={notificationConfig.type}
-                onClick={() => {
-                  if (notificationConfig.onConfirm) notificationConfig.onConfirm();
-                  setShowNotificationModal(false);
-                }}
-              >
-                {notificationConfig.confirmText}
-              </NotificationButton>
-            </NotificationActions>
-          </NotificationModalContainer>
-        </NotificationModalBackdrop>
-      )}
+              </NotificationActions>
+            </NotificationModalContainer>
+          </NotificationModalBackdrop>
+        )}
 
+        {/* Review Modal for Approvals */}
+        {showReviewModal && (
+          <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeReviewModal()}>
+            <ModalContainer onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
       {/* Review Modal for Approvals */}
       {showReviewModal && (
         <ModalBackdrop onClick={(e) => e.target === e.currentTarget && closeReviewModal()}>
@@ -5908,6 +6005,7 @@ For questions, contact staff immediately.`,
           </ModalContainer>
         </ModalBackdrop>
       )}
+      </ContentWrapper>
     </DashboardContainer>
   );
 }
