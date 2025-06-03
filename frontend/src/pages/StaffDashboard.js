@@ -621,11 +621,22 @@ const ModalBackdrop = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: 
+    radial-gradient(circle at 30% 40%, rgba(103, 123, 174, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(138, 157, 201, 0.1) 0%, transparent 50%),
+    rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 `;
 
 const NotificationModalBackdrop = styled.div`
@@ -634,22 +645,92 @@ const NotificationModalBackdrop = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: 
+    radial-gradient(circle at 30% 40%, rgba(103, 123, 174, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(138, 157, 201, 0.1) 0%, transparent 50%),
+    rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1100;
+  animation: fadeIn 0.3s ease;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 `;
 
 const ModalContainer = styled.div`
-  background-color: #34495e;
-  border-radius: 12px;
+  background: 
+    linear-gradient(135deg, 
+      rgba(52, 73, 94, 0.95) 0%, 
+      rgba(44, 62, 80, 0.98) 50%,
+      rgba(52, 73, 94, 0.95) 100%
+    ),
+    radial-gradient(circle at top right, rgba(103, 123, 174, 0.1) 0%, transparent 60%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(103, 123, 174, 0.3);
+  border-radius: 16px;
   padding: 2rem;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(103, 123, 174, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(138, 157, 201, 0.03) 0%, transparent 50%);
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  @keyframes modalSlideIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(-20px) scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(44, 62, 80, 0.5);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%);
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -679,48 +760,203 @@ const CloseButton = styled.button`
 
 const FormGroup = styled.div`
   margin-bottom: 1.5rem;
+  position: relative;
 `;
 
 const Label = styled.label`
   display: block;
   color: #ecf0f1;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const Input = styled.input`
   width: 100%;
-  background-color: #2c3e50;
+  background: 
+    linear-gradient(135deg, 
+      rgba(44, 62, 80, 0.9) 0%, 
+      rgba(52, 73, 94, 0.95) 100%
+    );
   color: #ecf0f1;
-  border: 1px solid #445566;
-  padding: 0.75rem;
-  border-radius: 4px;
+  border: 2px solid rgba(103, 123, 174, 0.3);
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
   font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
+  &::placeholder {
+    color: rgba(138, 157, 201, 0.7);
+    font-style: italic;
+  }
+  
+  &:hover {
+    border-color: rgba(138, 157, 201, 0.5);
+    background: 
+      linear-gradient(135deg, 
+        rgba(52, 73, 94, 0.95) 0%, 
+        rgba(58, 79, 100, 0.98) 100%
+      );
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
   
   &:focus {
     border-color: #677bae;
     outline: none;
+    background: 
+      linear-gradient(135deg, 
+        rgba(52, 73, 94, 0.98) 0%, 
+        rgba(103, 123, 174, 0.15) 100%
+      );
+    box-shadow: 
+      0 0 0 3px rgba(103, 123, 174, 0.2),
+      0 6px 16px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, rgba(149, 165, 166, 0.3) 0%, rgba(127, 140, 141, 0.3) 100%);
+    color: rgba(236, 240, 241, 0.5);
+    cursor: not-allowed;
+    border-color: rgba(103, 123, 174, 0.1);
+  }
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  background: 
+    linear-gradient(135deg, 
+      rgba(44, 62, 80, 0.9) 0%, 
+      rgba(52, 73, 94, 0.95) 100%
+    );
+  color: #ecf0f1;
+  border: 2px solid rgba(103, 123, 174, 0.3);
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
+  &::placeholder {
+    color: rgba(138, 157, 201, 0.7);
+    font-style: italic;
+  }
+  
+  &:hover {
+    border-color: rgba(138, 157, 201, 0.5);
+    background: 
+      linear-gradient(135deg, 
+        rgba(52, 73, 94, 0.95) 0%, 
+        rgba(58, 79, 100, 0.98) 100%
+      );
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  &:focus {
+    border-color: #677bae;
+    outline: none;
+    background: 
+      linear-gradient(135deg, 
+        rgba(52, 73, 94, 0.98) 0%, 
+        rgba(103, 123, 174, 0.15) 100%
+      );
+    box-shadow: 
+      0 0 0 3px rgba(103, 123, 174, 0.2),
+      0 6px 16px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, rgba(149, 165, 166, 0.3) 0%, rgba(127, 140, 141, 0.3) 100%);
+    color: rgba(236, 240, 241, 0.5);
+    cursor: not-allowed;
+    border-color: rgba(103, 123, 174, 0.1);
   }
 `;
 
 const EditorContainer = styled.div`
   .w-md-editor {
-    background-color: #2c3e50;
+    background: 
+      linear-gradient(135deg, 
+        rgba(44, 62, 80, 0.9) 0%, 
+        rgba(52, 73, 94, 0.95) 100%
+      );
+    border: 2px solid rgba(103, 123, 174, 0.3);
+    border-radius: 8px;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
   }
   
   .w-md-editor-text-textarea, 
   .w-md-editor-text {
-    background-color: #2c3e50 !important;
+    background: 
+      linear-gradient(135deg, 
+        rgba(44, 62, 80, 0.95) 0%, 
+        rgba(52, 73, 94, 0.98) 100%
+      ) !important;
     color: #ecf0f1 !important;
+    border: none !important;
+    font-family: inherit !important;
   }
   
   .w-md-editor-bar {
-    background-color: #34495e;
-    border-color: #445566;
+    background: 
+      linear-gradient(135deg, 
+        rgba(52, 73, 94, 0.98) 0%, 
+        rgba(44, 62, 80, 0.95) 100%
+      );
+    border: none;
+    border-bottom: 1px solid rgba(103, 123, 174, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
   }
   
   .w-md-editor-bar svg {
     color: #ecf0f1;
+    transition: color 0.2s ease;
+  }
+  
+  .w-md-editor-bar button:hover svg {
+    color: #8a9dc9;
+  }
+  
+  .w-md-editor-bar button {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(103, 123, 174, 0.2);
+    }
   }
 `;
 
@@ -729,8 +965,23 @@ const ModalActions = styled.div`
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #445566;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(103, 123, 174, 0.2);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(103, 123, 174, 0.5) 50%, 
+      transparent 100%
+    );
+  }
 `;
 
 const SearchContainer = styled.div`
@@ -986,21 +1237,66 @@ const ReorderingOverlay = styled.div`
 
 // Custom notification modal styled components
 const NotificationModalContainer = styled.div`
-  background-color: #34495e;
-  border-radius: 12px;
+  background: 
+    linear-gradient(135deg, 
+      rgba(52, 73, 94, 0.98) 0%, 
+      rgba(44, 62, 80, 0.99) 50%,
+      rgba(52, 73, 94, 0.98) 100%
+    ),
+    radial-gradient(circle at top left, rgba(103, 123, 174, 0.1) 0%, transparent 50%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 16px;
   padding: 2rem;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.5),
+    0 12px 24px rgba(103, 123, 174, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   border: 2px solid ${props => {
     switch(props.type) {
-      case 'success': return '#27ae60';
-      case 'error': return '#e74c3c';
-      case 'warning': return '#f39c12';
-      case 'confirm': return '#3498db';
-      default: return '#677bae';
+      case 'success': return 'rgba(39, 174, 96, 0.4)';
+      case 'error': return 'rgba(231, 76, 60, 0.4)';
+      case 'warning': return 'rgba(243, 156, 18, 0.4)';
+      case 'confirm': return 'rgba(52, 152, 219, 0.4)';
+      default: return 'rgba(103, 123, 174, 0.4)';
     }
   }};
+  position: relative;
+  animation: notificationSlideIn 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => {
+      switch(props.type) {
+        case 'success': return 'radial-gradient(circle at top right, rgba(39, 174, 96, 0.05) 0%, transparent 60%)';
+        case 'error': return 'radial-gradient(circle at top right, rgba(231, 76, 60, 0.05) 0%, transparent 60%)';
+        case 'warning': return 'radial-gradient(circle at top right, rgba(243, 156, 18, 0.05) 0%, transparent 60%)';
+        case 'confirm': return 'radial-gradient(circle at top right, rgba(52, 152, 219, 0.05) 0%, transparent 60%)';
+        default: return 'radial-gradient(circle at top right, rgba(103, 123, 174, 0.05) 0%, transparent 60%)';
+      }
+    }};
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  @keyframes notificationSlideIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(-30px) scale(0.9); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
 `;
 
 const NotificationHeader = styled.div`
@@ -1045,29 +1341,79 @@ const NotificationActions = styled.div`
 `;
 
 const NotificationButton = styled.button`
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    right: 100%;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.5s ease;
+  }
   
   ${props => props.variant === 'primary' ? `
-    background-color: ${props.type === 'warning' || props.type === 'error' ? '#e74c3c' : '#677bae'};
+    background: linear-gradient(135deg, ${props.type === 'warning' || props.type === 'error' ? '#e74c3c' : '#677bae'} 0%, ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'} 100%);
+    background-size: 200% 100%;
     color: white;
+    box-shadow: 
+      0 2px 8px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(138, 157, 201, 0.3);
     
     &:hover {
-      background-color: ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'};
+      background: linear-gradient(135deg, ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'} 0%, ${props.type === 'warning' || props.type === 'error' ? '#a93226' : '#a8b9d6'} 100%);
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 16px rgba(103, 123, 174, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border-color: rgba(168, 185, 214, 0.5);
+      
+      &::before {
+        left: -50%;
+        right: -50%;
+      }
     }
   ` : `
-    background-color: #95a5a6;
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    background-size: 200% 100%;
     color: white;
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(149, 165, 166, 0.3);
     
     &:hover {
-      background-color: #7f8c8d;
+      background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      
+      &::before {
+        left: -50%;
+        right: -50%;
+      }
     }
   `}
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 // Dashboard Overview styled components
@@ -5993,7 +6339,7 @@ For questions, contact staff immediately.`,
                   <Label>
                     Review Notes {reviewAction === 'reject' ? '(Required)' : '(Optional)'}
                   </Label>
-                  <textarea
+                  <Textarea
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
                     placeholder={
@@ -6001,17 +6347,7 @@ For questions, contact staff immediately.`,
                         ? 'Optional notes about this approval...' 
                         : 'Please explain why this is being rejected...'
                     }
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      backgroundColor: '#2c3e50',
-                      color: '#ecf0f1',
-                      border: '1px solid #445566',
-                      borderRadius: '4px',
-                      padding: '0.75rem',
-                      fontSize: '1rem',
-                      resize: 'vertical'
-                    }}
+                    style={{ minHeight: '120px' }}
                   />
                 </FormGroup>
               </>
@@ -6239,21 +6575,11 @@ For questions, contact staff immediately.`,
 
             <FormGroup>
               <Label>Description</Label>
-              <textarea
+              <Textarea
                 value={categoryFormData.description}
                 onChange={(e) => setCategoryFormData({...categoryFormData, description: e.target.value})}
                 placeholder="Enter category description..."
-                style={{
-                  width: '100%',
-                  minHeight: '100px',
-                  backgroundColor: '#2c3e50',
-                  color: '#ecf0f1',
-                  border: '1px solid #445566',
-                  borderRadius: '4px',
-                  padding: '0.75rem',
-                  fontSize: '1rem',
-                  resize: 'vertical'
-                }}
+                style={{ minHeight: '120px' }}
               />
             </FormGroup>
 
