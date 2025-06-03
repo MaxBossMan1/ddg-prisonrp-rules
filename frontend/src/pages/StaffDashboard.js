@@ -525,17 +525,39 @@ const RuleActions = styled.div`
 `;
 
 const ActionButton = styled.button`
-  background-color: ${props => props.danger ? '#e74c3c' : '#95a5a6'};
+  background: ${props => props.danger ? 
+    'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' : 
+    'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'};
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    0 2px 6px ${props => props.danger ? 
+      'rgba(231, 76, 60, 0.2)' : 
+      'rgba(149, 165, 166, 0.2)'},
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   
   &:hover {
-    background-color: ${props => props.danger ? '#c0392b' : '#7f8c8d'};
+    background: ${props => props.danger ? 
+      'linear-gradient(135deg, #c0392b 0%, #a93226 100%)' : 
+      'linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%)'};
+    transform: translateY(-1px);
+    box-shadow: 
+      0 4px 12px ${props => props.danger ? 
+        'rgba(231, 76, 60, 0.3)' : 
+        'rgba(149, 165, 166, 0.3)'},
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -1035,27 +1057,47 @@ const NotificationActions = styled.div`
 const NotificationButton = styled.button`
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   
   ${props => props.variant === 'primary' ? `
-    background-color: ${props.type === 'warning' || props.type === 'error' ? '#e74c3c' : '#677bae'};
+    background: linear-gradient(135deg, ${props.type === 'warning' || props.type === 'error' ? '#e74c3c' : '#677bae'} 0%, ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'} 100%);
     color: white;
+    box-shadow: 
+      0 2px 8px rgba(${props.type === 'warning' || props.type === 'error' ? '231, 76, 60' : '103, 123, 174'}, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
     
     &:hover {
-      background-color: ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'};
+      background: linear-gradient(135deg, ${props.type === 'warning' || props.type === 'error' ? '#c0392b' : '#8a9dc9'} 0%, ${props.type === 'warning' || props.type === 'error' ? '#a93226' : '#a8b9d6'} 100%);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 16px rgba(${props.type === 'warning' || props.type === 'error' ? '231, 76, 60' : '103, 123, 174'}, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
   ` : `
-    background-color: #95a5a6;
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
     color: white;
+    box-shadow: 
+      0 2px 8px rgba(149, 165, 166, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
     
     &:hover {
-      background-color: #7f8c8d;
+      background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 16px rgba(149, 165, 166, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
   `}
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 // Dashboard Overview styled components
