@@ -4819,14 +4819,21 @@ For questions, contact staff immediately.`,
                 </div>
 
                 <RulesList>
-                  {announcements.map(announcement => (
+                  {pendingApprovals && pendingApprovals.announcements && pendingApprovals.announcements.map(announcement => (
                     <RuleCard key={announcement.id}>
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                           <div style={{ flex: 1 }}>
                             <RuleTitle>{announcement.title}</RuleTitle>
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                              <RuleCode>Priority: {announcement.priority}</RuleCode>
+                              <RuleCode style={{ 
+                                backgroundColor: announcement.priority >= 4 ? '#e74c3c' : 
+                                                announcement.priority >= 3 ? '#f39c12' : 
+                                                announcement.priority >= 2 ? '#677bae' : '#27ae60',
+                                color: 'white'
+                              }}>
+                                Priority {announcement.priority}
+                              </RuleCode>
                               
                               {/* Status Indicator */}
                               {announcement.status && (
@@ -4834,45 +4841,36 @@ For questions, contact staff immediately.`,
                                   {announcement.status}
                                 </StatusBadge>
                               )}
-                              
-                                <RuleCode style={{ 
-                                  backgroundColor: announcement.priority >= 4 ? '#e74c3c' : 
-                                                  announcement.priority >= 3 ? '#f39c12' : 
-                                                  announcement.priority >= 2 ? '#677bae' : '#27ae60',
-                                  color: 'white'
-                                }}>
-                                  Priority {announcement.priority}
-                                </RuleCode>
-                              </div>
-                              
-                              <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                <strong>Submitted by:</strong> {announcement.submitted_by_username || 'Unknown'} • 
-                                <strong> Submitted:</strong> {announcement.submitted_at ? new Date(announcement.submitted_at).toLocaleDateString() : 'Unknown'}
-                              </div>
-                              
-                              <RuleContent 
-                                dangerouslySetInnerHTML={{ 
-                                  __html: markdownToHtml(announcement.content ? announcement.content.substring(0, 300) + (announcement.content.length > 300 ? '...' : '') : '') 
-                                }}
-                              />
                             </div>
+                            
+                            <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                              <strong>Submitted by:</strong> {announcement.submitted_by_username || 'Unknown'} • 
+                              <strong> Submitted:</strong> {announcement.submitted_at ? new Date(announcement.submitted_at).toLocaleDateString() : 'Unknown'}
+                            </div>
+                            
+                            <RuleContent 
+                              dangerouslySetInnerHTML={{ 
+                                __html: markdownToHtml(announcement.content ? announcement.content.substring(0, 300) + (announcement.content.length > 300 ? '...' : '') : '') 
+                              }}
+                            />
                           </div>
-                          
-                          <RuleActions>
-                            <ActionButton 
-                              onClick={() => openReviewModal(announcement, 'approve', 'announcement')}
-                              style={{ backgroundColor: '#27ae60' }}
-                            >
-                              ✅ Approve
-                            </ActionButton>
-                            <ActionButton 
-                              danger
-                              onClick={() => openReviewModal(announcement, 'reject', 'announcement')}
-                            >
-                              ❌ Reject
-                            </ActionButton>
-                          </RuleActions>
                         </div>
+                        
+                        <RuleActions>
+                          <ActionButton 
+                            onClick={() => openReviewModal(announcement, 'approve', 'announcement')}
+                            style={{ backgroundColor: '#27ae60' }}
+                          >
+                            ✅ Approve
+                          </ActionButton>
+                          <ActionButton 
+                            danger
+                            onClick={() => openReviewModal(announcement, 'reject', 'announcement')}
+                          >
+                            ❌ Reject
+                          </ActionButton>
+                        </RuleActions>
+                      </div>
                     </RuleCard>
                   ))}
                 </RulesList>
