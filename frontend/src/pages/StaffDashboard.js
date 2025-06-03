@@ -950,21 +950,45 @@ const ReorderingOverlay = styled.div`
 
 // Custom notification modal styled components
 const NotificationModalContainer = styled.div`
-  background-color: #34495e;
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.95) 0%, rgba(44, 62, 80, 0.95) 100%);
+  border-radius: 16px;
   padding: 2rem;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
   border: 2px solid ${props => {
     switch(props.type) {
-      case 'success': return '#27ae60';
-      case 'error': return '#e74c3c';
-      case 'warning': return '#f39c12';
-      case 'confirm': return '#3498db';
-      default: return '#677bae';
+      case 'success': return 'rgba(39, 174, 96, 0.6)';
+      case 'error': return 'rgba(231, 76, 60, 0.6)';
+      case 'warning': return 'rgba(243, 156, 18, 0.6)';
+      case 'confirm': return 'rgba(52, 152, 219, 0.6)';
+      default: return 'rgba(103, 123, 174, 0.6)';
     }
   }};
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => {
+      switch(props.type) {
+        case 'success': return 'radial-gradient(circle at 20% 30%, rgba(39, 174, 96, 0.1) 0%, transparent 70%)';
+        case 'error': return 'radial-gradient(circle at 20% 30%, rgba(231, 76, 60, 0.1) 0%, transparent 70%)';
+        case 'warning': return 'radial-gradient(circle at 20% 30%, rgba(243, 156, 18, 0.1) 0%, transparent 70%)';
+        case 'confirm': return 'radial-gradient(circle at 20% 30%, rgba(52, 152, 219, 0.1) 0%, transparent 70%)';
+        default: return 'radial-gradient(circle at 20% 30%, rgba(103, 123, 174, 0.1) 0%, transparent 70%)';
+      }
+    }};
+    border-radius: 16px;
+    pointer-events: none;
+  }
 `;
 
 const NotificationHeader = styled.div`
@@ -1043,16 +1067,34 @@ const DashboardGrid = styled.div`
 `;
 
 const DashboardCard = styled.div`
-  background-color: #2c3e50;
-  border: 1px solid #445566;
+  background: linear-gradient(135deg, rgba(52, 73, 94, 0.9) 0%, rgba(44, 62, 80, 0.9) 100%);
+  border: 1px solid rgba(103, 123, 174, 0.2);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 10% 20%, rgba(103, 123, 174, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
   
   &:hover {
     border-color: #677bae;
-    box-shadow: 0 4px 12px rgba(103, 123, 174, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 24px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 `;
 
@@ -1060,7 +1102,8 @@ const StatCard = styled(DashboardCard)`
   text-align: center;
   
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    border-color: #677bae;
   }
 `;
 
