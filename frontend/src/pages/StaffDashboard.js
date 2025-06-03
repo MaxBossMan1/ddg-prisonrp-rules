@@ -271,18 +271,38 @@ const RulesHeader = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: #677bae;
+  background: linear-gradient(135deg, #677bae 0%, #8a9dc9 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 2px 8px rgba(103, 123, 174, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   
   &:hover {
-    background-color: #8a9dc9;
+    background: linear-gradient(135deg, #8a9dc9 0%, #a8b9d6 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 16px rgba(103, 123, 174, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 `;
 
