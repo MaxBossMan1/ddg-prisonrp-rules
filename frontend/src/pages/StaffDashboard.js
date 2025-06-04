@@ -2193,7 +2193,9 @@ For questions, contact staff immediately.`,
     id: null,
     letter_code: '',
     name: '',
-    description: ''
+    description: '',
+    color: '#3498db',
+    is_active: true
   });
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [reorderingCategories, setReorderingCategories] = useState(false);
@@ -3615,7 +3617,9 @@ For questions, contact staff immediately.`,
       id: null,
       letter_code: '',
       name: '',
-      description: ''
+      description: '',
+      color: '#3498db',
+      is_active: true
     });
     setCategoryModalType('create');
     setShowCategoryModal(true);
@@ -3626,7 +3630,9 @@ For questions, contact staff immediately.`,
       id: category.id,
       letter_code: category.letter_code,
       name: category.name,
-      description: category.description || ''
+      description: category.description || '',
+      color: category.color || '#3498db',
+      is_active: category.is_active === 1
     });
     setCategoryModalType('edit');
     setShowCategoryModal(true);
@@ -3638,7 +3644,9 @@ For questions, contact staff immediately.`,
       id: null,
       letter_code: '',
       name: '',
-      description: ''
+      description: '',
+      color: '#3498db',
+      is_active: true
     });
   };
 
@@ -3668,7 +3676,9 @@ For questions, contact staff immediately.`,
         body: JSON.stringify({
           letter_code: categoryFormData.letter_code.trim().toUpperCase(),
           name: categoryFormData.name.trim(),
-          description: categoryFormData.description.trim()
+          description: categoryFormData.description.trim(),
+          color: categoryFormData.color,
+          is_active: categoryFormData.is_active
         })
       });
 
@@ -6769,8 +6779,8 @@ For questions, contact staff immediately.`,
               <Label>Category Code *</Label>
               <Input
                 type="text"
-                value={categoryFormData.code}
-                onChange={(e) => setCategoryFormData({...categoryFormData, code: e.target.value.toUpperCase()})}
+                value={categoryFormData.letter_code}
+                onChange={(e) => setCategoryFormData({...categoryFormData, letter_code: e.target.value.toUpperCase()})}
                 placeholder="Enter category code (e.g., A, B, C)..."
                 maxLength="3"
               />
@@ -6812,10 +6822,10 @@ For questions, contact staff immediately.`,
               </Button>
               <Button 
                 onClick={saveCategory}
-                disabled={!categoryFormData.name || !categoryFormData.code}
+                disabled={!categoryFormData.name || !categoryFormData.letter_code}
                 style={{ 
-                  backgroundColor: categoryFormData.name && categoryFormData.code ? '#27ae60' : '#95a5a6',
-                  opacity: categoryFormData.name && categoryFormData.code ? 1 : 0.6
+                  backgroundColor: categoryFormData.name && categoryFormData.letter_code ? '#27ae60' : '#95a5a6',
+                  opacity: categoryFormData.name && categoryFormData.letter_code ? 1 : 0.6
                 }}
               >
                 {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
