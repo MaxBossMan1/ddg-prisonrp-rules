@@ -6822,10 +6822,10 @@ For questions, contact staff immediately.`,
               </Button>
               <Button 
                 onClick={saveCategory}
-                disabled={!categoryFormData.name || !categoryFormData.letter_code}
+                disabled={!categoryFormData.name.trim() || !categoryFormData.letter_code.trim()}
                 style={{ 
-                  backgroundColor: categoryFormData.name && categoryFormData.letter_code ? '#27ae60' : '#95a5a6',
-                  opacity: categoryFormData.name && categoryFormData.letter_code ? 1 : 0.6
+                  backgroundColor: categoryFormData.name.trim() && categoryFormData.letter_code.trim() ? '#27ae60' : '#95a5a6',
+                  opacity: categoryFormData.name.trim() && categoryFormData.letter_code.trim() ? 1 : 0.6
                 }}
               >
                 {categoryModalType === 'create' ? '✅ Create Category' : '💾 Update Category'}
