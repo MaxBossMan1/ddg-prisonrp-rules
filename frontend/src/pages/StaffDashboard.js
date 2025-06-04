@@ -6109,7 +6109,7 @@ For questions, contact staff immediately.`,
                   <EditorContainer>
                     <MDEditor
                       value={formData.content}
-                      onChange={(content) => setFormData({...formData, content})}
+                      onChange={(content) => setFormData({...formData, content: content || ''})}
                       preview="edit"
                       hideToolbar={false}
                       data-color-mode="dark"
@@ -6342,7 +6342,7 @@ For questions, contact staff immediately.`,
                   <EditorContainer>
                     <MDEditor
                       value={announcementFormData.content}
-                      onChange={(content) => setAnnouncementFormData({...announcementFormData, content})}
+                      onChange={(content) => setAnnouncementFormData({...announcementFormData, content: content || ''})}
                       preview="edit"
                       hideToolbar={false}
                       data-color-mode="dark"
