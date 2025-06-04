@@ -3651,7 +3651,18 @@ For questions, contact staff immediately.`,
   };
 
   const saveCategory = async () => {
+    // Debug logging to see what's in the form data
+    console.log('=== SAVE CATEGORY DEBUG ===');
+    console.log('categoryFormData:', categoryFormData);
+    console.log('name value:', `"${categoryFormData.name}"`);
+    console.log('letter_code value:', `"${categoryFormData.letter_code}"`);
+    console.log('name trimmed:', `"${categoryFormData.name.trim()}"`);
+    console.log('letter_code trimmed:', `"${categoryFormData.letter_code.trim()}"`);
+    console.log('name validation:', !categoryFormData.name.trim());
+    console.log('letter_code validation:', !categoryFormData.letter_code.trim());
+    
     if (!categoryFormData.letter_code.trim() || !categoryFormData.name.trim()) {
+      console.log('Validation failed - showing alert');
       showCustomAlert(
         '⚠️ Missing Information',
         'Please fill in all required fields:\n• Letter Code\n• Category Name',
@@ -3660,6 +3671,7 @@ For questions, contact staff immediately.`,
       return;
     }
 
+    console.log('Validation passed - proceeding with save');
     try {
       const url = categoryModalType === 'edit' 
         ? `${BASE_URL}/api/staff/categories/${categoryFormData.id}`
@@ -6770,7 +6782,10 @@ For questions, contact staff immediately.`,
               <Input
                 type="text"
                 value={categoryFormData.name}
-                onChange={(e) => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                onChange={(e) => {
+                  console.log('Name input changed:', e.target.value);
+                  setCategoryFormData({...categoryFormData, name: e.target.value});
+                }}
                 placeholder="Enter category name..."
               />
             </FormGroup>
@@ -6780,7 +6795,10 @@ For questions, contact staff immediately.`,
               <Input
                 type="text"
                 value={categoryFormData.letter_code}
-                onChange={(e) => setCategoryFormData({...categoryFormData, letter_code: e.target.value.toUpperCase()})}
+                onChange={(e) => {
+                  console.log('Letter code input changed:', e.target.value);
+                  setCategoryFormData({...categoryFormData, letter_code: e.target.value.toUpperCase()});
+                }}
                 placeholder="Enter category code (e.g., A, B, C)..."
                 maxLength="3"
               />
