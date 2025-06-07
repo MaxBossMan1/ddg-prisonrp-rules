@@ -1687,7 +1687,7 @@ router.get('/categories/list', requireAuth, requirePermission('editor'), async (
 
 router.post('/categories', requireAuth, requirePermission('admin'), async (req, res) => {
     try {
-        const { letter_code, name, description } = req.body;
+        const { letter_code, name, description, color, is_active } = req.body;
         
         if (!letter_code || !name) {
             return res.status(400).json({ error: 'Letter code and name are required' });
@@ -1715,8 +1715,8 @@ router.post('/categories', requireAuth, requirePermission('admin'), async (req, 
         const orderIndex = (maxOrder.max_order || 0) + 1;
 
         const result = await db.run(
-            'INSERT INTO categories (letter_code, name, description, order_index) VALUES (?, ?, ?, ?)',
-            [letter_code, name, description || '', orderIndex]
+            'INSERT INTO categories (letter_code, name, description, color, is_active, order_index) VALUES (?, ?, ?, ?, ?, ?)',
+            [letter_code, name, description || '', color || '#3498db', is_active !== false ? 1 : 0, orderIndex]
         );
 
         // Log the category creation activity
@@ -1729,6 +1729,8 @@ router.post('/categories', requireAuth, requirePermission('admin'), async (req, 
                 letterCode: letter_code,
                 name: name,
                 description: description || '',
+                color: color || '#3498db',
+                isActive: is_active !== false ? 1 : 0,
                 orderIndex: orderIndex,
                 timestamp: new Date().toISOString()
             },
@@ -1743,6 +1745,8 @@ router.post('/categories', requireAuth, requirePermission('admin'), async (req, 
             letter_code,
             name,
             description: description || '',
+            color: color || '#3498db',
+            is_active: is_active !== false ? 1 : 0,
             order_index: orderIndex,
             message: 'Category created successfully'
         });
@@ -1755,7 +1759,7 @@ router.post('/categories', requireAuth, requirePermission('admin'), async (req, 
 router.put('/categories/:id', requireAuth, requirePermission('admin'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { letter_code, name, description } = req.body;
+        const { letter_code, name, description, color, is_active } = req.body;
 
         if (!letter_code || !name) {
             return res.status(400).json({ error: 'Letter code and name are required' });
@@ -1779,8 +1783,8 @@ router.put('/categories/:id', requireAuth, requirePermission('admin'), async (re
         }
 
         const result = await db.run(
-            'UPDATE categories SET letter_code = ?, name = ?, description = ? WHERE id = ?',
-            [letter_code, name, description || '', id]
+            'UPDATE categories SET letter_code = ?, name = ?, description = ?, color = ?, is_active = ? WHERE id = ?',
+            [letter_code, name, description || '', color || '#3498db', is_active !== false ? 1 : 0, id]
         );
 
         if (result.changes === 0) {
@@ -1797,6 +1801,8 @@ router.put('/categories/:id', requireAuth, requirePermission('admin'), async (re
                 letterCode: letter_code,
                 name: name,
                 description: description || '',
+                color: color || '#3498db',
+                isActive: is_active !== false ? 1 : 0,
                 timestamp: new Date().toISOString()
             },
             ipAddress: req.ip || req.connection.remoteAddress,
