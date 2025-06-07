@@ -108,8 +108,10 @@ class DatabaseAdapter {
                 await this.run('ALTER TABLE categories ADD COLUMN color VARCHAR(7) DEFAULT "#3498db"');
                 console.log('Migration: Added color column to categories');
             } catch (error) {
-                if (!error.message.includes('duplicate column name')) {
+                if (error.message.includes('duplicate column name')) {
                     console.log('Color column already exists in categories table');
+                } else {
+                    console.error('Unexpected error adding color column:', error.message);
                 }
             }
 
@@ -118,8 +120,10 @@ class DatabaseAdapter {
                 await this.run('ALTER TABLE categories ADD COLUMN is_active BOOLEAN DEFAULT 1');
                 console.log('Migration: Added is_active column to categories');
             } catch (error) {
-                if (!error.message.includes('duplicate column name')) {
+                if (error.message.includes('duplicate column name')) {
                     console.log('is_active column already exists in categories table');
+                } else {
+                    console.error('Unexpected error adding is_active column:', error.message);
                 }
             }
 
@@ -128,8 +132,10 @@ class DatabaseAdapter {
                 await this.run('ALTER TABLE discord_messages ADD COLUMN action_type TEXT');
                 console.log('Migration: Added action_type column to discord_messages');
             } catch (error) {
-                if (!error.message.includes('duplicate column name')) {
+                if (error.message.includes('duplicate column name')) {
                     console.log('action_type column already exists in discord_messages table');
+                } else {
+                    console.error('Unexpected error adding action_type column:', error.message);
                 }
             }
         } catch (error) {
