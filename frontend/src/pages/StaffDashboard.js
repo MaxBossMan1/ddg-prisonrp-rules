@@ -2452,10 +2452,20 @@ For questions, contact staff immediately.`,
       const response = await fetch(`${BASE_URL}/api/categories`);
       if (response.ok) {
         const data = await response.json();
-        setCategories(data);
+        // Ensure data is valid array before setting state
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          console.error('Categories API returned invalid data:', data);
+          setCategories([]);
+        }
+      } else {
+        console.error('Failed to load categories:', response.status, response.statusText);
+        setCategories([]);
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      setCategories([]);
     }
   };
 
@@ -2466,10 +2476,20 @@ For questions, contact staff immediately.`,
       });
       if (response.ok) {
         const data = await response.json();
-        setCategoriesData(data);
+        // Ensure data is valid array before setting state
+        if (Array.isArray(data)) {
+          setCategoriesData(data);
+        } else {
+          console.error('Categories data API returned invalid data:', data);
+          setCategoriesData([]);
+        }
+      } else {
+        console.error('Failed to load categories data:', response.status, response.statusText);
+        setCategoriesData([]);
       }
     } catch (error) {
       console.error('Error loading categories data:', error);
+      setCategoriesData([]);
     }
   };
 
@@ -2589,7 +2609,6 @@ For questions, contact staff immediately.`,
   const searchRulesForCrossRef = (query) => {
     console.log('🔍 Search function called with query:', query);
     console.log('🔍 Available rules count:', rules.length);
-    console.log('🔍 First few rules:', rules.slice(0, 3).map(r => ({ id: r.id, full_code: r.full_code, title: r.title })));
     
     if (!query.trim()) {
       setRuleSearchResults([]);
@@ -2600,34 +2619,51 @@ For questions, contact staff immediately.`,
       // Build a flat array of all rules including sub-rules
       const allRules = [];
       
-      rules.forEach(rule => {
-        // Add main rule
-        allRules.push(rule);
-        
-        // Add sub-rules if they exist
-        if (rule.sub_rules && Array.isArray(rule.sub_rules)) {
-          allRules.push(...rule.sub_rules);
-        }
-      });
+      // Safely iterate through rules
+      if (Array.isArray(rules)) {
+        rules.forEach(rule => {
+          // Add main rule
+          if (rule && rule.id) {
+            allRules.push(rule);
+          }
+          
+          // Add sub-rules if they exist and are valid
+          if (rule && rule.sub_rules && Array.isArray(rule.sub_rules)) {
+            rule.sub_rules.forEach(subRule => {
+              if (subRule && subRule.id) {
+                allRules.push(subRule);
+              }
+            });
+          }
+        });
+      }
       
       console.log('🔍 Total rules including sub-rules:', allRules.length);
       
       // Filter out current rule and already cross-referenced rules
-      // Ensure crossReferences is always an array
-      const crossRefsArray = Array.isArray(crossReferences) ? crossReferences : [];
+      // Ensure crossReferences is always an array and filter out invalid entries
+      const crossRefsArray = Array.isArray(crossReferences) ? crossReferences.filter(ref => ref && ref.target_rule_id) : [];
       const existingTargetIds = new Set([
         currentRuleForCrossRefs?.id,
         ...crossRefsArray.map(ref => ref.target_rule_id)
-      ]);
+      ].filter(id => id != null)); // Remove null/undefined values
 
       console.log('🔍 Existing target IDs to exclude:', Array.from(existingTargetIds));
 
-      const filteredRules = allRules.filter(rule => 
-        !existingTargetIds.has(rule.id) &&
-        (rule.full_code.toLowerCase().includes(query.toLowerCase()) ||
-         (rule.title && rule.title.toLowerCase().includes(query.toLowerCase())) ||
-         (rule.content && rule.content.toLowerCase().includes(query.toLowerCase())))
-      ).slice(0, 10);
+      const filteredRules = allRules.filter(rule => {
+        if (!rule || !rule.id) return false; // Skip invalid rules
+        
+        if (existingTargetIds.has(rule.id)) return false; // Skip already referenced rules
+        
+        const queryLower = query.toLowerCase();
+        
+        // Check if query matches full_code, title, or content
+        const matchesCode = rule.full_code && rule.full_code.toLowerCase().includes(queryLower);
+        const matchesTitle = rule.title && rule.title.toLowerCase().includes(queryLower);
+        const matchesContent = rule.content && rule.content.toLowerCase().includes(queryLower);
+        
+        return matchesCode || matchesTitle || matchesContent;
+      }).slice(0, 10); // Limit to 10 results
 
       console.log('🔍 Filtered results:', filteredRules.map(r => ({ id: r.id, full_code: r.full_code, title: r.title })));
       setRuleSearchResults(filteredRules);
@@ -3695,7 +3731,15 @@ For questions, contact staff immediately.`,
       });
 
       if (response.ok) {
-        await Promise.all([loadCategoriesData(), loadCategories()]);
+        // Reload categories data in sequence to avoid race conditions
+        try {
+          await loadCategoriesData();
+          await loadCategories();
+        } catch (loadError) {
+          console.error('Error reloading categories after save:', loadError);
+          // Don't fail the save operation if reload fails
+        }
+        
         closeCategoryModal();
         showCustomAlert(
           '✅ Category Saved',
@@ -3706,7 +3750,7 @@ For questions, contact staff immediately.`,
         const error = await response.json();
         showCustomAlert(
           '❌ Save Failed',
-          `Error saving category: ${error.message}`,
+          `Error saving category: ${error.message || error.error || 'Unknown error'}`,
           'error'
         );
       }
@@ -3743,7 +3787,15 @@ For questions, contact staff immediately.`,
           });
           
           if (response.ok) {
-            await Promise.all([loadCategoriesData(), loadCategories()]);
+            // Reload categories data in sequence to avoid race conditions
+            try {
+              await loadCategoriesData();
+              await loadCategories();
+            } catch (loadError) {
+              console.error('Error reloading categories after delete:', loadError);
+              // Don't fail the delete operation if reload fails
+            }
+            
             // Success notification
             showCustomAlert(
               '✅ Category Deleted',
@@ -3751,10 +3803,10 @@ For questions, contact staff immediately.`,
               'success'
             );
           } else {
-            const error = await response.json();
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             showCustomAlert(
               '❌ Deletion Failed',
-              `Error deleting category: ${error.error || error.message || 'Unknown error occurred'}`,
+              `Error deleting category: ${errorData.error || errorData.message || 'Unknown error occurred'}`,
               'error'
             );
           }

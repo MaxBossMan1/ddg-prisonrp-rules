@@ -1,21 +1,21 @@
--- DigitalDeltaGaming PrisonRP Rules System Database Schema
+-- DigitalDeltaGaming PrisonRP Rules System Database Schema (PostgreSQL)
 
 -- Categories table for rule sections (A, B, C, etc.)
 CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     letter_code TEXT NOT NULL UNIQUE,
     color VARCHAR(7) DEFAULT '#3498db',
-    is_active BOOLEAN DEFAULT 1,
+    is_active BOOLEAN DEFAULT true,
     order_index INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Rules table with hierarchical structure
 CREATE TABLE IF NOT EXISTS rules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     category_id INTEGER NOT NULL,
     parent_rule_id INTEGER NULL, -- For sub-rules
     title TEXT DEFAULT '',
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS rules (
     sub_number INTEGER NULL, -- For sub-rules (1.1, 1.2, etc.)
     revision_letter TEXT DEFAULT 'a', -- For revisions (a, b, c, etc.)
     rule_type TEXT DEFAULT 'main', -- 'main', 'sub', 'revision'
-    is_active BOOLEAN DEFAULT 1, -- Only active rules shown to public
+    is_active BOOLEAN DEFAULT true, -- Only active rules shown to public
     order_index INTEGER NOT NULL,
     images TEXT DEFAULT '[]', -- JSON array of image objects
     -- Approval workflow fields
@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS rules (
     submitted_by INTEGER, -- Staff user who created/submitted this rule
     reviewed_by INTEGER, -- Staff user who approved/rejected this rule
     review_notes TEXT, -- Comments from reviewer
-    submitted_at DATETIME, -- When submitted for approval
-    reviewed_at DATETIME, -- When reviewed
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    submitted_at TIMESTAMP, -- When submitted for approval
+    reviewed_at TIMESTAMP, -- When reviewed
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_rule_id) REFERENCES rules(id) ON DELETE CASCADE,
     FOREIGN KEY (submitted_by) REFERENCES staff_users(id),
@@ -44,41 +44,41 @@ CREATE TABLE IF NOT EXISTS rules (
 
 -- Rule codes table for search optimization
 CREATE TABLE IF NOT EXISTS rule_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     rule_id INTEGER NOT NULL,
     full_code TEXT NOT NULL UNIQUE, -- e.g., "A.1", "B.2.1", etc.
     truncated_description TEXT NOT NULL, -- For search results
     searchable_content TEXT NOT NULL, -- Full text for search indexing
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE
 );
 
 -- Rule changes tracking for recent updates
 CREATE TABLE IF NOT EXISTS rule_changes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     rule_id INTEGER NOT NULL,
     change_type TEXT NOT NULL, -- 'created', 'updated', 'deleted'
     old_content TEXT,
     new_content TEXT,
     change_description TEXT,
-    is_major BOOLEAN DEFAULT 0, -- Major vs minor changes
+    is_major BOOLEAN DEFAULT false, -- Major vs minor changes
     staff_user_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE,
     FOREIGN KEY (staff_user_id) REFERENCES staff_users(id)
 );
 
 -- Rule cross-references table for linking related rules
 CREATE TABLE IF NOT EXISTS rule_cross_references (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     source_rule_id INTEGER NOT NULL, -- The rule that references another
     target_rule_id INTEGER NOT NULL, -- The rule being referenced
     reference_type TEXT DEFAULT 'related', -- 'related', 'supersedes', 'superseded_by', 'clarifies', 'conflicts_with'
     reference_context TEXT, -- Optional description of how they're related
-    is_bidirectional BOOLEAN DEFAULT 1, -- Whether the relationship goes both ways
+    is_bidirectional BOOLEAN DEFAULT true, -- Whether the relationship goes both ways
     created_by INTEGER NOT NULL, -- Staff user who created this cross-reference
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (source_rule_id) REFERENCES rules(id) ON DELETE CASCADE,
     FOREIGN KEY (target_rule_id) REFERENCES rules(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES staff_users(id),
@@ -87,27 +87,27 @@ CREATE TABLE IF NOT EXISTS rule_cross_references (
 
 -- Announcements/MOTD table
 CREATE TABLE IF NOT EXISTS announcements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     priority INTEGER DEFAULT 1, -- Higher number = higher priority
-    is_active BOOLEAN DEFAULT 1,
+    is_active BOOLEAN DEFAULT true,
     -- Approval workflow fields
     status TEXT DEFAULT 'approved', -- 'draft', 'pending_approval', 'approved', 'rejected'
     submitted_by INTEGER, -- Staff user who created/submitted this announcement
     reviewed_by INTEGER, -- Staff user who approved/rejected this announcement
     review_notes TEXT, -- Comments from reviewer
-    submitted_at DATETIME, -- When submitted for approval
-    reviewed_at DATETIME, -- When reviewed
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    submitted_at TIMESTAMP, -- When submitted for approval
+    reviewed_at TIMESTAMP, -- When reviewed
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (submitted_by) REFERENCES staff_users(id),
     FOREIGN KEY (reviewed_by) REFERENCES staff_users(id)
 );
 
 -- Media files table
 CREATE TABLE IF NOT EXISTS media (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     rule_id INTEGER NULL, -- Can be null for general media
     filename TEXT NOT NULL,
     original_filename TEXT NOT NULL,
@@ -116,54 +116,54 @@ CREATE TABLE IF NOT EXISTS media (
     file_size INTEGER NOT NULL,
     file_path TEXT NOT NULL,
     description TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE SET NULL
 );
 
 -- Uploaded images table for rich text editor
 CREATE TABLE IF NOT EXISTS uploaded_images (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     filename TEXT NOT NULL,
     thumbnail_filename TEXT NOT NULL,
     original_name TEXT NOT NULL,
     file_size INTEGER NOT NULL,
     uploaded_by INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (uploaded_by) REFERENCES staff_users(id)
 );
 
 -- Staff users table for authentication
 CREATE TABLE IF NOT EXISTS staff_users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     steam_id TEXT NOT NULL UNIQUE,
     steam_username TEXT NOT NULL,
     permission_level TEXT NOT NULL DEFAULT 'editor', -- 'admin', 'moderator', 'editor'
-    is_active BOOLEAN DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP
 );
 
 -- Sessions table for staff authentication
 CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     session_token TEXT NOT NULL UNIQUE,
-    expires_at DATETIME NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES staff_users(id) ON DELETE CASCADE
 );
 
 -- Search history table (optional)
 CREATE TABLE IF NOT EXISTS search_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     search_term TEXT NOT NULL,
     results_count INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Enhanced staff activity logging table
 CREATE TABLE IF NOT EXISTS staff_activity_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     staff_user_id INTEGER NOT NULL,
     action_type TEXT NOT NULL, -- 'login', 'logout', 'create', 'update', 'delete', 'upload', 'download', 'access'
     resource_type TEXT NOT NULL, -- 'rule', 'category', 'announcement', 'user', 'image', 'dashboard', 'system'
@@ -172,46 +172,46 @@ CREATE TABLE IF NOT EXISTS staff_activity_logs (
     ip_address TEXT,
     user_agent TEXT,
     session_id TEXT,
-    success BOOLEAN DEFAULT 1, -- Whether the action was successful
+    success BOOLEAN DEFAULT true, -- Whether the action was successful
     error_message TEXT, -- Error details if action failed
     duration_ms INTEGER, -- How long the action took (for performance monitoring)
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (staff_user_id) REFERENCES staff_users(id) ON DELETE CASCADE
 );
 
 -- Enhanced permissions table for granular access control
 CREATE TABLE IF NOT EXISTS staff_permissions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     staff_user_id INTEGER NOT NULL,
     permission_type TEXT NOT NULL, -- 'category_access', 'feature_access', 'time_restriction'
     permission_value TEXT NOT NULL, -- Category ID, feature name, or time range
     granted_by INTEGER NOT NULL, -- Who granted this permission
-    granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME, -- Optional expiration
-    is_active BOOLEAN DEFAULT 1,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP, -- Optional expiration
+    is_active BOOLEAN DEFAULT true,
     FOREIGN KEY (staff_user_id) REFERENCES staff_users(id) ON DELETE CASCADE,
     FOREIGN KEY (granted_by) REFERENCES staff_users(id)
 );
 
 -- Scheduled announcements table
 CREATE TABLE IF NOT EXISTS scheduled_announcements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     priority INTEGER DEFAULT 1,
-    scheduled_for DATETIME NOT NULL,
+    scheduled_for TIMESTAMP NOT NULL,
     created_by INTEGER NOT NULL,
     auto_expire_hours INTEGER, -- Auto-deactivate after X hours
-    is_published BOOLEAN DEFAULT 0, -- Whether it has been published
-    published_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_published BOOLEAN DEFAULT false, -- Whether it has been published
+    published_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES staff_users(id)
 );
 
 -- Bulk operations tracking
 CREATE TABLE IF NOT EXISTS bulk_operations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     operation_type TEXT NOT NULL, -- 'import', 'export', 'mass_update', 'mass_delete'
     operation_status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed'
     initiated_by INTEGER NOT NULL,
@@ -220,14 +220,14 @@ CREATE TABLE IF NOT EXISTS bulk_operations (
     failed_items INTEGER DEFAULT 0,
     operation_data TEXT, -- JSON with operation details
     error_log TEXT, -- Errors encountered during operation
-    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at DATETIME,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
     FOREIGN KEY (initiated_by) REFERENCES staff_users(id)
 );
 
 -- Discord Integration Tables
 CREATE TABLE IF NOT EXISTS discord_settings (
-    id INTEGER PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     announcement_webhook_url TEXT,
     rules_webhook_url TEXT,
     announcements_enabled INTEGER DEFAULT 0,
@@ -240,10 +240,11 @@ CREATE TABLE IF NOT EXISTS discord_settings (
 );
 
 CREATE TABLE IF NOT EXISTS discord_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     announcement_id INTEGER,
     rule_id INTEGER,
     message_type VARCHAR(50) NOT NULL, -- 'announcement', 'rule_change', etc.
+    action_type TEXT,
     discord_message_id TEXT NOT NULL,
     webhook_url TEXT NOT NULL,
     sent_by INTEGER NOT NULL,
@@ -307,7 +308,3 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_announcements_published ON scheduled_an
 
 CREATE INDEX IF NOT EXISTS idx_bulk_operations_status ON bulk_operations(operation_status);
 CREATE INDEX IF NOT EXISTS idx_bulk_operations_user ON bulk_operations(initiated_by);
-
--- Enhanced rules indexes for approval workflow
-CREATE INDEX IF NOT EXISTS idx_rules_status ON rules(status);
-CREATE INDEX IF NOT EXISTS idx_rules_submitted_by ON rules(submitted_by); 
