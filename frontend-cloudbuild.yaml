@@ -1,0 +1,40 @@
+steps:
+  # Install dependencies and build React app
+  - name: 'node:18-alpine'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd frontend
+        npm ci
+        npm run build
+    
+  # Deploy to Cloud Storage bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        # Create bucket if it doesn't exist (ignore error if it exists)
+        gsutil mb gs://${_BUCKET_NAME} || true
+        
+        # Enable static website hosting
+        gsutil web set -m index.html -e 404.html gs://${_BUCKET_NAME}
+        
+        # Upload files
+        gsutil -m rsync -r -d frontend/build gs://${_BUCKET_NAME}
+        
+        # Set cache control for static assets
+        gsutil -m setmeta -h "Cache-Control:public, max-age=31536000" gs://${_BUCKET_NAME}/static/**
+        
+        # Set cache control for HTML files
+        gsutil -m setmeta -h "Cache-Control:no-cache" gs://${_BUCKET_NAME}/*.html
+        
+        # Make bucket publicly readable
+        gsutil iam ch allUsers:objectViewer gs://${_BUCKET_NAME}
+
+substitutions:
+  _BUCKET_NAME: 'ddg-prisonrp-frontend'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
