@@ -1,216 +1,230 @@
-# DigitalDeltaGaming PrisonRP MOTD/Rules System
+# DigitalDeltaGaming PrisonRP Rules Management System
 
-A full-stack web application for managing the Message of the Day (MOTD), server rules, announcements, staff tools, and analytics for the DigitalDeltaGaming PrisonRP server. This project provides robust features for both public users and server staff, including authentication via Steam and Discord, image uploads, and a modern, responsive dark-themed UI.
+A modern, full-stack web application for managing server rules, announcements, and staff tools for the DigitalDeltaGaming PrisonRP server.
 
----
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![Node.js Version](https://img.shields.io/badge/node.js-18%2B-brightgreen)](https://nodejs.org/)
+[![React Version](https://img.shields.io/badge/react-19-blue)](https://reactjs.org/)
 
-## Table of Contents
+## 🎯 Project Overview
 
-- [Project Overview](#project-overview)
-- [Architecture](#architecture)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Environment Variables](#environment-variables)
-  - [Backend Setup](#backend-setup)
-  - [Frontend Setup](#frontend-setup)
-- [Development Workflow](#development-workflow)
-- [Production Deployment](#production-deployment)
-- [API Documentation](#api-documentation)
-- [Staff Dashboard & Authentication](#staff-dashboard--authentication)
-- [Additional Guides](#additional-guides)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
+This platform provides a comprehensive solution for managing PrisonRP server operations:
 
----
+- **Public Interface**: Clean, responsive rules browser for players
+- **Staff Dashboard**: Advanced management tools with role-based permissions
+- **Multi-Database Support**: SQLite for development, PostgreSQL for production
+- **Modern Architecture**: React 19 frontend with Node.js/Express backend
 
-## Project Overview
+## ✨ Key Features
 
-This platform enables DigitalDeltaGaming staff to manage server rules, announcements, player analytics, and more. It provides a user-friendly public-facing portal for players to read server rules and announcements, while staff have access to advanced management tools via a secure dashboard.
+### For Players
+- 📋 Hierarchical rules browser with search functionality  
+- 📢 Server announcements with priority system
+- 🎨 Modern dark theme optimized for gaming
+- 📱 Fully responsive design
 
-- **Public:** View server rules, categories, and announcements in a modern web interface.
-- **Staff:** Secure Steam-based login unlocks a dashboard for editing rules, managing announcements, viewing analytics, and more.
+### For Staff
+- 🔐 Steam OAuth authentication with permission levels
+- 📝 Rich text editor for rules and announcements
+- 🖼️ Image upload and management system
+- 📊 Activity logging and change tracking
+- ⏰ Announcement scheduling system
+- 🎛️ User management with hierarchical permissions
 
----
+## 🏗️ Architecture
 
-## Architecture
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React 19      │◄──►│  Express API    │◄──►│ SQLite/PostgreSQL│
+│   Frontend      │    │   Backend       │    │   Database      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        │              ┌─────────────────┐              │
+        └──────────────►│ Steam OAuth     │              │
+                        │ Authentication  │              │
+                        └─────────────────┘              │
+                                 │                       │
+                        ┌─────────────────┐              │
+                        │ Discord         │              │
+                        │ Integration     │              │
+                        └─────────────────┘              │
+                                                         │
+                                                ┌─────────────────┐
+                                                │ File Upload     │
+                                                │ System          │
+                                                └─────────────────┘
+```
 
-- **Frontend:** [React 19](https://react.dev/) SPA with styled-components, React Router, and custom dark theme.
-- **Backend:** [Node.js](https://nodejs.org/) (Express) REST API with SQLite, Passport (Steam OAuth), Discord integration, rate limiting, and analytics.
-- **Database:** SQLite (file-based, portable).
-- **Authentication:** Steam OAuth (via Passport), session-based (with staff dashboard behind a secret URL).
-- **Deployment:** Suitable for Docker, VM, or traditional hosting. See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
-
----
-
-## Features
-
-- **Rules System:** Hierarchical categories and rules, Markdown support, rich formatting, and active/inactive toggling.
-- **Announcements:** Scheduled and instant announcements, auto-expiry, priority sorting.
-- **Staff Tools:** Dashboard for rule/announcement management, analytics, image uploads, permission control.
-- **Authentication:** Steam OAuth for staff, Discord integration for notifications and analytics.
-- **Analytics:** Rule views, staff actions, user engagement statistics.
-- **Uploads:** Secure image/file uploads with CORS and access controls.
-- **Security:** Rate limiting, session management, CORS, Helmet for HTTP headers.
-- **Responsive UI:** Fully responsive, industrial dark theme for immersive experience.
-
----
-
-## Screenshots
-
-*(Add screenshots here if available)*
-
----
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 16.x (recommended: latest LTS)
-- [npm](https://www.npmjs.com/) >= 8.x
-- *(Optional: [Docker](https://www.docker.com/) for containerized deployment)*
+- [Node.js](https://nodejs.org/) 18.0.0 or higher
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- Git
 
----
+### Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ddg-prisonrp-rules
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   cp env.example .env
+   # Edit .env with your configuration
+   npm run dev
+   ```
+
+3. **Frontend Setup** (in new terminal)
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
+   - Staff Dashboard: http://localhost:3000/staff/{SECRET_URL}/dashboard
+
+## 📁 Project Structure
+
+```
+ddg-prisonrp-rules/
+├── backend/                    # Express.js API server
+│   ├── database/              # Database schemas and adapters
+│   │   ├── adapter.js         # Multi-database abstraction layer
+│   │   ├── schema.sql         # SQLite schema
+│   │   └── schema-postgres.sql # PostgreSQL schema
+│   ├── middleware/            # Authentication & security middleware
+│   ├── routes/               # API route handlers
+│   ├── uploads/              # File upload storage
+│   └── server.js             # Main server entry point
+├── frontend/                  # React 19 application
+│   ├── public/               # Static assets
+│   └── src/
+│       ├── components/       # Reusable UI components
+│       ├── pages/           # Page components
+│       ├── services/        # API service layer
+│       └── utils/           # Utility functions
+├── docs/                     # Documentation
+│   ├── setup/               # Setup and installation guides
+│   ├── deployment/          # Deployment guides
+│   ├── development/         # Development documentation
+│   └── api/                 # API documentation
+├── scripts/                  # Utility scripts
+└── resources/               # Project assets and images
+```
+
+## 🔧 Configuration
 
 ### Environment Variables
 
-Copy and modify the provided `.env.example` files in both `backend/` and (if needed) `frontend/`.
-
 #### Backend (`backend/.env`)
-
 ```env
+# Server Configuration
 PORT=3001
-DATABASE_PATH=./database/ddg_prisonrp.db
-SESSION_SECRET=your-session-secret
 NODE_ENV=development
+
+# Database Configuration  
+DATABASE_TYPE=sqlite                    # or 'postgres'
+DATABASE_PATH=./database/ddg_prisonrp.db # SQLite path
+DATABASE_URL=postgresql://...           # PostgreSQL connection string
+
+# Authentication
+STEAM_API_KEY=your_steam_api_key
+SESSION_SECRET=your_session_secret
+
+# Application URLs
 FRONTEND_URL=http://localhost:3000
-STEAM_API_KEY=your-steam-api-key
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-STAFF_SECRET_URL=your-secret-path
+STAFF_SECRET_URL=your_secret_staff_path
+
+# Discord Integration (optional)
+DISCORD_WEBHOOK_URL=your_webhook_url
 ```
 
-> See [STEAM_AUTHENTICATION_SETUP.md](STEAM_AUTHENTICATION_SETUP.md) for Steam integration details.
+### Database Support
 
----
+The application supports dual database configuration:
 
-### Backend Setup
+- **SQLite**: Perfect for development and small deployments
+- **PostgreSQL**: Recommended for production and cloud deployments
 
-```sh
-cd backend
-npm install
-npm run dev      # For development (nodemon)
-# or
-npm start        # For production
+The `DatabaseAdapter` class automatically handles the differences between database types.
+
+## 🚀 Deployment
+
+### Production Deployment Options
+
+1. **Serverless (Google Cloud)** - Recommended for cost-effectiveness
+   - See: [`docs/deployment/serverless-guide.md`](docs/deployment/serverless-guide.md)
+
+2. **Traditional VPS/VM**
+   - See: [`docs/deployment/vps-guide.md`](docs/deployment/vps-guide.md)
+
+3. **Docker Container**
+   - See: [`docs/deployment/docker-guide.md`](docs/deployment/docker-guide.md)
+
+### Quick Docker Deployment
+
+```bash
+# Build and run with Docker
+docker build -t ddg-prisonrp .
+docker run -p 3001:3001 -e NODE_ENV=production ddg-prisonrp
 ```
 
-- The backend will auto-create the SQLite database on first run.
-- API available at `http://localhost:3001/api/`
+## 🔐 Authentication & Permissions
+
+### Permission Levels
+
+1. **Owner** (Level 4) - Full system access
+2. **Admin** (Level 3) - Can manage users and content
+3. **Moderator** (Level 2) - Can approve/reject content
+4. **Editor** (Level 1) - Can create drafts for approval
+
+### Steam Authentication Setup
+
+1. Get Steam Web API key from [Steam Developer](https://steamcommunity.com/dev/apikey)
+2. Configure your Steam app settings
+3. Add staff users through the admin panel
+
+See: [`docs/setup/steam-authentication.md`](docs/setup/steam-authentication.md)
+
+## 📖 Documentation
+
+- **[Setup Guide](docs/setup/)** - Installation and configuration
+- **[API Documentation](docs/api/)** - REST API reference  
+- **[Development Guide](docs/development/)** - Contributing and development workflow
+- **[Deployment Guide](docs/deployment/)** - Production deployment options
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📝 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+## 📞 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Check the documentation in [`docs/`](docs/)
+- Review the troubleshooting guide: [`docs/setup/troubleshooting.md`](docs/setup/troubleshooting.md)
+
+## 📄 License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-### Frontend Setup
-
-```sh
-cd frontend
-npm install
-npm start        # Runs on http://localhost:3000
-```
-
-- Uses [React Scripts](https://www.npmjs.com/package/react-scripts).
-- For local development, API and auth requests are automatically proxied to the backend (see `frontend/src/setupProxy.js`).
-
----
-
-## Development Workflow
-
-- **Local development:** Start both backend and frontend in separate terminals. The frontend proxies API calls to the backend.
-- **Hot reload:** Supported in both backend (via [nodemon](https://www.npmjs.com/package/nodemon)) and frontend.
-- **Linting & Testing:** See scripts in respective package.json files.
-- **Database:** SQLite file is generated in `backend/database/`.
-
----
-
-## Production Deployment
-
-Follow [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for best practices including environment variables, reverse proxy setup, and Docker recommendations.
-
-- Use `npm run build` in `frontend/` to generate production static files.
-- Serve the frontend separately (e.g., via Nginx) or combine with backend (see deployment guide).
-
----
-
-## API Documentation
-
-- Full REST API documentation is available in [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md).
-- Key endpoints:
-  - `GET /api/rules`, `GET /api/categories`, `GET /api/announcements`
-  - `POST /api/auth/steam`, `GET/POST /api/staff/...`
-  - `POST /api/images/upload`, `GET /api/analytics`
-  - See file for complete list and usage.
-
----
-
-## Staff Dashboard & Authentication
-
-- Staff dashboard is available at: `http://yourdomain.com/staff/{STAFF_SECRET_URL}/dashboard`
-- Requires Steam login (OAuth); only whitelisted users or those with sufficient permission level may access staff tools.
-- All authentication and permission logic handled by backend.
-- Staff tools include rule/announcement editors, analytics, image uploads, and Discord notifications.
-
----
-
-## Additional Guides
-
-- [STEAM_AUTHENTICATION_SETUP.md](STEAM_AUTHENTICATION_SETUP.md) – Steam login configuration
-- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) – End-to-end deployment
-- [ENHANCED_STAFF_TOOLS.md](ENHANCED_STAFF_TOOLS.md) – Advanced staff/dashboard features
-- [TEST_IMAGE_UPLOAD.md](TEST_IMAGE_UPLOAD.md) – Testing file uploads
-- [SETUP_GUIDE.md](SETUP_GUIDE.md) – Legacy setup steps
-- [GITHUB_SETUP.md](GITHUB_SETUP.md) – GitHub/CI integration
-- [PROJECT_CHECKLIST.md](PROJECT_CHECKLIST.md) – Launch checklist
-- [QUICK_FIX_GUIDE.md](QUICK_FIX_GUIDE.md) – Troubleshooting
-
----
-
-## Project Structure
-
-```
-/
-  backend/
-    server.js                # Express API entry point
-    package.json             # Backend dependencies & scripts
-    database/                # SQLite DB & migrations
-    routes/                  # API route handlers
-    middleware/              # Auth, rate limiting, etc.
-    public/                  # Static files
-    scripts/                 # Utility scripts
-    API_DOCUMENTATION.md     # API reference
-    ...
-  frontend/
-    src/
-      App.js                 # React SPA entry
-      pages/                 # Public & staff dashboard pages
-      components/            # Reusable UI components
-      services/              # API services
-      setupProxy.js          # Local API proxy config
-      ...
-    public/                  # Static assets
-    package.json             # Frontend dependencies & scripts
-  resources/                 # (Optional) Project resources/assets
-  scripts/                   # DevOps/deployment scripts
-  *.md                       # Guides and documentation
-```
-
----
-
-## Contributing
-
-Pull requests and suggestions welcome! Please open an issue or PR for any improvements or bug fixes.
-
----
-
-## License
-
-ISC. © DigitalDeltaGaming. See [LICENSE](LICENSE) if present.
+**Made with ❤️ by DigitalDeltaGaming**
