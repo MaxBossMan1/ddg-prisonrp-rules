@@ -239,10 +239,25 @@ class DatabaseAdapter {
     async runPostgreSQL(sql, params = []) {
         const client = await this.db.connect();
         try {
-            const result = await client.query(sql, params);
+            // Check if this is an INSERT statement that needs RETURNING id
+            const trimmedSql = sql.trim().toUpperCase();
+            let queryResult;
+            
+            if (trimmedSql.startsWith('INSERT') && !trimmedSql.includes('RETURNING')) {
+                // Add RETURNING id to INSERT statements
+                let modifiedSql = sql.trim();
+                if (modifiedSql.endsWith(';')) {
+                    modifiedSql = modifiedSql.slice(0, -1);
+                }
+                modifiedSql += ' RETURNING id';
+                queryResult = await client.query(modifiedSql, params);
+            } else {
+                queryResult = await client.query(sql, params);
+            }
+            
             return { 
-                id: result.rows[0]?.id || null, 
-                changes: result.rowCount || 0 
+                id: queryResult.rows[0]?.id || null, 
+                changes: queryResult.rowCount || 0 
             };
         } finally {
             client.release();
