@@ -1,0 +1,11 @@
+---
+description: Read this rule when creating new files, features, or documentation to ensure consistency in project organization.
+globs: 
+alwaysApply: false
+---
+Rule:
+Place all backend code in apps/backend and frontend code in apps/frontend.
+Store all database migration scripts in the scripts/ directory.
+Do not create new top-level folders for features; follow the existing structure.
+
+Place documentation in the docs/ directory.

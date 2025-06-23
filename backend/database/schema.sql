@@ -135,9 +135,11 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
 -- Staff users table for authentication
 CREATE TABLE IF NOT EXISTS staff_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    steam_id TEXT NOT NULL UNIQUE,
-    steam_username TEXT NOT NULL,
-    permission_level TEXT NOT NULL DEFAULT 'editor', -- 'admin', 'moderator', 'editor'
+    steam_id TEXT UNIQUE,
+    steam_username TEXT,
+    discord_id TEXT UNIQUE,
+    discord_username TEXT,
+    permission_level TEXT NOT NULL DEFAULT 'editor', -- 'owner', 'admin', 'moderator', 'editor'
     is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME
@@ -286,6 +288,8 @@ CREATE INDEX IF NOT EXISTS idx_uploaded_images_user ON uploaded_images(uploaded_
 CREATE INDEX IF NOT EXISTS idx_uploaded_images_date ON uploaded_images(created_at);
 
 CREATE INDEX IF NOT EXISTS idx_staff_steam ON staff_users(steam_id);
+CREATE INDEX IF NOT EXISTS idx_staff_discord_id ON staff_users(discord_id);
+CREATE INDEX IF NOT EXISTS idx_staff_discord_username ON staff_users(discord_username);
 CREATE INDEX IF NOT EXISTS idx_staff_active ON staff_users(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token);

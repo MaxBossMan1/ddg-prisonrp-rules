@@ -316,7 +316,7 @@ router.get('/users', requireAuth, (req, res, next) => {
         const db = require('../database/init').getInstance();
         const users = await db.all(`
             SELECT 
-                su.id, su.steam_id, su.steam_username, su.permission_level, 
+                su.id, su.discord_id, su.discord_username, su.permission_level, 
                 su.is_active, su.created_at, su.last_login,
                 (SELECT COUNT(*) FROM staff_activity_logs WHERE staff_user_id = su.id) as total_actions,
                 (SELECT COUNT(*) FROM staff_activity_logs WHERE staff_user_id = su.id AND created_at >= datetime('now', '-7 days')) as recent_actions
@@ -350,9 +350,9 @@ router.post('/users', requireAuth, (req, res, next) => {
     next();
 }, async (req, res) => {
     try {
-        const { steamId, username, permissionLevel } = req.body;
+        const { discordId, username, permissionLevel } = req.body;
         
-        if (!steamId || !username || !permissionLevel) {
+        if (!discordId || !username || !permissionLevel) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
@@ -368,8 +368,8 @@ router.post('/users', requireAuth, (req, res, next) => {
         
         // Check if user already exists
         const existingUser = await db.get(
-            'SELECT id FROM staff_users WHERE steam_id = ?',
-            [steamId]
+            'SELECT id FROM staff_users WHERE discord_id = ?',
+            [discordId]
         );
 
         if (existingUser) {
@@ -377,9 +377,9 @@ router.post('/users', requireAuth, (req, res, next) => {
         }
 
         const result = await db.run(
-            `INSERT INTO staff_users (steam_id, steam_username, permission_level) 
+            `INSERT INTO staff_users (discord_id, discord_username, permission_level) 
              VALUES (?, ?, ?)`,
-            [steamId, username, permissionLevel]
+            [discordId, username, permissionLevel]
         );
 
         // Log the user creation
@@ -389,7 +389,7 @@ router.post('/users', requireAuth, (req, res, next) => {
             resourceType: 'user',
             resourceId: result.id,
             actionDetails: {
-                newUserSteamId: steamId,
+                newUserDiscordId: discordId,
                 newUserUsername: username,
                 newUserPermissionLevel: permissionLevel
             },
@@ -401,7 +401,7 @@ router.post('/users', requireAuth, (req, res, next) => {
 
         res.status(201).json({
             id: result.id,
-            steamId,
+            discordId,
             username,
             permissionLevel,
             message: 'User added successfully'
@@ -470,8 +470,8 @@ router.put('/users/:id', requireAuth, (req, res, next) => {
                 newPermissionLevel: permissionLevel,
                 oldIsActive: oldUser.is_active,
                 newIsActive: isActive,
-                targetUserSteamId: oldUser.steam_id,
-                targetUsername: oldUser.steam_username
+                targetUserDiscordId: oldUser.discord_id,
+                targetUsername: oldUser.discord_username
             },
             ipAddress: req.ip,
             userAgent: req.get('User-Agent'),

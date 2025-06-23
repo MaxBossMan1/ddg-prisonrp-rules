@@ -11,19 +11,8 @@ import { buildApiUrl, API_ENDPOINTS } from '../utils/apiConfig';
 import { apiService } from '../services/api';
 
 // Dynamic API configuration - Auto-detect environment
-const getApiBaseUrl = () => {
-  const hostname = window.location.hostname;
-  
-  // If we're running on localhost or 127.0.0.1, use local backend
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3001';
-  }
-  
-  // If we're on the server IP or any other domain, use the same host with port 3001
-  return `http://${hostname}:3001`;
-};
-
-const BASE_URL = getApiBaseUrl();
+// Force use of deployed backend for now
+const BASE_URL = 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app';
 
 console.log('🔧 StaffDashboard API Configuration:', { 
   hostname: window.location.hostname,
@@ -2382,10 +2371,10 @@ For questions, contact staff immediately.`,
           setUser(userData.user);
           loadDashboardData();
         } else {
-          window.location.href = `${BASE_URL}/auth/steam`;
+          window.location.href = `${BASE_URL}/auth/discord`;
         }
       } else {
-        window.location.href = `${BASE_URL}/auth/steam`;
+        window.location.href = `${BASE_URL}/auth/discord`;
       }
     } catch (error) {
       console.error('Auth failed:', error);
@@ -3953,7 +3942,7 @@ For questions, contact staff immediately.`,
   const openCreateUserModal = () => {
     setUserFormData({
       id: null,
-      steamId: '',
+      discordId: '',
       username: '',
       permissionLevel: 'editor', // Always available as the lowest level
       isActive: true
@@ -3975,8 +3964,8 @@ For questions, contact staff immediately.`,
 
     setUserFormData({
       id: staffUser.id,
-      steamId: staffUser.steam_id,
-      username: staffUser.steam_username,
+      discordId: staffUser.discord_id,
+      username: staffUser.discord_username,
       permissionLevel: staffUser.permission_level,
       isActive: staffUser.is_active === 1
     });
@@ -3988,7 +3977,7 @@ For questions, contact staff immediately.`,
     setShowUserModal(false);
     setUserFormData({
       id: null,
-      steamId: '',
+      discordId: '',
       username: '',
       permissionLevel: 'editor',
       isActive: true
@@ -3997,20 +3986,20 @@ For questions, contact staff immediately.`,
 
   const saveUser = async () => {
     try {
-      if (!userFormData.steamId || !userFormData.username || !userFormData.permissionLevel) {
+      if (!userFormData.discordId || !userFormData.username || !userFormData.permissionLevel) {
         showCustomAlert(
           '⚠️ Missing Information',
-          'Please fill in all required fields:\n• Steam ID\n• Username\n• Permission Level',
+          'Please fill in all required fields:\n• Discord ID\n• Username\n• Permission Level',
           'warning'
         );
         return;
       }
 
-      // Validate Steam ID format (basic check)
-      if (!/^\d{17}$/.test(userFormData.steamId)) {
+      // Validate Discord ID format (basic check)
+      if (!/^\d{17,19}$/.test(userFormData.discordId)) {
         showCustomAlert(
-          '⚠️ Invalid Steam ID',
-          'Steam ID must be a 17-digit number.\n\nExample: 76561198123456789',
+          '⚠️ Invalid Discord ID',
+          'Discord ID must be a 17-19 digit number.\n\nExample: 123456789012345678',
           'warning'
         );
         return;
@@ -4028,7 +4017,7 @@ For questions, contact staff immediately.`,
             isActive: userFormData.isActive
           }
         : {
-            steamId: userFormData.steamId,
+            discordId: userFormData.discordId,
             username: userFormData.username,
             permissionLevel: userFormData.permissionLevel
           };
@@ -4456,7 +4445,7 @@ For questions, contact staff immediately.`,
       <Header>
         <HeaderTitle>Staff Management Dashboard</HeaderTitle>
         <UserInfo>
-          <UserName>{user.steam_username || user.username}</UserName>
+          <UserName>{user.discord_username || user.username}</UserName>
           <UserRole>{user.permissionLevel}</UserRole>
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
             <button 
@@ -5544,7 +5533,7 @@ For questions, contact staff immediately.`,
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                            <RuleTitle style={{ margin: 0 }}>{staffUser.steam_username}</RuleTitle>
+                            <RuleTitle style={{ margin: 0 }}>{staffUser.discord_username}</RuleTitle>
                             <RuleCode style={{ 
                               backgroundColor: staffUser.permission_level === 'owner' ? '#9b59b6' :
                                               staffUser.permission_level === 'admin' ? '#e74c3c' : 
@@ -5563,7 +5552,7 @@ For questions, contact staff immediately.`,
                           </div>
                           
                           <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                            <strong>Steam ID:</strong> {staffUser.steam_id}
+                            <strong>Discord ID:</strong> {staffUser.discord_id}
                           </div>
                           
                           <div style={{ 
@@ -5604,7 +5593,7 @@ For questions, contact staff immediately.`,
                         {staffUser.id !== user.id && (user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
                           <ActionButton 
                             danger 
-                            onClick={() => deactivateUser(staffUser.id, staffUser.steam_username, staffUser.permission_level)}
+                            onClick={() => deactivateUser(staffUser.id, staffUser.discord_username, staffUser.permission_level)}
                             disabled={
                               !staffUser.is_active || 
                               (user.permissionLevel === 'admin' && (staffUser.permission_level === 'admin' || staffUser.permission_level === 'owner'))
@@ -6919,17 +6908,17 @@ For questions, contact staff immediately.`,
             {userModalType === 'create' && (
               <>
                 <FormGroup>
-                  <Label>Steam ID *</Label>
-                  <Input
-                    type="text"
-                    value={userFormData.steamId}
-                    onChange={(e) => setUserFormData({...userFormData, steamId: e.target.value})}
-                    placeholder="Enter 17-digit Steam ID (e.g., 76561198123456789)"
-                    maxLength="17"
-                  />
-                  <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
-                    You can find Steam IDs using tools like steamid.io or Steam profile URLs
-                  </small>
+                                  <Label>Discord ID *</Label>
+                <Input
+                  type="text"
+                  value={userFormData.discordId}
+                  onChange={(e) => setUserFormData({...userFormData, discordId: e.target.value})}
+                  placeholder="Enter Discord ID (e.g., 123456789012345678)"
+                  maxLength="19"
+                />
+                <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
+                  You can find Discord IDs by right-clicking on a user and selecting "Copy User ID"
+                </small>
                 </FormGroup>
 
                 <FormGroup>
@@ -6938,7 +6927,7 @@ For questions, contact staff immediately.`,
                     type="text"
                     value={userFormData.username}
                     onChange={(e) => setUserFormData({...userFormData, username: e.target.value})}
-                    placeholder="Enter Steam username"
+                    placeholder="Enter Discord username"
                   />
                 </FormGroup>
               </>
@@ -6991,13 +6980,13 @@ For questions, contact staff immediately.`,
                 onClick={saveUser}
                 disabled={
                   !userFormData.permissionLevel || 
-                  (userModalType === 'create' && (!userFormData.steamId || !userFormData.username))
+                  (userModalType === 'create' && (!userFormData.discordId || !userFormData.username))
                 }
                 style={{ 
                   backgroundColor: (userFormData.permissionLevel && 
-                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? '#27ae60' : '#95a5a6',
+                    (userModalType === 'edit' || (userFormData.discordId && userFormData.username))) ? '#27ae60' : '#95a5a6',
                   opacity: (userFormData.permissionLevel && 
-                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? 1 : 0.6
+                    (userModalType === 'edit' || (userFormData.discordId && userFormData.username))) ? 1 : 0.6
                 }}
               >
                 {userModalType === 'create' ? '✅ Add User' : '💾 Update User'}

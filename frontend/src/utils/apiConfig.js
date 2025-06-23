@@ -12,9 +12,8 @@ const getApiBaseUrl = () => {
 };
 
 // Centralized API configuration
-export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // In production, API calls will be relative to the same domain
-  : getApiBaseUrl(); // Dynamic detection for development
+// Force use of deployed backend for now
+export const API_BASE_URL = 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app';
 
 // Helper function to build API URLs
 export const buildApiUrl = (path) => {
@@ -33,7 +32,7 @@ export const buildApiUrl = (path) => {
 export const API_ENDPOINTS = {
   // Auth
   CHECK_AUTH: '/auth/check',
-  STEAM_LOGIN: '/auth/steam',
+  LOGIN: '/auth/discord',
   LOGOUT: '/auth/logout',
   
   // Dashboard

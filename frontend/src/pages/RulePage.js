@@ -7,20 +7,8 @@ import ImageModal from '../components/ImageModal';
 import { resolveImagesInContent, extractImagesFromContent } from '../utils/imageUtils';
 import { markdownToHtml } from '../utils/markdownUtils';
 
-// Dynamic API configuration - Auto-detect environment
-const getApiBaseUrl = () => {
-  const hostname = window.location.hostname;
-  
-  // If we're running on localhost or 127.0.0.1, use local backend
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3001';
-  }
-  
-  // If we're on the server IP or any other domain, use the same host with port 3001
-  return `http://${hostname}:3001`;
-};
-
-const BASE_URL = getApiBaseUrl();
+// Force use of deployed backend for now
+const BASE_URL = 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app';
 
 const Container = styled.div`
   max-width: 1200px;

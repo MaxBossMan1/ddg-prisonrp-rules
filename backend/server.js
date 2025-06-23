@@ -42,7 +42,6 @@ let db;
 
 // Dynamic URL configuration - Auto-detect environment
 const getDynamicUrls = () => {
-  const serverIp = process.env.SERVER_IP || '34.132.234.56';
   const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
   
   if (isLocal) {
@@ -51,9 +50,10 @@ const getDynamicUrls = () => {
       backend: 'http://localhost:3001'
     };
   } else {
+    // Use Cloud Run URLs in production
     return {
-      frontend: `http://${serverIp}:3000`,
-      backend: `http://${serverIp}:3001`
+      frontend: process.env.FRONTEND_URL || 'https://ddg-prisonrp-frontend-287483604174.us-central1.run.app',
+      backend: 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app'
     };
   }
 };
@@ -129,6 +129,8 @@ app.use((req, res, next) => {
 // CORS configuration with dynamic URLs
 const allowedOrigins = [
     dynamicUrls.frontend,
+    'http://localhost:3000', // Always allow localhost for development
+    'https://ddg-prisonrp-frontend-287483604174.us-central1.run.app', // Cloud Run frontend
     process.env.FRONTEND_URL // Keep for backward compatibility
 ].filter(Boolean); // Remove any undefined values
 
@@ -159,10 +161,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to false to work with HTTP (not just HTTPS)
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: 'lax' // Allow cross-site cookies for different ports
+        sameSite: 'lax' // Use lax for better compatibility with Steam OpenID
     }
 }));
 
@@ -311,32 +313,89 @@ app.get(`/staff/${staffSecretUrl}`, (req, res) => {
                         padding: 50px; 
                     }
                     .login-container {
-                        max-width: 400px;
+                        max-width: 450px;
                         margin: 0 auto;
                         padding: 40px;
                         background: #34495e;
                         border-radius: 8px;
                         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                     }
-                    .steam-btn {
+                    .auth-options {
+                        margin: 30px 0;
+                    }
+                    .steam-btn, .discord-btn {
                         background: #677bae;
                         color: white;
-                        padding: 12px 24px;
+                        padding: 15px 30px;
                         border: none;
-                        border-radius: 4px;
+                        border-radius: 6px;
                         text-decoration: none;
-                        display: inline-block;
-                        margin-top: 20px;
-                        transition: background 0.3s;
+                        display: block;
+                        margin: 15px 0;
+                        transition: all 0.3s;
+                        font-size: 16px;
+                        font-weight: bold;
+                        text-align: center;
                     }
-                    .steam-btn:hover { background: #8a9dc9; }
+                    .steam-btn:hover { 
+                        background: #8a9dc9; 
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    }
+                    .discord-btn {
+                        background: #5865F2;
+                    }
+                    .discord-btn:hover { 
+                        background: #4752C4; 
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    }
+                    .auth-icon {
+                        margin-right: 10px;
+                        font-size: 18px;
+                    }
+                    .auth-divider {
+                        text-align: center;
+                        margin: 20px 0;
+                        color: #bdc3c7;
+                        font-weight: bold;
+                        position: relative;
+                    }
+                    .auth-divider::before,
+                    .auth-divider::after {
+                        content: '';
+                        position: absolute;
+                        top: 50%;
+                        width: 40%;
+                        height: 1px;
+                        background: #bdc3c7;
+                    }
+                    .auth-divider::before { left: 0; }
+                    .auth-divider::after { right: 0; }
+                    .auth-note {
+                        font-size: 12px;
+                        color: #bdc3c7;
+                        margin-top: 20px;
+                        line-height: 1.4;
+                    }
                 </style>
             </head>
             <body>
                 <div class="login-container">
                     <h1>Staff Access Portal</h1>
-                    <p>Please authenticate with Steam to access the staff management panel.</p>
-                    <a href="/auth/steam" class="steam-btn">Login with Steam</a>
+                    <p>Please authenticate to access the staff management panel.</p>
+                    <div class="auth-options">
+                        <a href="/auth/steam" class="steam-btn">
+                            <span class="auth-icon">🎮</span>
+                            Login with Steam
+                        </a>
+                        <div class="auth-divider">OR</div>
+                        <a href="/auth/discord" class="discord-btn">
+                            <span class="auth-icon">💬</span>
+                            Login with Discord
+                        </a>
+                    </div>
+                    <p class="auth-note">Both authentication methods provide the same access level based on your account permissions.</p>
                 </div>
             </body>
             </html>

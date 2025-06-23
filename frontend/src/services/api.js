@@ -15,9 +15,8 @@ const getApiBaseUrl = () => {
   return `http://${hostname}:3001`;
 };
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // In production, API calls will be relative to the same domain
-  : getApiBaseUrl(); // Dynamic detection for development
+// Force use of deployed backend for now
+const API_BASE_URL = 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app';
 
 console.log('🔧 API Configuration:', { 
   NODE_ENV: process.env.NODE_ENV,

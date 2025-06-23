@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule:
+Write commit messages in present tense and clearly describe the change (e.g., “Add user authentication endpoint”).
+Reference related issue numbers in pull requests (e.g., “Fixes #42”).
+All changes must be submitted via pull requests—never merge directly to the main branch.
+Wait for Bugbot to review and process each pull request before merging.
+
+Do not bypass Bugbot checks or force-merge PRs unless absolutely necessary and approved.

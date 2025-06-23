@@ -1,26 +1,31 @@
-# Use the official Node.js runtime as the base image
-FROM node:18-alpine
+# Use a Debian-based Node image (avoids Alpine musl build issues)
+FROM node:18-slim AS base
 
-# Set the working directory in the container
+# Install native build dependencies required by sharp & better-sqlite3
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3 \
+        make \
+        g++ \
+        pkg-config \
+        libvips-dev \
+        sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set workdir
 WORKDIR /app
 
-# Copy package.json and package-lock.json for backend
+# Copy backend package files and install only production deps (these include native modules)
 COPY backend/package*.json ./
+RUN npm ci --omit=dev
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy the backend source code
+# Copy backend source
 COPY backend/ .
 
-# Create uploads directory
+# Ensure uploads dir exists
 RUN mkdir -p uploads
 
-# Expose the port that the app runs on
 EXPOSE 3001
-
-# Set environment to production
 ENV NODE_ENV=production
 
-# Command to run the application
 CMD ["npm", "start"]

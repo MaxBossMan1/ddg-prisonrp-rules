@@ -7,24 +7,24 @@ const getEnvironmentConfig = () => {
   // Check if we're on localhost/development
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
   
-  // For production builds, use relative URLs or same domain
+  // Force use of deployed backend for now
   if (process.env.NODE_ENV === 'production') {
     return {
-      API_BASE_URL: '', // Use relative URLs in production
+      API_BASE_URL: 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app',
       FRONTEND_URL: `${protocol}//${hostname}:3000`,
-      BACKEND_URL: `${protocol}//${hostname}:3001`,
+      BACKEND_URL: 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app',
       IS_PRODUCTION: true,
       IS_LOCALHOST: isLocalhost
     };
   }
   
-  // For development, detect if we're running locally or on cloud server
+  // For development, force use of deployed backend
   if (isLocalhost) {
-    // Local development
+    // Local development but use deployed backend
     return {
-      API_BASE_URL: 'http://localhost:3001',
+      API_BASE_URL: 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app',
       FRONTEND_URL: 'http://localhost:3000',
-      BACKEND_URL: 'http://localhost:3001',
+      BACKEND_URL: 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app',
       IS_PRODUCTION: false,
       IS_LOCALHOST: true
     };

@@ -1,0 +1,19 @@
+[build]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/build"
+
+[build.environment]
+  NODE_VERSION = "18.0.0"
+  NPM_VERSION = "9.0.0"
+  CI = false
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables will be set in Netlify's dashboard
+# These are just placeholders - set the actual values in Netlify
+[build.environment]
+  REACT_APP_API_URL = "https://your-backend-url.herokuapp.com"  # Update with your backend URL
+  NODE_ENV = "production"

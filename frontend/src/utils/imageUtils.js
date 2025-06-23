@@ -1,14 +1,6 @@
-// Dynamic backend URL configuration - Auto-detect environment
+// Force use of deployed backend for now
 const getBackendUrl = () => {
-  const hostname = window.location.hostname;
-  
-  // If we're running on localhost or 127.0.0.1, use local backend
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3001';
-  }
-  
-  // If we're on the server IP or any other domain, use the same host with port 3001
-  return `http://${hostname}:3001`;
+  return 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app';
 };
 
 // Utility function to resolve image URLs for development vs production

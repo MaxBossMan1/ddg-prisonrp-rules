@@ -2,6 +2,7 @@
   "name": "ddg-prisonrp-frontend",
   "version": "0.7.0",
   "description": "Frontend for DigitalDeltaGaming PrisonRP MOTD/Rules System - React 19 with Industrial Dark Theme",
+
   "private": true,
   "author": "DigitalDeltaGaming",
   "license": "ISC",

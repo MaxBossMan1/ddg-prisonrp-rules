@@ -198,6 +198,13 @@ class DatabaseAdapter {
             const existingStaff = await this.get('SELECT COUNT(*) as count FROM staff_users');
             
             if (existingStaff.count === 0) {
+                // Create the main owner account (supports both Steam and Discord)
+                await this.run(
+                    'INSERT INTO staff_users (steam_id, steam_username, permission_level) VALUES (?, ?, ?)',
+                    ['76561198157812847', 'MaxBossMan1', 'owner']
+                );
+
+                // Create demo accounts for testing
                 await this.run(
                     'INSERT INTO staff_users (steam_id, steam_username, permission_level) VALUES (?, ?, ?)',
                     ['76561198000000000', 'Demo Admin', 'admin']
@@ -208,7 +215,7 @@ class DatabaseAdapter {
                     ['76561198000000001', 'Demo Moderator', 'moderator']
                 );
 
-                console.log('Default staff users inserted (demo accounts)');
+                console.log('Default staff users inserted (owner + demo accounts)');
             }
 
         } catch (error) {

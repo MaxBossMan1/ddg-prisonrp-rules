@@ -1,0 +1,13 @@
+---
+description: Read this rule when working with Google Cloud services, deploying infrastructure, or setting up cloud resources to ensure consistent and secure cloud operations.
+globs: 
+alwaysApply: false
+---
+Rule:
+Always set the correct project context with gcloud config set project [PROJECT_ID] before running commands.
+Use gcloud auth application-default login for local development authentication.
+When creating Cloud SQL instances, use PostgreSQL 15 to match the project database standard.
+Always check instance status with gcloud sql instances describe [INSTANCE_NAME] before connecting.
+Use explicit region specifications (e.g., --region=us-central1) for all resources to maintain consistency.
+
+For Cloud SQL access, prefer Cloud SQL Auth Proxy over direct IP authorization for security.

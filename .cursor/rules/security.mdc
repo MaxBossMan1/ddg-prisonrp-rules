@@ -1,0 +1,11 @@
+---
+description: Read this rule when handling authentication, user input, or any sensitive data to ensure security best practices.
+globs: 
+alwaysApply: false
+---
+Rule:
+Never commit real secrets, passwords, or API keys to the repository.
+Use environment variables and .env files for all sensitive information.
+Sanitize and validate all user input before using it in SQL queries or API calls.
+
+Use parameterized queries to prevent SQL injection.
