@@ -55,8 +55,20 @@ if (!process.env.DISCORD_CLIENT_SECRET || process.env.DISCORD_CLIENT_SECRET === 
 
 // Function to create Discord strategy with current dynamic URLs
 const createDiscordStrategy = () => {
-    const currentUrls = getDynamicUrls();
-    console.log('🔧 Creating Discord Strategy with URLs:', currentUrls);
+    let currentUrls;
+    try {
+        currentUrls = getDynamicUrls();
+        console.log('🔧 Creating Discord Strategy with URLs:', currentUrls);
+    } catch (error) {
+        console.error('🚨 DISCORD STRATEGY CREATION ERROR:', error.message);
+        console.error('   Using fallback configuration. Discord authentication may not work properly.');
+        
+        // Provide fallback URLs to prevent complete failure
+        currentUrls = {
+            callbackURL: 'http://localhost:3001/auth/discord/callback', // fallback to localhost
+            frontendUrl: 'http://localhost:3000'
+        };
+    }
     
     return new DiscordStrategy({
         clientID: process.env.DISCORD_CLIENT_ID || 'your-discord-client-id-here',
@@ -218,8 +230,21 @@ const createDiscordStrategy = () => {
 };
 
 // Initialize with current strategy
-console.log('🔧 Initializing Discord Strategy at startup with URLs:', getDynamicUrls());
-passport.use('discord', createDiscordStrategy());
+try {
+    console.log('🔧 Initializing Discord Strategy at startup with URLs:', getDynamicUrls());
+} catch (error) {
+    console.error('🚨 DISCORD STRATEGY INITIALIZATION WARNING:', error.message);
+    console.error('   Discord authentication may not work properly in production.');
+}
+
+try {
+    passport.use('discord', createDiscordStrategy());
+    console.log('✅ Discord Strategy initialized successfully');
+} catch (error) {
+    console.error('🚨 FAILED TO INITIALIZE DISCORD STRATEGY:', error.message);
+    console.error('   Discord authentication will not be available.');
+    console.error('   Please check your Discord configuration and SERVER_IP settings.');
+}
 
 // Passport serialization
 passport.serializeUser((user, done) => {
@@ -407,7 +432,14 @@ router.get('/discord/callback',
         
         // Redirect to staff dashboard
         const secretUrl = process.env.STAFF_SECRET_URL || 'staff-dashboard-2025';
-        const frontendUrl = getDynamicUrls().frontendUrl;
+        let frontendUrl;
+        try {
+            frontendUrl = getDynamicUrls().frontendUrl;
+        } catch (error) {
+            console.error('🚨 Error getting frontend URL for redirect:', error.message);
+            // Fallback to localhost if URL generation fails
+            frontendUrl = 'http://localhost:3000';
+        }
         res.redirect(`${frontendUrl}/staff/${secretUrl}/dashboard`);
     }
 );
