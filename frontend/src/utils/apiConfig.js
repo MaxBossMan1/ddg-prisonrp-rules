@@ -32,7 +32,7 @@ export const buildApiUrl = (path) => {
 // Common API endpoints
 export const API_ENDPOINTS = {
   // Auth
-  CHECK_AUTH: '/auth/check',
+  CHECK_AUTH: '/auth/status',
   DISCORD_LOGIN: '/auth/discord',
   LOGOUT: '/auth/logout',
   

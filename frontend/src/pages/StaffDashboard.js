@@ -2375,7 +2375,7 @@ For questions, contact staff immediately.`,
 
   const checkAuth = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/check`, { credentials: 'include' });
+      const response = await fetch(`${BASE_URL}/auth/status`, { credentials: 'include' });
       if (response.ok) {
         const userData = await response.json();
         if (userData.authenticated && userData.user) {
