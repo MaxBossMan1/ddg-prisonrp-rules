@@ -1,0 +1,11 @@
+---
+description: Read this rule when developing new features, fixing bugs, or preparing code for review to ensure proper test coverage.
+globs: 
+alwaysApply: false
+---
+Rule:
+Write unit tests for all new backend features in apps/backend/src/__tests__.
+Use Jest as the testing framework for all JavaScript/TypeScript code.
+Ensure all tests pass before submitting a pull request.
+
+Write clear, descriptive test names and cover edge cases.

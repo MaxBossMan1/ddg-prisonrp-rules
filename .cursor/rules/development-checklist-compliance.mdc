@@ -1,0 +1,13 @@
+---
+description: Read this rule when planning development work, implementing new features, or preparing for deployment to ensure project milestones are met systematically.
+globs: 
+alwaysApply: false
+---
+Rule:
+Always check items off in development-checklist.md as they are completed.
+Before starting new features, verify all prerequisite checklist items are completed.
+For database-related work, ensure "Set up Google Cloud SQL (PostgreSQL)" is marked complete before proceeding with deployment items.
+Update the "Current Status" section at the bottom of the checklist after major milestones.
+Follow the phase order: complete Phase 1 items before starting Phase 2.
+
+Test each checklist item thoroughly before marking as complete.

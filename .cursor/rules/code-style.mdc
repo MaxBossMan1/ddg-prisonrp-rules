@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule:
+Use Prettier and ESLint for formatting and linting all JavaScript/TypeScript code.
+Always run linting and formatting before committing code.
+Prefer async/await for asynchronous operations; avoid callbacks and .then() chains.
+
+Use TypeScript types and interfaces for all function signatures and data structures.

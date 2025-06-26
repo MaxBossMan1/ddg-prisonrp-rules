@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule:
+Document every new API endpoint in the docs/ directory, including request/response examples.
+Update README.md when adding or changing major features.
+
+Write clear, concise, and up-to-date documentation for all public interfaces.

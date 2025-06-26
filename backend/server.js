@@ -10,6 +10,9 @@ const fs = require('fs');
 // Import database
 const Database = require('./database/init');
 
+// Import Discord bot service
+const { getInstance: getDiscordBot } = require('./services/discordBot');
+
 // Import rate limiting middleware
 const {
   publicApiLimiter,
@@ -93,6 +96,13 @@ async function initializeServer() {
         Database.setInstance(database);
 
         console.log('Database initialized successfully');
+        
+        // Initialize Discord bot
+        console.log('🤖 Initializing Discord bot...');
+        const discordBot = getDiscordBot();
+        await discordBot.initialize();
+        
+        console.log('✅ Server initialization complete');
     } catch (error) {
         console.error('Failed to initialize database:', error);
         process.exit(1);

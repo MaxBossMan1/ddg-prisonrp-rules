@@ -2210,7 +2210,7 @@ For questions, contact staff immediately.`,
   const [userModalType, setUserModalType] = useState('create'); // 'create' or 'edit'
   const [userFormData, setUserFormData] = useState({
     id: null,
-    steamId: '',
+    discordId: '',
     username: '',
     permissionLevel: 'editor',
     isActive: true
@@ -2382,10 +2382,10 @@ For questions, contact staff immediately.`,
           setUser(userData.user);
           loadDashboardData();
         } else {
-          window.location.href = `${BASE_URL}/auth/steam`;
+          window.location.href = `${BASE_URL}/auth/discord`;
         }
       } else {
-        window.location.href = `${BASE_URL}/auth/steam`;
+        window.location.href = `${BASE_URL}/auth/discord`;
       }
     } catch (error) {
       console.error('Auth failed:', error);
@@ -3953,7 +3953,7 @@ For questions, contact staff immediately.`,
   const openCreateUserModal = () => {
     setUserFormData({
       id: null,
-      steamId: '',
+      discordId: '',
       username: '',
       permissionLevel: 'editor', // Always available as the lowest level
       isActive: true
@@ -3975,8 +3975,8 @@ For questions, contact staff immediately.`,
 
     setUserFormData({
       id: staffUser.id,
-      steamId: staffUser.steam_id,
-      username: staffUser.steam_username,
+      discordId: staffUser.discord_id,
+      username: staffUser.discord_username,
       permissionLevel: staffUser.permission_level,
       isActive: staffUser.is_active === 1
     });
@@ -3988,7 +3988,7 @@ For questions, contact staff immediately.`,
     setShowUserModal(false);
     setUserFormData({
       id: null,
-      steamId: '',
+      discordId: '',
       username: '',
       permissionLevel: 'editor',
       isActive: true
@@ -3997,20 +3997,20 @@ For questions, contact staff immediately.`,
 
   const saveUser = async () => {
     try {
-      if (!userFormData.steamId || !userFormData.username || !userFormData.permissionLevel) {
+      if (!userFormData.discordId || !userFormData.username || !userFormData.permissionLevel) {
         showCustomAlert(
           '⚠️ Missing Information',
-          'Please fill in all required fields:\n• Steam ID\n• Username\n• Permission Level',
+          'Please fill in all required fields:\n• Discord ID\n• Username\n• Permission Level',
           'warning'
         );
         return;
       }
 
-      // Validate Steam ID format (basic check)
-      if (!/^\d{17}$/.test(userFormData.steamId)) {
+      // Validate Discord ID format (basic check)
+      if (!/^\d{17,19}$/.test(userFormData.discordId)) {
         showCustomAlert(
-          '⚠️ Invalid Steam ID',
-          'Steam ID must be a 17-digit number.\n\nExample: 76561198123456789',
+          '⚠️ Invalid Discord ID',
+          'Discord ID must be a 17-19 digit number.\n\nYou can get Discord IDs by enabling Developer Mode in Discord settings,\nthen right-clicking a user and selecting "Copy ID".',
           'warning'
         );
         return;
@@ -4028,7 +4028,7 @@ For questions, contact staff immediately.`,
             isActive: userFormData.isActive
           }
         : {
-            steamId: userFormData.steamId,
+            discordId: userFormData.discordId,
             username: userFormData.username,
             permissionLevel: userFormData.permissionLevel
           };
@@ -6919,16 +6919,16 @@ For questions, contact staff immediately.`,
             {userModalType === 'create' && (
               <>
                 <FormGroup>
-                  <Label>Steam ID *</Label>
+                  <Label>Discord ID *</Label>
                   <Input
                     type="text"
-                    value={userFormData.steamId}
-                    onChange={(e) => setUserFormData({...userFormData, steamId: e.target.value})}
-                    placeholder="Enter 17-digit Steam ID (e.g., 76561198123456789)"
-                    maxLength="17"
+                    value={userFormData.discordId}
+                    onChange={(e) => setUserFormData({...userFormData, discordId: e.target.value})}
+                    placeholder="Enter Discord ID (e.g., 123456789012345678)"
+                    maxLength="19"
                   />
                   <small style={{ color: '#8a9dc9', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
-                    You can find Steam IDs using tools like steamid.io or Steam profile URLs
+                    Enable Developer Mode in Discord, right-click a user, and select "Copy ID"
                   </small>
                 </FormGroup>
 
@@ -6938,7 +6938,7 @@ For questions, contact staff immediately.`,
                     type="text"
                     value={userFormData.username}
                     onChange={(e) => setUserFormData({...userFormData, username: e.target.value})}
-                    placeholder="Enter Steam username"
+                    placeholder="Enter Discord username"
                   />
                 </FormGroup>
               </>
@@ -6991,13 +6991,13 @@ For questions, contact staff immediately.`,
                 onClick={saveUser}
                 disabled={
                   !userFormData.permissionLevel || 
-                  (userModalType === 'create' && (!userFormData.steamId || !userFormData.username))
+                  (userModalType === 'create' && (!userFormData.discordId || !userFormData.username))
                 }
                 style={{ 
                   backgroundColor: (userFormData.permissionLevel && 
-                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? '#27ae60' : '#95a5a6',
+                    (userModalType === 'edit' || (userFormData.discordId && userFormData.username))) ? '#27ae60' : '#95a5a6',
                   opacity: (userFormData.permissionLevel && 
-                    (userModalType === 'edit' || (userFormData.steamId && userFormData.username))) ? 1 : 0.6
+                    (userModalType === 'edit' || (userFormData.discordId && userFormData.username))) ? 1 : 0.6
                 }}
               >
                 {userModalType === 'create' ? '✅ Add User' : '💾 Update User'}

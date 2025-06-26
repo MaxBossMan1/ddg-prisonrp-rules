@@ -33,7 +33,7 @@ export const buildApiUrl = (path) => {
 export const API_ENDPOINTS = {
   // Auth
   CHECK_AUTH: '/auth/check',
-  STEAM_LOGIN: '/auth/steam',
+  DISCORD_LOGIN: '/auth/discord',
   LOGOUT: '/auth/logout',
   
   // Dashboard
