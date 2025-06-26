@@ -9,16 +9,17 @@ const getDynamicUrls = () => {
   
   if (isLocal) {
     return {
-      returnURL: 'http://localhost:3001/auth/discord/return',
+      returnURL: 'http://localhost:3001/auth/discord/callback',
       realm: 'http://localhost:3001',
       frontendUrl: 'http://localhost:3000'
     };
   } else {
-    // Use Cloud Run URLs in production
+    // Use environment variables or default to VM IP
+    const serverIp = process.env.SERVER_IP || '34.41.22.155';
     return {
-      returnURL: process.env.DISCORD_RETURN_URL || 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app/auth/discord/return',
-      realm: process.env.DISCORD_REALM || 'https://ddg-prisonrp-backend-287483604174.us-central1.run.app',
-      frontendUrl: process.env.FRONTEND_URL || 'https://ddg-prisonrp-frontend-287483604174.us-central1.run.app'
+      returnURL: process.env.DISCORD_CALLBACK_URL || `http://${serverIp}:3001/auth/discord/callback`,
+      realm: process.env.DISCORD_REALM || `http://${serverIp}:3001`,
+      frontendUrl: process.env.FRONTEND_URL || `http://${serverIp}:3000`
     };
   }
 };
@@ -248,9 +249,9 @@ router.get('/discord', (req, res, next) => {
     passport.authenticate('discord')(req, res, next);
 });
 
-router.get('/discord/return',
+router.get('/discord/callback',
     (req, res, next) => {
-        console.log('🔍 Discord Return URL accessed');
+        console.log('🔍 Discord Callback URL accessed');
         console.log('  - Query params:', req.query);
         console.log('  - Body:', req.body);
         console.log('  - Session ID:', req.sessionID);
