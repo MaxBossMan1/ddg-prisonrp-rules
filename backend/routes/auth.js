@@ -6,7 +6,6 @@ const { getInstance: getDiscordBot } = require('../services/discordBot');
 const router = express.Router();
 
 const getDynamicUrls = () => {
-  const serverIp = process.env.SERVER_IP || 'localhost';
   const isLocal = process.env.NODE_ENV === 'development' || process.env.LOCAL_DEV === 'true';
   
   if (isLocal) {
@@ -15,6 +14,12 @@ const getDynamicUrls = () => {
       frontendUrl: 'http://localhost:3000'
     };
   } else {
+    // In production, SERVER_IP must be explicitly set
+    const serverIp = process.env.SERVER_IP;
+    if (!serverIp) {
+      throw new Error('SERVER_IP environment variable is required in production for Discord OAuth callbacks. Please set it to your server\'s public IP address or domain name.');
+    }
+    
     return {
       callbackURL: `http://${serverIp}:3001/auth/discord/callback`,
       frontendUrl: `http://${serverIp}:3000`
@@ -22,12 +27,18 @@ const getDynamicUrls = () => {
   }
 };
 
-console.log('🔧 Discord Auth Configuration:', {
-  NODE_ENV: process.env.NODE_ENV,
-  LOCAL_DEV: process.env.LOCAL_DEV,
-  SERVER_IP: process.env.SERVER_IP,
-  discordUrls: getDynamicUrls()
-});
+try {
+  console.log('🔧 Discord Auth Configuration:', {
+    NODE_ENV: process.env.NODE_ENV,
+    LOCAL_DEV: process.env.LOCAL_DEV,
+    SERVER_IP: process.env.SERVER_IP,
+    discordUrls: getDynamicUrls()
+  });
+} catch (error) {
+  console.error('🚨 DISCORD AUTHENTICATION CONFIGURATION ERROR:', error.message);
+  console.error('   This will prevent Discord OAuth from working properly in production.');
+  console.error('   Please set the SERVER_IP environment variable to your server\'s public IP or domain.');
+}
 
 // Check if Discord credentials are configured
 if (!process.env.DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID === 'your-discord-client-id-here') {
