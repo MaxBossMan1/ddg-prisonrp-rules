@@ -199,6 +199,43 @@ CREATE TABLE IF NOT EXISTS staff_permissions (
     FOREIGN KEY (granted_by) REFERENCES staff_users(id)
 );
 
+-- Discord role mappings table - maps Discord roles to permission levels
+CREATE TABLE IF NOT EXISTS discord_role_mappings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_role_id TEXT NOT NULL UNIQUE,
+    discord_role_name TEXT NOT NULL,
+    permission_level TEXT NOT NULL, -- 'owner', 'admin', 'moderator', 'editor'
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Discord bot settings table
+CREATE TABLE IF NOT EXISTS discord_bot_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    bot_token_hash TEXT NOT NULL, -- Store hashed version for security
+    permission_sync_enabled BOOLEAN DEFAULT 1,
+    auto_role_assignment BOOLEAN DEFAULT 1,
+    log_channel_id TEXT, -- Channel for logging auth events
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Discord authentication logs
+CREATE TABLE IF NOT EXISTS discord_auth_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    discord_username TEXT NOT NULL,
+    action_type TEXT NOT NULL, -- 'login', 'logout', 'permission_check', 'role_sync'
+    success BOOLEAN DEFAULT 1,
+    roles_at_time TEXT, -- JSON array of roles at time of action
+    permission_level_granted TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    error_message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Scheduled announcements table
 CREATE TABLE IF NOT EXISTS scheduled_announcements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -307,6 +344,11 @@ CREATE INDEX IF NOT EXISTS idx_staff_activity_session ON staff_activity_logs(ses
 CREATE INDEX IF NOT EXISTS idx_staff_permissions_user ON staff_permissions(staff_user_id);
 CREATE INDEX IF NOT EXISTS idx_staff_permissions_type ON staff_permissions(permission_type);
 CREATE INDEX IF NOT EXISTS idx_staff_permissions_active ON staff_permissions(is_active);
+
+-- Discord table indexes
+CREATE INDEX IF NOT EXISTS idx_discord_role_mappings_role ON discord_role_mappings(discord_role_id);
+CREATE INDEX IF NOT EXISTS idx_discord_auth_logs_user ON discord_auth_logs(discord_id);
+CREATE INDEX IF NOT EXISTS idx_discord_auth_logs_date ON discord_auth_logs(created_at);
 
 CREATE INDEX IF NOT EXISTS idx_scheduled_announcements_date ON scheduled_announcements(scheduled_for);
 CREATE INDEX IF NOT EXISTS idx_scheduled_announcements_published ON scheduled_announcements(is_published);
