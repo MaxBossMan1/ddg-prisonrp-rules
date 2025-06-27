@@ -135,12 +135,18 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
 -- Staff users table for authentication
 CREATE TABLE IF NOT EXISTS staff_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    steam_id TEXT NOT NULL UNIQUE,
-    steam_username TEXT NOT NULL,
-    permission_level TEXT NOT NULL DEFAULT 'editor', -- 'admin', 'moderator', 'editor'
+    steam_id TEXT, -- Removed NOT NULL constraint to allow Discord-only users
+    steam_username TEXT,
+    discord_id TEXT,
+    discord_username TEXT,
+    discord_discriminator TEXT,
+    discord_avatar TEXT,
+    discord_roles TEXT DEFAULT '[]', -- JSON array of Discord role IDs
+    permission_level TEXT NOT NULL DEFAULT 'editor', -- 'owner', 'admin', 'moderator', 'editor'
     is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME
+    last_login DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Sessions table for staff authentication
