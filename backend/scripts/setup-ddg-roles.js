@@ -16,12 +16,17 @@ const path = require('path');
 const DDG_CONFIG = {
     guildId: '929440166991527946',
     owners: [
-        { discordId: '616691120407052291', username: 'Owner 1' },
-        { discordId: '303675233359888384', username: 'Owner 2' }
+        { discordId: '616691120407052291', username: 'maxbossman1' },
+        { discordId: '303675233359888384', username: 'Rexxor' }
     ],
     roles: [
+        // Admin roles
         { roleId: '1241190526296920065', roleName: 'Administrator', permissionLevel: 'admin' },
+        { roleId: '929440167012491336', roleName: 'Admin Role 2', permissionLevel: 'admin' },
+        // Moderator roles  
         { roleId: '929440167012491334', roleName: 'Moderator', permissionLevel: 'moderator' },
+        { roleId: '972142128752910346', roleName: 'Moderator Role 2', permissionLevel: 'moderator' },
+        // Editor roles
         { roleId: '929440166991527955', roleName: 'Editor', permissionLevel: 'editor' }
     ]
 };

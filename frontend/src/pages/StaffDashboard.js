@@ -2397,11 +2397,15 @@ For questions, contact staff immediately.`,
     const promises = [
       loadRules(),
       loadCategories(),
-      loadCategoriesData(),
       loadAnnouncements(),
-      loadActivityLog(),
-      loadStaffUsers()
+      loadActivityLog()
     ];
+
+    // Load admin-level categories data and staff users for admins and owners only
+    if (user && (user.permissionLevel === 'admin' || user.permissionLevel === 'owner')) {
+      promises.push(loadCategoriesData());
+      promises.push(loadStaffUsers());
+    }
 
     // Load pending approvals for moderators and above
     if (user && (user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner')) {

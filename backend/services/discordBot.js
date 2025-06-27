@@ -3,9 +3,21 @@ const Database = require('../database/init');
 
 // DDG-specific hardcoded owners
 const DDG_HARDCODED_OWNERS = [
-    '616691120407052291',
-    '303675233359888384'
+    '616691120407052291', // maxbossman1
+    '303675233359888384'  // Rexxor
 ];
+
+// DDG-specific hardcoded role mappings
+const DDG_HARDCODED_ROLES = {
+    // Admin roles
+    '1241190526296920065': 'admin', // Administrator  
+    '929440167012491336': 'admin',  // Admin Role 2
+    // Moderator roles
+    '929440167012491334': 'moderator', // Moderator
+    '972142128752910346': 'moderator', // Moderator Role 2
+    // Editor roles
+    '929440166991527955': 'editor'  // Editor
+};
 
 class DiscordBotService {
     constructor() {
@@ -128,48 +140,34 @@ class DiscordBotService {
             const roles = await this.getUserRoles(discordId);
             const roleIds = roles.map(r => r.id);
 
-            // Get role mappings from database
-            const db = Database.getInstance();
-            if (!db) {
-                console.error('🚨 Database not available for role mapping');
-                return null;
-            }
-
-            // Get all role mappings ordered by priority (owner > admin > moderator > editor)
-            const roleMappings = await db.all(`
-                SELECT * FROM discord_role_mappings 
-                ORDER BY 
-                    CASE permission_level
-                        WHEN 'owner' THEN 1
-                        WHEN 'admin' THEN 2
-                        WHEN 'moderator' THEN 3
-                        WHEN 'editor' THEN 4
-                        ELSE 5
-                    END
-            `);
-
-            // Find the highest permission level the user has
-            for (const mapping of roleMappings) {
-                if (roleIds.includes(mapping.discord_role_id)) {
-                    console.log(`✅ User ${discordId} granted ${mapping.permission_level} permission via role ${mapping.discord_role_name}`);
-                    
-                    // Log the permission check
-                    await this.logAuthEvent(discordId, 'permission_check', true, {
-                        roles: roleIds,
-                        permissionLevel: mapping.permission_level,
-                        grantedByRole: mapping.discord_role_name
-                    });
-                    
-                    return mapping.permission_level;
+            // Check hardcoded roles first (priority order: admin > moderator > editor)
+            const permissionOrder = ['admin', 'moderator', 'editor'];
+            
+            for (const permission of permissionOrder) {
+                for (const roleId of roleIds) {
+                    if (DDG_HARDCODED_ROLES[roleId] === permission) {
+                        const roleName = roles.find(r => r.id === roleId)?.name || `Role ${roleId}`;
+                        console.log(`✅ User ${discordId} granted ${permission} permission via hardcoded role ${roleName}`);
+                        
+                        // Log the permission check
+                        await this.logAuthEvent(discordId, 'permission_check', true, {
+                            roles: roleIds,
+                            permissionLevel: permission,
+                            grantedByRole: roleName,
+                            grantedByRuleType: 'hardcoded'
+                        });
+                        
+                        return permission;
+                    }
                 }
             }
 
-            console.log(`❌ User ${discordId} has no matching roles for staff permissions`);
+            console.log(`❌ User ${discordId} has no matching hardcoded roles for staff permissions`);
             
             // Log the failed permission check
             await this.logAuthEvent(discordId, 'permission_check', false, {
                 roles: roleIds,
-                reason: 'No matching staff roles found'
+                reason: 'No matching hardcoded staff roles found'
             });
             
             return null;

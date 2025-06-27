@@ -182,7 +182,20 @@ const createDiscordStrategy = () => {
                         VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                     `, [discordId, discordUsername, discriminator, avatar, permissionLevel]);
                     
-                    const newUser = await db.get('SELECT * FROM staff_users WHERE id = ?', [result.lastID]);
+                    // Get the newly created user - use discord_id as fallback if lastID fails
+                    let newUser = null;
+                    if (result.lastID) {
+                        newUser = await db.get('SELECT * FROM staff_users WHERE id = ?', [result.lastID]);
+                    }
+                    
+                    // Fallback: if lastID didn't work, find by discord_id
+                    if (!newUser) {
+                        newUser = await db.get('SELECT * FROM staff_users WHERE discord_id = ? ORDER BY created_at DESC LIMIT 1', [discordId]);
+                    }
+                    
+                    if (!newUser) {
+                        throw new Error('Failed to create user account in database');
+                    }
                     
                     // Send notification about new user
                     if (discordBot && discordBot.isReady()) {
