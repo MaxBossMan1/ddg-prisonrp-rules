@@ -141,25 +141,45 @@ class DatabaseAdapter {
 
             // Migration: Add UNIQUE constraint to discord_id column in staff_users
             try {
-                // Check if UNIQUE constraint already exists by checking table info
+                // Check if UNIQUE constraint already exists by querying schema
                 const tableInfo = await this.all('PRAGMA table_info(staff_users)');
                 const discordIdColumn = tableInfo.find(col => col.name === 'discord_id');
                 
-                // Check if we need to apply the migration by trying to insert a duplicate
+                // Check if UNIQUE constraint exists by examining the table's CREATE statement
                 let needsMigration = true;
-                try {
-                    // Try to create a test duplicate - if it fails, UNIQUE constraint exists
-                    await this.run('BEGIN TRANSACTION');
-                    await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', ['test_duplicate_check', 'editor']);
-                    await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', ['test_duplicate_check', 'editor']);
-                    // If we get here, no UNIQUE constraint exists
-                    await this.run('DELETE FROM staff_users WHERE discord_id = ?', ['test_duplicate_check']);
-                    await this.run('COMMIT');
-                } catch (error) {
-                    await this.run('ROLLBACK');
-                    if (error.message.includes('UNIQUE constraint failed')) {
-                        needsMigration = false;
-                        console.log('discord_id UNIQUE constraint already exists in staff_users table');
+                if (discordIdColumn) {
+                    const schemaQuery = await this.get(`
+                        SELECT sql FROM sqlite_master 
+                        WHERE type='table' AND name='staff_users'
+                    `);
+                    
+                    if (schemaQuery && schemaQuery.sql) {
+                        const createStatement = schemaQuery.sql.toLowerCase();
+                        // Check if discord_id column has UNIQUE constraint in the CREATE statement
+                        const hasUniqueConstraint = createStatement.includes('discord_id') && 
+                                                   (createStatement.includes('discord_id text unique') || 
+                                                    createStatement.includes('unique(discord_id)') ||
+                                                    createStatement.includes('constraint') && createStatement.includes('unique') && createStatement.includes('discord_id'));
+                        
+                        if (hasUniqueConstraint) {
+                            needsMigration = false;
+                            console.log('discord_id UNIQUE constraint already exists in staff_users table');
+                        }
+                    }
+                    
+                    // Also check for unique indexes on discord_id
+                    if (needsMigration) {
+                        const indexes = await this.all('PRAGMA index_list(staff_users)');
+                        for (const index of indexes) {
+                            if (index.unique === 1) {
+                                const indexInfo = await this.all(`PRAGMA index_info(${index.name})`);
+                                if (indexInfo.some(col => col.name === 'discord_id')) {
+                                    needsMigration = false;
+                                    console.log('discord_id UNIQUE index already exists in staff_users table');
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
 

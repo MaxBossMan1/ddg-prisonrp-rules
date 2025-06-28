@@ -4081,7 +4081,7 @@ For questions, contact staff immediately.`,
     setUserFormData({
       id: staffUser.id,
       discordId: staffUser.discord_id,
-      username: staffUser.discord_username,
+      username: staffUser.steam_username,
       permissionLevel: staffUser.permission_level,
       isActive: staffUser.is_active === 1
     });
