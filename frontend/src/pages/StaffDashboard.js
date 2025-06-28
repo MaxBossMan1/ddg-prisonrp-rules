@@ -2087,6 +2087,7 @@ const FloatingParticles = () => {
 function StaffDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshingPermissions, setRefreshingPermissions] = useState(false);
   const [activeTab, setActiveTab] = useState('log');
   const [rules, setRules] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -2539,6 +2540,104 @@ For questions, contact staff immediately.`,
     }
   };
 
+  // Refresh permissions manually
+  const refreshPermissions = async () => {
+    try {
+      setRefreshingPermissions(true);
+      console.log('🔄 Manually refreshing permissions...');
+      
+      const response = await fetch(`${BASE_URL}/auth/refresh-permissions`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      const data = await response.json();
+      
+      if (response.status === 401 && data.forceLogout) {
+        // Permissions revoked - force logout
+        showCustomAlert(
+          '🚨 Access Revoked',
+          'Your Discord roles have been removed. You will be logged out.',
+          'error'
+        );
+        setTimeout(() => {
+          window.location.href = `${BASE_URL}/auth/discord`;
+        }, 2000);
+        return;
+      }
+      
+      if (response.ok) {
+        if (data.changed) {
+          // Permission level changed
+          showCustomAlert(
+            '🔄 Permissions Updated',
+            `Your permission level has changed from ${data.previousLevel} to ${data.permissionLevel}. The page will reload to reflect your new permissions.`,
+            'success'
+          );
+          
+          // Update user state and reload data
+          setUser(prevUser => ({
+            ...prevUser,
+            permissionLevel: data.permissionLevel
+          }));
+          
+          // Reload dashboard data with new permissions
+          setTimeout(() => {
+            loadDashboardData();
+          }, 1000);
+        } else {
+          // No changes
+          showCustomAlert(
+            '✅ Permissions Verified',
+            `Your permissions are up to date. Current level: ${data.permissionLevel}`,
+            'success'
+          );
+        }
+      } else {
+        throw new Error(data.message || 'Permission refresh failed');
+      }
+    } catch (error) {
+      console.error('Permission refresh error:', error);
+      showCustomAlert(
+        '❌ Refresh Failed',
+        `Failed to refresh permissions: ${error.message}`,
+        'error'
+      );
+    } finally {
+      setRefreshingPermissions(false);
+    }
+  };
+
+  // Enhanced API request handler that checks for permission revocation
+  const makeAuthenticatedRequest = async (url, options = {}) => {
+    try {
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options
+      });
+      
+      if (response.status === 401) {
+        const data = await response.json();
+        if (data.forceLogout) {
+          // Permissions revoked during request
+          showCustomAlert(
+            '🚨 Access Revoked',
+            'Your Discord roles have been removed. You will be logged out.',
+            'error'
+          );
+          setTimeout(() => {
+            window.location.href = `${BASE_URL}/auth/discord`;
+          }, 2000);
+          return null;
+        }
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('API request error:', error);
+      throw error;
+    }
+  };
 
   // Full cross-references management functions
   const openCrossReferencesModal = async (rule) => {
@@ -4476,6 +4575,22 @@ For questions, contact staff immediately.`,
               }}
             >
               {showDebugPanel ? '🔴 Debug' : '🔧 Debug'}
+            </button>
+            <button 
+              onClick={refreshPermissions}
+              disabled={refreshingPermissions}
+              style={{ 
+                backgroundColor: refreshingPermissions ? '#95a5a6' : '#3498db',
+                color: 'white',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '4px',
+                cursor: refreshingPermissions ? 'not-allowed' : 'pointer',
+                opacity: refreshingPermissions ? 0.7 : 1
+              }}
+              title="Check Discord roles and refresh permissions"
+            >
+              {refreshingPermissions ? '🔄 Checking...' : '🔄 Refresh Permissions'}
             </button>
             <button 
               onClick={logout}

@@ -123,12 +123,15 @@ const createDiscordStrategy = () => {
                 const discordBot = getDiscordBot();
                 let permissionLevel = user.permission_level;
                 
+                // ALWAYS check Discord roles first (even if user has 'none' in database)
+                console.log(`  🔍 Checking Discord roles for existing user (current db level: ${user.permission_level})...`);
+                
                 if (discordBot && discordBot.isReady()) {
                     console.log('  - Syncing user roles with Discord bot...');
                     const newPermissionLevel = await discordBot.determinePermissionLevel(discordId);
                     
                     if (newPermissionLevel && newPermissionLevel !== user.permission_level) {
-                        console.log(`  - Permission level changed from ${user.permission_level} to ${newPermissionLevel}`);
+                        console.log(`  ✅ Permission level changed from ${user.permission_level} to ${newPermissionLevel}`);
                         permissionLevel = newPermissionLevel;
                         
                         // Update permission level in database
@@ -142,6 +145,33 @@ const createDiscordStrategy = () => {
                         await discordBot.sendAuthNotification(discordId, 'Permission Level Changed', true, {
                             permissionLevel: permissionLevel,
                             previousLevel: user.permission_level
+                        });
+                    } else if (newPermissionLevel && newPermissionLevel === user.permission_level) {
+                        // Permissions are the same, just continue with existing level
+                        console.log(`  ✅ Permission level confirmed: ${user.permission_level}`);
+                        permissionLevel = user.permission_level;
+                    } else if (!newPermissionLevel) {
+                        // User has no Discord permissions
+                        console.log(`  🚨 User ${discordUsername} has no Discord staff roles - denying login`);
+                        
+                        // Update database to reflect no permissions
+                        await db.run(`
+                            UPDATE staff_users 
+                            SET permission_level = 'none'
+                            WHERE id = ?
+                        `, [user.id]);
+                        
+                        await discordBot.logAuthEvent(discordId, 'login', false, {
+                            reason: 'No Discord staff roles found',
+                            previousLevel: user.permission_level
+                        });
+                        
+                        await discordBot.sendAuthNotification(discordId, 'Access Denied - No Staff Roles', false, {
+                            reason: 'No Discord staff roles found'
+                        });
+                        
+                        return done(null, false, { 
+                            message: 'Access denied. You need appropriate Discord roles to access the staff panel. Contact an administrator if you believe this is an error.' 
                         });
                     }
                     
@@ -237,6 +267,15 @@ const createDiscordStrategy = () => {
             }
         } catch (error) {
             console.error('❌ Discord authentication error:', error);
+            
+            // Handle rate limiting specifically
+            if (error.code === 'invalid_request' && error.message?.includes('rate limited')) {
+                console.log('🚨 Discord OAuth rate limited - implementing backoff...');
+                return done(null, false, { 
+                    message: 'Discord authentication is temporarily rate limited. Please wait a moment and try again.' 
+                });
+            }
+            
             return done(error);
         }
     });
@@ -381,6 +420,74 @@ const requirePermission = (minLevel) => {
     return async (req, res, next) => {
         if (!req.isAuthenticated()) {
             return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        // Periodic role revalidation (every 30 seconds for security)
+        const REVALIDATION_INTERVAL = 30 * 1000; // 30 seconds in milliseconds
+        const lastRevalidation = req.session.lastRoleCheck || 0;
+        const now = Date.now();
+        
+        // Always check permissions for write operations (POST, PUT, DELETE)
+        const isWriteOperation = ['POST', 'PUT', 'DELETE'].includes(req.method);
+        const shouldRevalidate = (now - lastRevalidation > REVALIDATION_INTERVAL) || isWriteOperation;
+        
+        if (shouldRevalidate) {
+            console.log(`🔄 Revalidating Discord roles for user ${req.user.username} (last check: ${Math.floor((now - lastRevalidation) / 60000)} minutes ago)`);
+            
+            try {
+                const discordBot = getDiscordBot();
+                if (discordBot && discordBot.isReady()) {
+                    const currentPermissionLevel = await discordBot.determinePermissionLevel(req.user.discordId);
+                    
+                    if (!currentPermissionLevel) {
+                        // User has lost all permissions - force logout
+                        console.log(`🚨 User ${req.user.username} has lost Discord permissions - forcing logout`);
+                        
+                        await discordBot.logAuthEvent(req.user.discordId, 'permission_revoked', true, {
+                            previousLevel: req.user.permissionLevel,
+                            reason: 'Discord roles removed'
+                        });
+                        
+                        req.logout((err) => {
+                            if (err) console.error('Logout error during permission revocation:', err);
+                        });
+                        
+                        return res.status(401).json({ 
+                            error: 'Permissions revoked',
+                            message: 'Your Discord roles have been removed. Please log in again.',
+                            forceLogout: true
+                        });
+                    }
+                    
+                    if (currentPermissionLevel !== req.user.permissionLevel) {
+                        // Permission level changed - update session and database
+                        console.log(`🔄 User ${req.user.username} permission changed: ${req.user.permissionLevel} → ${currentPermissionLevel}`);
+                        
+                        const db = require('../database/init').getInstance();
+                        await db.run(`
+                            UPDATE staff_users 
+                            SET permission_level = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        `, [currentPermissionLevel, req.user.id]);
+                        
+                        // Update session
+                        req.user.permissionLevel = currentPermissionLevel;
+                        
+                        await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
+                            previousLevel: req.user.permissionLevel,
+                            newLevel: currentPermissionLevel,
+                            reason: 'Discord roles changed'
+                        });
+                    }
+                }
+                
+                // Update last revalidation timestamp
+                req.session.lastRoleCheck = now;
+                
+            } catch (error) {
+                console.error('🚨 Error during role revalidation:', error);
+                // Continue with current permissions if revalidation fails
+            }
         }
 
         const userLevel = PERMISSION_LEVELS[req.user.permissionLevel] || 0;
@@ -545,6 +652,84 @@ router.get('/status', (req, res) => {
         });
     } else {
         res.json({ authenticated: false });
+    }
+});
+
+// Manual permission refresh endpoint
+router.post('/refresh-permissions', requireAuth, async (req, res) => {
+    try {
+        console.log(`🔄 Manual permission refresh requested by user ${req.user.username}`);
+        
+        const discordBot = getDiscordBot();
+        if (!discordBot || !discordBot.isReady()) {
+            return res.status(503).json({ 
+                error: 'Discord bot not available',
+                message: 'Cannot verify permissions at this time'
+            });
+        }
+
+        const currentPermissionLevel = await discordBot.determinePermissionLevel(req.user.discordId);
+        
+        if (!currentPermissionLevel) {
+            // User has lost all permissions - force logout
+            console.log(`🚨 User ${req.user.username} has lost Discord permissions during manual refresh`);
+            
+            await discordBot.logAuthEvent(req.user.discordId, 'permission_revoked', true, {
+                previousLevel: req.user.permissionLevel,
+                reason: 'Manual refresh - Discord roles removed'
+            });
+            
+            req.logout((err) => {
+                if (err) console.error('Logout error during manual permission refresh:', err);
+            });
+            
+            return res.status(401).json({ 
+                error: 'Permissions revoked',
+                message: 'Your Discord roles have been removed. You have been logged out.',
+                forceLogout: true
+            });
+        }
+        
+        const previousLevel = req.user.permissionLevel;
+        
+        if (currentPermissionLevel !== previousLevel) {
+            // Permission level changed - update session and database
+            console.log(`🔄 User ${req.user.username} permission changed during manual refresh: ${previousLevel} → ${currentPermissionLevel}`);
+            
+            const db = require('../database/init').getInstance();
+            await db.run(`
+                UPDATE staff_users 
+                SET permission_level = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `, [currentPermissionLevel, req.user.id]);
+            
+            // Update session
+            req.user.permissionLevel = currentPermissionLevel;
+            
+            await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
+                previousLevel: previousLevel,
+                newLevel: currentPermissionLevel,
+                reason: 'Manual refresh - Discord roles changed'
+            });
+        }
+        
+        // Update last revalidation timestamp
+        req.session.lastRoleCheck = Date.now();
+        
+        res.json({
+            success: true,
+            message: 'Permissions refreshed successfully',
+            permissionLevel: currentPermissionLevel,
+            changed: currentPermissionLevel !== previousLevel,
+            previousLevel: previousLevel
+        });
+        
+    } catch (error) {
+        console.error('🚨 Error during manual permission refresh:', error);
+        res.status(500).json({ 
+            error: 'Permission refresh failed',
+            message: 'An error occurred while checking your permissions'
+        });
     }
 });
 

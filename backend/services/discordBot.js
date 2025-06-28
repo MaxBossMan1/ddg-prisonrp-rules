@@ -16,7 +16,7 @@ const DDG_HARDCODED_ROLES = {
     '929440167012491334': 'moderator', // Moderator
     '972142128752910346': 'moderator', // Moderator Role 2
     // Editor roles
-    '929440166991527955': 'editor'  // Editor
+    '929440166991527955': 'editor'   // Editor
 };
 
 class DiscordBotService {
