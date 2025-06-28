@@ -145,7 +145,7 @@ class DatabaseAdapter {
                 const tableInfo = await this.all('PRAGMA table_info(staff_users)');
                 const discordIdColumn = tableInfo.find(col => col.name === 'discord_id');
                 
-                // Check if UNIQUE constraint already exists using a more reliable method
+                // Check if UNIQUE constraint already exists using reliable methods
                 let hasUniqueConstraint = false;
                 
                 if (discordIdColumn) {
@@ -156,39 +156,40 @@ class DatabaseAdapter {
                             const indexInfo = await this.all(`PRAGMA index_info(${index.name})`);
                             if (indexInfo.some(col => col.name === 'discord_id')) {
                                 hasUniqueConstraint = true;
-                                console.log('discord_id UNIQUE constraint already exists (via index) in staff_users table');
+                                console.log('discord_id UNIQUE constraint already exists (via unique index) in staff_users table');
                                 break;
                             }
                         }
                     }
                     
-                    // Method 2: Test constraint by attempting to insert duplicates (if no unique constraint found via indexes)
+                    // Method 2: Check table schema for UNIQUE constraints in CREATE TABLE statement
                     if (!hasUniqueConstraint) {
                         try {
-                            // Start a transaction for testing
-                            await this.run('BEGIN TRANSACTION');
+                            const schemaResult = await this.all(
+                                "SELECT sql FROM sqlite_master WHERE type='table' AND name='staff_users'"
+                            );
                             
-                            // Try to insert two rows with the same discord_id to test for constraint
-                            const testDiscordId = 'test_duplicate_' + Date.now();
-                            await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', [testDiscordId, 'editor']);
-                            
-                            try {
-                                await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', [testDiscordId, 'editor']);
-                                // If we get here, no unique constraint exists
-                                await this.run('ROLLBACK');
-                            } catch (duplicateError) {
-                                // If this throws a UNIQUE constraint error, the constraint exists
-                                if (duplicateError.message.includes('UNIQUE') && duplicateError.message.includes('discord_id')) {
+                            if (schemaResult.length > 0 && schemaResult[0].sql) {
+                                const createTableSql = schemaResult[0].sql.toUpperCase();
+                                // Check if discord_id column has UNIQUE constraint in the table definition
+                                if (createTableSql.includes('DISCORD_ID') && 
+                                    (createTableSql.includes('DISCORD_ID TEXT UNIQUE') || 
+                                     createTableSql.includes('DISCORD_ID UNIQUE') ||
+                                     createTableSql.includes('UNIQUE(DISCORD_ID)') ||
+                                     createTableSql.includes('UNIQUE (DISCORD_ID)'))) {
                                     hasUniqueConstraint = true;
-                                    console.log('discord_id UNIQUE constraint already exists (via constraint) in staff_users table');
+                                    console.log('discord_id UNIQUE constraint already exists (via table schema) in staff_users table');
                                 }
-                                await this.run('ROLLBACK');
                             }
-                        } catch (testError) {
-                            await this.run('ROLLBACK');
-                            // If test fails for other reasons, assume we need to check further
+                        } catch (schemaError) {
+                            console.warn('Could not check table schema for UNIQUE constraints:', schemaError.message);
+                            // If schema check fails, we'll err on the side of caution and assume no constraint exists
+                            // This is safer than the previous test insertion method
                         }
                     }
+                } else {
+                    // If discord_id column doesn't exist, we definitely need to run the migration
+                    console.log('discord_id column does not exist, migration needed');
                 }
 
                 // Run migration if needed

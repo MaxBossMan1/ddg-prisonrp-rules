@@ -2383,7 +2383,7 @@ For questions, contact staff immediately.`,
         const userData = await response.json();
         if (userData.authenticated && userData.user) {
           setUser(userData.user);
-          loadDashboardData();
+          loadDashboardData(userData.user);
         } else {
           window.location.href = `${BASE_URL}/auth/discord`;
         }
@@ -2396,7 +2396,7 @@ For questions, contact staff immediately.`,
     }
   };
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (userData = null) => {
     const promises = [
       loadRules(),
       loadCategories(),
@@ -2404,14 +2404,17 @@ For questions, contact staff immediately.`,
       loadActivityLog()
     ];
 
+    // Use provided userData or fall back to current user state
+    const currentUser = userData || user;
+
     // Load admin-level categories data and staff users for admins and owners only
-    if (user && (user.permissionLevel === 'admin' || user.permissionLevel === 'owner')) {
+    if (currentUser && (currentUser.permissionLevel === 'admin' || currentUser.permissionLevel === 'owner')) {
       promises.push(loadCategoriesData());
       promises.push(loadStaffUsers());
     }
 
     // Load pending approvals for moderators and above
-    if (user && (user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner')) {
+    if (currentUser && (currentUser.permissionLevel === 'moderator' || currentUser.permissionLevel === 'admin' || currentUser.permissionLevel === 'owner')) {
       promises.push(loadPendingApprovals());
     }
 
