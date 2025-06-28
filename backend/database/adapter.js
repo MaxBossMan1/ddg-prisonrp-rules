@@ -141,74 +141,87 @@ class DatabaseAdapter {
 
             // Migration: Add UNIQUE constraint to discord_id column in staff_users
             try {
-                // Check if UNIQUE constraint already exists by querying schema
+                // Check current table structure
                 const tableInfo = await this.all('PRAGMA table_info(staff_users)');
                 const discordIdColumn = tableInfo.find(col => col.name === 'discord_id');
                 
-                // Check if UNIQUE constraint exists by examining the table's CREATE statement
-                let needsMigration = true;
+                // Check if UNIQUE constraint already exists using a more reliable method
+                let hasUniqueConstraint = false;
+                
                 if (discordIdColumn) {
-                    const schemaQuery = await this.get(`
-                        SELECT sql FROM sqlite_master 
-                        WHERE type='table' AND name='staff_users'
-                    `);
-                    
-                    if (schemaQuery && schemaQuery.sql) {
-                        const createStatement = schemaQuery.sql.toLowerCase();
-                        // Check if discord_id column has UNIQUE constraint in the CREATE statement
-                        const hasUniqueConstraint = createStatement.includes('discord_id') && 
-                                                   (createStatement.includes('discord_id text unique') || 
-                                                    createStatement.includes('unique(discord_id)') ||
-                                                    createStatement.includes('constraint') && createStatement.includes('unique') && createStatement.includes('discord_id'));
-                        
-                        if (hasUniqueConstraint) {
-                            needsMigration = false;
-                            console.log('discord_id UNIQUE constraint already exists in staff_users table');
+                    // Method 1: Check for unique indexes on discord_id
+                    const indexes = await this.all('PRAGMA index_list(staff_users)');
+                    for (const index of indexes) {
+                        if (index.unique === 1) {
+                            const indexInfo = await this.all(`PRAGMA index_info(${index.name})`);
+                            if (indexInfo.some(col => col.name === 'discord_id')) {
+                                hasUniqueConstraint = true;
+                                console.log('discord_id UNIQUE constraint already exists (via index) in staff_users table');
+                                break;
+                            }
                         }
                     }
                     
-                    // Also check for unique indexes on discord_id
-                    if (needsMigration) {
-                        const indexes = await this.all('PRAGMA index_list(staff_users)');
-                        for (const index of indexes) {
-                            if (index.unique === 1) {
-                                const indexInfo = await this.all(`PRAGMA index_info(${index.name})`);
-                                if (indexInfo.some(col => col.name === 'discord_id')) {
-                                    needsMigration = false;
-                                    console.log('discord_id UNIQUE index already exists in staff_users table');
-                                    break;
+                    // Method 2: Test constraint by attempting to insert duplicates (if no unique constraint found via indexes)
+                    if (!hasUniqueConstraint) {
+                        try {
+                            // Start a transaction for testing
+                            await this.run('BEGIN TRANSACTION');
+                            
+                            // Try to insert two rows with the same discord_id to test for constraint
+                            const testDiscordId = 'test_duplicate_' + Date.now();
+                            await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', [testDiscordId, 'editor']);
+                            
+                            try {
+                                await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', [testDiscordId, 'editor']);
+                                // If we get here, no unique constraint exists
+                                await this.run('ROLLBACK');
+                            } catch (duplicateError) {
+                                // If this throws a UNIQUE constraint error, the constraint exists
+                                if (duplicateError.message.includes('UNIQUE') && duplicateError.message.includes('discord_id')) {
+                                    hasUniqueConstraint = true;
+                                    console.log('discord_id UNIQUE constraint already exists (via constraint) in staff_users table');
                                 }
+                                await this.run('ROLLBACK');
                             }
+                        } catch (testError) {
+                            await this.run('ROLLBACK');
+                            // If test fails for other reasons, assume we need to check further
                         }
                     }
                 }
 
-                if (needsMigration && discordIdColumn) {
+                // Run migration if needed
+                const needsMigration = !hasUniqueConstraint;
+                
+                if (needsMigration) {
                     console.log('🔄 Adding UNIQUE constraint to discord_id column...');
                     
-                    // Step 1: Check for duplicates and warn
-                    const duplicates = await this.all(`
-                        SELECT discord_id, COUNT(*) as count 
-                        FROM staff_users 
-                        WHERE discord_id IS NOT NULL AND discord_id != ''
-                        GROUP BY discord_id 
-                        HAVING COUNT(*) > 1
-                    `);
-                    
-                    if (duplicates.length > 0) {
-                        console.warn('⚠️  Found duplicate discord_id values:', duplicates);
-                        console.log('🧹 Removing duplicates (keeping oldest entry for each discord_id)...');
-                        
-                        // Remove duplicates, keeping the oldest (smallest id) for each discord_id
-                        await this.run(`
-                            DELETE FROM staff_users 
-                            WHERE id NOT IN (
-                                SELECT MIN(id) 
-                                FROM staff_users 
-                                WHERE discord_id IS NOT NULL AND discord_id != ''
-                                GROUP BY discord_id
-                            ) AND discord_id IS NOT NULL AND discord_id != ''
+                    // Step 1: Check for duplicates and warn (only if discord_id column exists)
+                    if (discordIdColumn) {
+                        const duplicates = await this.all(`
+                            SELECT discord_id, COUNT(*) as count 
+                            FROM staff_users 
+                            WHERE discord_id IS NOT NULL AND discord_id != ''
+                            GROUP BY discord_id 
+                            HAVING COUNT(*) > 1
                         `);
+                        
+                        if (duplicates.length > 0) {
+                            console.warn('⚠️  Found duplicate discord_id values:', duplicates);
+                            console.log('🧹 Removing duplicates (keeping oldest entry for each discord_id)...');
+                            
+                            // Remove duplicates, keeping the oldest (smallest id) for each discord_id
+                            await this.run(`
+                                DELETE FROM staff_users 
+                                WHERE id NOT IN (
+                                    SELECT MIN(id) 
+                                    FROM staff_users 
+                                    WHERE discord_id IS NOT NULL AND discord_id != ''
+                                    GROUP BY discord_id
+                                ) AND discord_id IS NOT NULL AND discord_id != ''
+                            `);
+                        }
                     }
 
                     // Step 2: Create backup
@@ -233,17 +246,20 @@ class DatabaseAdapter {
                         )
                     `);
 
-                    // Step 4: Copy data
+                    // Step 4: Copy data - handle missing columns gracefully
+                    const columnNames = tableInfo.map(col => col.name);
+                    const availableColumns = [
+                        'id', 'steam_id', 'steam_username', 'discord_id', 'discord_username',
+                        'discord_discriminator', 'discord_avatar', 'discord_roles',
+                        'permission_level', 'is_active', 'created_at', 'last_login', 'updated_at'
+                    ].filter(col => columnNames.includes(col));
+                    
+                    const selectColumns = availableColumns.join(', ');
+                    const insertColumns = availableColumns.join(', ');
+                    
                     await this.run(`
-                        INSERT INTO staff_users_new (
-                            id, steam_id, steam_username, discord_id, discord_username, 
-                            discord_discriminator, discord_avatar, discord_roles, 
-                            permission_level, is_active, created_at, last_login, updated_at
-                        )
-                        SELECT 
-                            id, steam_id, steam_username, discord_id, discord_username,
-                            discord_discriminator, discord_avatar, discord_roles,
-                            permission_level, is_active, created_at, last_login, updated_at
+                        INSERT INTO staff_users_new (${insertColumns})
+                        SELECT ${selectColumns}
                         FROM staff_users
                     `);
 
@@ -256,7 +272,11 @@ class DatabaseAdapter {
                     await this.run('CREATE INDEX IF NOT EXISTS idx_staff_active ON staff_users(is_active)');
                     await this.run('CREATE INDEX IF NOT EXISTS idx_staff_discord ON staff_users(discord_id)');
 
-                    console.log('✅ Migration: Added UNIQUE constraint to discord_id column');
+                    if (discordIdColumn) {
+                        console.log('✅ Migration: Added UNIQUE constraint to discord_id column');
+                    } else {
+                        console.log('✅ Migration: Added discord_id column with UNIQUE constraint');
+                    }
                 }
             } catch (error) {
                 console.error('Error adding UNIQUE constraint to discord_id:', error.message);
