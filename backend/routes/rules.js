@@ -96,11 +96,23 @@ router.get('/', async (req, res) => {
         c.name as category_name,
         c.letter_code as category_letter,
         rc.full_code,
-        rc.truncated_description
+        rc.truncated_description,
+        -- For pending approval rules, show the last approved content (old_content from rule_changes)
+        -- For approved rules, show current content
+        CASE 
+          WHEN r.status = 'pending_approval' THEN 
+            COALESCE(
+              (SELECT old_content FROM rule_changes 
+               WHERE rule_id = r.id AND change_type = 'updated' 
+               ORDER BY created_at DESC LIMIT 1),
+              r.content
+            )
+          ELSE r.content
+        END as display_content
       FROM rules r
       JOIN categories c ON r.category_id = c.id
       LEFT JOIN rule_codes rc ON r.id = rc.rule_id
-      WHERE r.is_active = 1
+      WHERE r.is_active = 1 AND (r.status = 'approved' OR r.status IS NULL OR r.status = 'pending_approval')
     `;
     
     let params = [];
@@ -114,7 +126,7 @@ router.get('/', async (req, res) => {
     
     const rules = await db.all(query, params);
     
-    // Parse images JSON for each rule
+    // Parse images JSON for each rule and use display_content for public view
     const rulesWithImages = rules.map(rule => {
         let images = [];
         try {
@@ -127,6 +139,8 @@ router.get('/', async (req, res) => {
         }
         return {
             ...rule,
+            // Use display_content for public view (shows approved content for pending rules)
+            content: rule.display_content || rule.content,
             images: Array.isArray(images) ? images : []
         };
     });
@@ -169,17 +183,28 @@ router.get('/category/:categoryId', async (req, res) => {
         c.name as category_name,
         c.letter_code as category_letter,
         rc.full_code,
-        rc.truncated_description
+        rc.truncated_description,
+        -- For pending approval rules, show the last approved content
+        CASE 
+          WHEN r.status = 'pending_approval' THEN 
+            COALESCE(
+              (SELECT old_content FROM rule_changes 
+               WHERE rule_id = r.id AND change_type = 'updated' 
+               ORDER BY created_at DESC LIMIT 1),
+              r.content
+            )
+          ELSE r.content
+        END as display_content
       FROM rules r
       JOIN categories c ON r.category_id = c.id
       LEFT JOIN rule_codes rc ON r.id = rc.rule_id
-      WHERE r.category_id = ? AND r.is_active = 1
+      WHERE r.category_id = ? AND r.is_active = 1 AND (r.status = 'approved' OR r.status IS NULL OR r.status = 'pending_approval')
       ORDER BY r.rule_number, r.sub_number
     `;
     
     const rules = await db.all(query, [categoryId]);
     
-    // Parse images JSON for each rule
+    // Parse images JSON for each rule and use display_content for public view
     const rulesWithImages = rules.map(rule => {
         let images = [];
         try {
@@ -192,6 +217,8 @@ router.get('/category/:categoryId', async (req, res) => {
         }
         return {
             ...rule,
+            // Use display_content for public view (shows approved content for pending rules)
+            content: rule.display_content || rule.content,
             images: Array.isArray(images) ? images : []
         };
     });
@@ -232,11 +259,22 @@ router.get('/code/:code', async (req, res) => {
         c.name as category_name,
         c.letter_code as category_letter,
         rc.full_code,
-        rc.truncated_description
+        rc.truncated_description,
+        -- For pending approval rules, show the last approved content
+        CASE 
+          WHEN r.status = 'pending_approval' THEN 
+            COALESCE(
+              (SELECT old_content FROM rule_changes 
+               WHERE rule_id = r.id AND change_type = 'updated' 
+               ORDER BY created_at DESC LIMIT 1),
+              r.content
+            )
+          ELSE r.content
+        END as display_content
       FROM rules r
       JOIN categories c ON r.category_id = c.id
       LEFT JOIN rule_codes rc ON r.id = rc.rule_id
-      WHERE rc.full_code = ? AND r.is_active = 1
+      WHERE rc.full_code = ? AND r.is_active = 1 AND (r.status = 'approved' OR r.status IS NULL OR r.status = 'pending_approval')
     `;
     
     const rule = await db.get(query, [code.toUpperCase()]);
@@ -245,7 +283,13 @@ router.get('/code/:code', async (req, res) => {
       return res.status(404).json({ error: 'Rule not found' });
     }
     
-    res.json(rule);
+    // Use display_content for public view (shows approved content for pending rules)
+    const responseRule = {
+      ...rule,
+      content: rule.display_content || rule.content
+    };
+    
+    res.json(responseRule);
   } catch (error) {
     console.error('Error fetching rule by code:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -2872,39 +2872,96 @@ For questions, contact staff immediately.`,
     setShowModal(true);
   };
 
-  const openEditModal = (rule) => {
-    setFormData({
-      title: rule.title,
-      content: rule.content,
-      categoryId: rule.category_id.toString(),
-      parentRuleId: rule.parent_rule_id
+  const openEditModal = async (rule) => {
+    console.log('🔍 Opening edit modal:', {
+      modalType: 'edit',
+      ruleId: rule.id,
+      ruleStatus: rule.status,
+      hasDraftEdit: rule.has_draft_edit,
+      isDraftEdit: rule.isDraftEdit
     });
     
-    // Handle images safely - could be array or JSON string
-    let images = [];
     try {
-      if (rule.images) {
-        images = Array.isArray(rule.images) ? rule.images : JSON.parse(rule.images);
+      let ruleToEdit = rule;
+      
+      // Check if this approved rule has a draft edit - if so, load the draft content
+      if (rule.status === 'approved' && rule.has_draft_edit > 0) {
+        console.log('Loading draft content for rule', rule.id);
+        const response = await fetch(`${BASE_URL}/api/staff/rules/${rule.id}/draft`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const draftData = await response.json();
+          if (draftData.isDraftEdit) {
+            ruleToEdit = draftData;
+            console.log('Loaded draft content:', draftData);
+          }
+        } else {
+          console.error('Failed to load draft content, using live content');
+        }
       }
-    } catch (e) {
-      console.error('Error parsing rule images:', e);
-      images = [];
-    }
-    setRuleImages(images);
-    
-    setModalType('edit');
-    setEditingRule(rule);
-    
-    // Set approval workflow state based on current rule status
-    if (rule.status === 'draft') {
-      setSaveAsDraft(true);
-      setSubmissionMode('draft');
-    } else {
+      
+      setFormData({
+        title: ruleToEdit.title,
+        content: ruleToEdit.content,
+        categoryId: ruleToEdit.category_id.toString(),
+        parentRuleId: ruleToEdit.parent_rule_id
+      });
+      
+      // Handle images safely - could be array or JSON string
+      let images = [];
+      try {
+        if (ruleToEdit.images) {
+          images = Array.isArray(ruleToEdit.images) ? ruleToEdit.images : JSON.parse(ruleToEdit.images);
+        }
+      } catch (e) {
+        console.error('Error parsing rule images:', e);
+        images = [];
+      }
+      setRuleImages(images);
+      
+      setModalType('edit');
+      setEditingRule(rule); // Keep original rule for reference
+      
+      // Set approval workflow state based on current rule status and draft state
+      if (rule.status === 'draft' || (rule.status === 'approved' && ruleToEdit.isDraftEdit)) {
+        setSaveAsDraft(true);
+        // Don't automatically set submissionMode to 'draft' - let user choose
+        setSubmissionMode('submit'); // Default to submit, user can choose draft if they want
+      } else {
+        setSaveAsDraft(false);
+        setSubmissionMode('submit');
+      }
+      
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error opening edit modal:', error);
+      // Fallback to opening with live content
+      setFormData({
+        title: rule.title,
+        content: rule.content,
+        categoryId: rule.category_id.toString(),
+        parentRuleId: rule.parent_rule_id
+      });
+      
+      let images = [];
+      try {
+        if (rule.images) {
+          images = Array.isArray(rule.images) ? rule.images : JSON.parse(rule.images);
+        }
+      } catch (e) {
+        console.error('Error parsing rule images:', e);
+        images = [];
+      }
+      setRuleImages(images);
+      
+      setModalType('edit');
+      setEditingRule(rule);
       setSaveAsDraft(false);
       setSubmissionMode('submit');
+      setShowModal(true);
     }
-    
-    setShowModal(true);
   };
 
   const openSubRuleModal = (parentRule) => {
@@ -2969,12 +3026,6 @@ For questions, contact staff immediately.`,
         status = 'approved';
       }
       
-      console.log('Saving rule with data:', {
-        ...formData,
-        images: ruleImages,
-        status: status
-      });
-      
       const url = modalType === 'edit' 
         ? `${BASE_URL}/api/staff/rules/${editingRule.id}`
         : `${BASE_URL}/api/staff/rules`;
@@ -2994,23 +3045,24 @@ For questions, contact staff immediately.`,
         })
       });
 
-      console.log('Response status:', response.status);
-      
       if (response.ok) {
         const result = await response.json();
-        console.log('Rule saved successfully:', result);
         await loadRules(); // Refresh the rules list
         await loadPendingApprovals(); // Refresh pending approvals if applicable
         closeModal();
         
-        // Show different success messages based on status
+        // Show different success messages based on ACTUAL backend response, not local status
         const actionText = modalType === 'edit' ? 'updated' : 'created';
         const ruleTypeText = modalType === 'create-sub' ? 'sub-rule' : 'rule';
         
         let successMessage = '';
-        if (status === 'draft') {
+        
+        // Special case: Draft edit of approved rule (original stays live)
+        if (result.originalStaysLive) {
+          successMessage = `Draft saved successfully! The original ${ruleTypeText} remains live for players while you work on this draft version. You can continue editing or submit it for approval later.`;
+        } else if (result.status === 'draft' || status === 'draft') {
           successMessage = `The ${ruleTypeText} has been saved as a draft. You can continue editing or submit it for approval later.`;
-        } else if (status === 'pending_approval') {
+        } else if (result.status === 'pending_approval' || status === 'pending_approval') {
           successMessage = `The ${ruleTypeText} has been submitted for approval. Moderators will review it before it goes live.`;
         } else {
           successMessage = `The ${ruleTypeText} has been ${actionText} successfully and is now live.`;
@@ -5013,32 +5065,35 @@ For questions, contact staff immediately.`,
                             
                             {/* Status Indicator */}
                             {rule.status && (
-                              <RuleCode style={{ 
-                                backgroundColor: rule.status === 'approved' ? '#27ae60' : 
-                                                rule.status === 'pending_approval' ? '#f39c12' : 
-                                                rule.status === 'draft' ? '#3498db' : 
-                                                rule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                color: 'white',
-                                fontSize: '0.7rem'
-                              }}>
-                                {rule.status === 'approved' && '✅ Live'}
-                                {rule.status === 'pending_approval' && '⏳ Pending'}
-                                {rule.status === 'draft' && '📝 Draft'}
-                                {rule.status === 'rejected' && '❌ Rejected'}
-                              </RuleCode>
+                              <ChangeAction type={
+                                rule.status === 'approved' ? 'create' : 
+                                rule.status === 'pending_approval' ? 'update' : 
+                                rule.status === 'draft' ? 'default' : 
+                                rule.status === 'rejected' ? 'delete' : 'default'
+                              }>
+                                {rule.status === 'approved' && 'LIVE'}
+                                {rule.status === 'pending_approval' && 'PENDING'}
+                                {rule.status === 'draft' && 'DRAFT'}
+                                {rule.status === 'rejected' && 'REJECTED'}
+                              </ChangeAction>
+                            )}
+                            
+                            {/* Draft Edit Indicator - Shows when a live rule has draft edits */}
+                            {rule.status === 'approved' && rule.has_draft_edit > 0 && (
+                              <ChangeAction type="default">
+                                DRAFT EDIT
+                              </ChangeAction>
                             )}
                             
                             {/* Review Notes Indicator */}
                             {rule.review_notes && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#8a9dc9',
-                                color: 'white',
-                                fontSize: '0.7rem',
-                                cursor: 'help'
-                              }}
-                              title={`Review Notes: ${rule.review_notes}`}>
-                                💬 Notes
-                              </RuleCode>
+                              <ChangeAction 
+                                type="default"
+                                style={{ cursor: 'help' }}
+                                title={`Review Notes: ${rule.review_notes}`}
+                              >
+                                NOTES
+                              </ChangeAction>
                             )}
                           </div>
                           
@@ -5155,32 +5210,31 @@ For questions, contact staff immediately.`,
                                     
                                     {/* Status Indicator for Sub-Rule */}
                                     {subRule.status && (
-                                      <RuleCode style={{ 
-                                        backgroundColor: subRule.status === 'approved' ? '#27ae60' : 
-                                                        subRule.status === 'pending_approval' ? '#f39c12' : 
-                                                        subRule.status === 'draft' ? '#3498db' : 
-                                                        subRule.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                        color: 'white',
-                                        fontSize: '0.6rem'
-                                      }}>
-                                        {subRule.status === 'approved' && '✅ Live'}
-                                        {subRule.status === 'pending_approval' && '⏳ Pending'}
-                                        {subRule.status === 'draft' && '📝 Draft'}
-                                        {subRule.status === 'rejected' && '❌ Rejected'}
-                                      </RuleCode>
+                                      <ChangeAction 
+                                        type={
+                                          subRule.status === 'approved' ? 'create' : 
+                                          subRule.status === 'pending_approval' ? 'update' : 
+                                          subRule.status === 'draft' ? 'default' : 
+                                          subRule.status === 'rejected' ? 'delete' : 'default'
+                                        }
+                                        style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
+                                      >
+                                        {subRule.status === 'approved' && 'LIVE'}
+                                        {subRule.status === 'pending_approval' && 'PENDING'}
+                                        {subRule.status === 'draft' && 'DRAFT'}
+                                        {subRule.status === 'rejected' && 'REJECTED'}
+                                      </ChangeAction>
                                     )}
                                     
                                     {/* Review Notes Indicator for Sub-Rule */}
                                     {subRule.review_notes && (
-                                      <RuleCode style={{ 
-                                        backgroundColor: '#8a9dc9',
-                                        color: 'white',
-                                        fontSize: '0.6rem',
-                                        cursor: 'help'
-                                      }}
-                                      title={`Review Notes: ${subRule.review_notes}`}>
-                                        💬 Notes
-                                      </RuleCode>
+                                      <ChangeAction 
+                                        type="default"
+                                        style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', cursor: 'help' }}
+                                        title={`Review Notes: ${subRule.review_notes}`}
+                                      >
+                                        NOTES
+                                      </ChangeAction>
                                     )}
                                   </div>
                                   
@@ -5368,55 +5422,43 @@ For questions, contact staff immediately.`,
                             
                             {/* Status Indicator */}
                             {announcement.status && (
-                              <RuleCode style={{ 
-                                backgroundColor: announcement.status === 'approved' ? '#27ae60' : 
-                                                announcement.status === 'pending_approval' ? '#f39c12' : 
-                                                announcement.status === 'draft' ? '#3498db' : 
-                                                announcement.status === 'rejected' ? '#e74c3c' : '#95a5a6',
-                                color: 'white'
-                              }}>
-                                {announcement.status === 'approved' && '✅ Live'}
-                                {announcement.status === 'pending_approval' && '⏳ Pending'}
-                                {announcement.status === 'draft' && '📝 Draft'}
-                                {announcement.status === 'rejected' && '❌ Rejected'}
-                              </RuleCode>
+                              <ChangeAction type={
+                                announcement.status === 'approved' ? 'create' : 
+                                announcement.status === 'pending_approval' ? 'update' : 
+                                announcement.status === 'draft' ? 'default' : 
+                                announcement.status === 'rejected' ? 'delete' : 'default'
+                              }>
+                                {announcement.status === 'approved' && 'LIVE'}
+                                {announcement.status === 'pending_approval' && 'PENDING'}
+                                {announcement.status === 'draft' && 'DRAFT'}
+                                {announcement.status === 'rejected' && 'REJECTED'}
+                              </ChangeAction>
                             )}
                             
-                            <RuleCode style={{ 
-                              backgroundColor: announcement.is_active ? '#27ae60' : '#e74c3c',
-                              color: 'white'
-                            }}>
-                              {announcement.is_active ? 'Active' : 'Inactive'}
-                            </RuleCode>
+                            <ChangeAction type={announcement.is_active ? 'create' : 'delete'}>
+                              {announcement.is_active ? 'ACTIVE' : 'INACTIVE'}
+                            </ChangeAction>
                             
                             {/* Review Notes Indicator */}
                             {announcement.review_notes && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#8a9dc9',
-                                color: 'white',
-                                fontSize: '0.8rem',
-                                cursor: 'help'
-                              }}
-                              title={`Review Notes: ${announcement.review_notes}`}>
-                                💬 Notes
-                              </RuleCode>
+                              <ChangeAction 
+                                type="default"
+                                style={{ cursor: 'help' }}
+                                title={`Review Notes: ${announcement.review_notes}`}
+                              >
+                                NOTES
+                              </ChangeAction>
                             )}
                             
                             {announcement.announcement_type === 'scheduled' && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#f39c12',
-                                color: 'white'
-                              }}>
-                                📅 Scheduled
-                              </RuleCode>
+                              <ChangeAction type="update">
+                                SCHEDULED
+                              </ChangeAction>
                             )}
                             {announcement.is_scheduled === 1 && (
-                              <RuleCode style={{ 
-                                backgroundColor: '#9b59b6',
-                                color: 'white'
-                              }}>
-                                ⏰ {announcement.is_published ? 'Published' : 'Pending'}
-                              </RuleCode>
+                              <ChangeAction type={announcement.is_published ? 'create' : 'update'}>
+                                {announcement.is_published ? 'PUBLISHED' : 'SCHEDULED'}
+                              </ChangeAction>
                             )}
                           </div>
                           
@@ -5807,13 +5849,14 @@ For questions, contact staff immediately.`,
                               <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
                                   <RuleCode>{rule.full_code || `Rule #${rule.id}`}</RuleCode>
-                                  <RuleCode style={{ 
-                                    backgroundColor: '#f39c12',
-                                    color: 'white'
-                                  }}>
-                                    {rule.status}
-                                  </RuleCode>
                                   {rule.title && <RuleTitle style={{ margin: 0 }}>{rule.title}</RuleTitle>}
+                                  <ChangeAction type="update">
+                                    PENDING
+                                  </ChangeAction>
+                                  {/* New/Edit indicator - Using ChangeAction styling */}
+                                  <ChangeAction type={rule.isNewRule ? 'create' : 'update'}>
+                                    {rule.isNewRule ? 'NEW RULE' : 'EDIT'}
+                                  </ChangeAction>
                                 </div>
                                 
                                 <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
@@ -5822,11 +5865,52 @@ For questions, contact staff immediately.`,
                                   <strong> Submitted:</strong> {rule.submitted_at ? new Date(rule.submitted_at).toLocaleDateString() : 'Unknown'}
                                 </div>
                                 
-                                <RuleContent 
-                                  dangerouslySetInnerHTML={{ 
-                                    __html: markdownToHtml(rule.content ? rule.content.substring(0, 300) + (rule.content.length > 300 ? '...' : '') : '') 
-                                  }}
-                                />
+                                {/* Current (Pending) Content */}
+                                <div style={{ marginBottom: '1rem' }}>
+                                  <h4 style={{ color: '#ecf0f1', fontSize: '1rem', marginBottom: '0.5rem' }}>
+                                    {rule.isNewRule ? '📝 Proposed Rule Content:' : '📝 Proposed Changes:'}
+                                  </h4>
+                                  <RuleContent 
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: markdownToHtml(rule.content ? rule.content.substring(0, 300) + (rule.content.length > 300 ? '...' : '') : '') 
+                                    }}
+                                  />
+                                </div>
+
+                                {/* Previous Version (for edits) */}
+                                {rule.isEdit && rule.previousVersion && (
+                                  <div style={{ 
+                                    marginBottom: '1rem',
+                                    padding: '1rem',
+                                    backgroundColor: 'rgba(52, 73, 94, 0.6)',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(149, 165, 166, 0.3)'
+                                  }}>
+                                    <h4 style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                                      📄 Previous Version (Currently Live):
+                                    </h4>
+                                    <RuleContent 
+                                      style={{ 
+                                        color: '#95a5a6', 
+                                        fontSize: '0.9rem' 
+                                      }}
+                                      dangerouslySetInnerHTML={{ 
+                                        __html: markdownToHtml(rule.previousVersion.content ? rule.previousVersion.content.substring(0, 200) + (rule.previousVersion.content.length > 200 ? '...' : '') : '') 
+                                      }}
+                                    />
+                                  </div>
+                                )}
+
+                                {/* Change Summary (for edits) */}
+                                {rule.isEdit && rule.changeHistory && rule.changeHistory.length > 0 && (
+                                  <div style={{ 
+                                    marginBottom: '1rem',
+                                    color: '#bdc3c7', 
+                                    fontSize: '0.8rem' 
+                                  }}>
+                                    <strong>🔄 Change History:</strong> {rule.changeHistory.map(change => change.description).join(', ')}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
@@ -5863,20 +5947,27 @@ For questions, contact staff immediately.`,
                               <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
                                   <RuleTitle style={{ margin: 0 }}>{announcement.title}</RuleTitle>
-                                  <RuleCode style={{ 
-                                    backgroundColor: '#f39c12',
-                                    color: 'white'
-                                  }}>
-                                    {announcement.status}
-                                  </RuleCode>
-                                  <RuleCode style={{ 
-                                    backgroundColor: announcement.priority >= 4 ? '#e74c3c' : 
-                                                    announcement.priority >= 3 ? '#f39c12' : 
-                                                    announcement.priority >= 2 ? '#677bae' : '#27ae60',
-                                    color: 'white'
+                                  <ChangeAction type="update">
+                                    PENDING
+                                  </ChangeAction>
+                                  <span style={{ 
+                                    background: announcement.priority >= 4 ? 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' : 
+                                                announcement.priority >= 3 ? 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)' : 
+                                                announcement.priority >= 2 ? 'linear-gradient(135deg, #677bae 0%, #8a9dc9 100%)' : 
+                                                'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+                                    color: 'white',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    whiteSpace: 'nowrap'
                                   }}>
                                     Priority {announcement.priority}
-                                  </RuleCode>
+                                  </span>
                                 </div>
                                 
                                 <div style={{ color: '#bdc3c7', fontSize: '0.9rem', marginBottom: '1rem' }}>
@@ -6185,13 +6276,13 @@ For questions, contact staff immediately.`,
                                   {message.message_type === 'announcement' ? '📢 Announcement' : '📋 Rule Update'}
                                 </RuleCode>
                                 
-                                <RuleCode style={{
-                                  backgroundColor: message.delivery_status === 'sent' ? '#27ae60' : 
-                                                  message.delivery_status === 'failed' ? '#e74c3c' : '#f39c12'
-                                }}>
-                                  {message.delivery_status === 'sent' ? '✅ Sent' : 
-                                   message.delivery_status === 'failed' ? '❌ Failed' : '⏳ Pending'}
-                                </RuleCode>
+                                <ChangeAction type={
+                                  message.delivery_status === 'sent' ? 'create' : 
+                                  message.delivery_status === 'failed' ? 'delete' : 'update'
+                                }>
+                                  {message.delivery_status === 'sent' ? 'SENT' : 
+                                   message.delivery_status === 'failed' ? 'FAILED' : 'PENDING'}
+                                </ChangeAction>
                               </div>
                               
                               <div style={{ color: '#ecf0f1', fontWeight: '500', marginBottom: '0.5rem' }}>
@@ -6243,13 +6334,37 @@ For questions, contact staff immediately.`,
           <ModalContainer onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
               <ModalTitle>
-                {modalType === 'edit' ? 'Edit Rule' : 
+                {modalType === 'edit' ? (
+                  editingRule?.status === 'approved' && editingRule?.has_draft_edit > 0 
+                    ? 'Edit Rule (Draft Version)' 
+                    : 'Edit Rule'
+                ) : 
                  modalType === 'create-sub' ? 'Add Sub-Rule' : 
                  modalType === 'create-announcement' ? 'Add New Announcement' :
                  modalType === 'edit-announcement' ? 'Edit Announcement' : 'Add New Rule'}
               </ModalTitle>
               <CloseButton onClick={closeModal}>&times;</CloseButton>
             </ModalHeader>
+            
+            {/* Draft Editing Notice */}
+            {modalType === 'edit' && editingRule?.status === 'approved' && editingRule?.has_draft_edit > 0 && (
+              <div style={{
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                border: '1px solid #3498db',
+                borderRadius: '6px',
+                padding: '1rem',
+                margin: '1rem 0',
+                color: '#3498db'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+                  📝 Editing Draft Version
+                </div>
+                <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                  You're editing a draft version of this rule. The original rule remains live and visible to players. 
+                  When you're ready, you can submit this draft for approval.
+                </div>
+              </div>
+            )}
             
             {/* Rule Form */}
             {(modalType === 'create' || modalType === 'edit' || modalType === 'create-sub') && (
@@ -6719,21 +6834,93 @@ For questions, contact staff immediately.`,
             {reviewItem && (
               <>
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <h4 style={{ color: '#ecf0f1', marginBottom: '0.5rem' }}>
-                    {reviewItem.type === 'rule' ? 'Rule:' : 'Announcement:'} {reviewItem.title || reviewItem.full_code || `#${reviewItem.id}`}
-                  </h4>
-                  <div style={{ 
-                    color: '#bdc3c7', 
-                    fontSize: '0.9rem',
-                    backgroundColor: '#2c3e50',
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {reviewItem.content?.substring(0, 300)}
-                    {reviewItem.content?.length > 300 && '...'}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                    <h4 style={{ color: '#ecf0f1', margin: 0 }}>
+                      {reviewItem.type === 'rule' ? 'Rule:' : 'Announcement:'} {reviewItem.title || reviewItem.full_code || `#${reviewItem.id}`}
+                    </h4>
+                    {/* Show NEW/EDIT indicator - Using ChangeAction styling */}
+                    {reviewItem.type === 'rule' && (
+                      <ChangeAction type={reviewItem.isNewRule ? 'create' : 'update'}>
+                        {reviewItem.isNewRule ? 'NEW RULE' : 'EDIT'}
+                      </ChangeAction>
+                    )}
                   </div>
+
+                  {/* For edits, show comparison */}
+                  {reviewItem.type === 'rule' && reviewItem.isEdit && reviewItem.previousVersion ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      {/* Previous Version */}
+                      <div>
+                        <h5 style={{ color: '#e74c3c', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                          📄 Current Version (Live):
+                        </h5>
+                        <div style={{ 
+                          color: '#bdc3c7', 
+                          fontSize: '0.85rem',
+                          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                          padding: '1rem',
+                          borderRadius: '6px',
+                          maxHeight: '250px',
+                          overflowY: 'auto',
+                          border: '1px solid rgba(231, 76, 60, 0.3)'
+                        }}>
+                          {reviewItem.previousVersion.content?.substring(0, 400)}
+                          {reviewItem.previousVersion.content?.length > 400 && '...'}
+                        </div>
+                      </div>
+
+                      {/* Proposed Changes */}
+                      <div>
+                        <h5 style={{ color: '#27ae60', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                          📝 Proposed Changes:
+                        </h5>
+                        <div style={{ 
+                          color: '#ecf0f1', 
+                          fontSize: '0.85rem',
+                          backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                          padding: '1rem',
+                          borderRadius: '6px',
+                          maxHeight: '250px',
+                          overflowY: 'auto',
+                          border: '1px solid rgba(39, 174, 96, 0.3)'
+                        }}>
+                          {reviewItem.content?.substring(0, 400)}
+                          {reviewItem.content?.length > 400 && '...'}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* For new rules or announcements, show normal content */
+                    <div>
+                      <h5 style={{ color: '#ecf0f1', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                        {reviewItem.type === 'rule' && reviewItem.isNewRule ? '📝 Proposed Rule Content:' : 'Content:'}
+                      </h5>
+                      <div style={{ 
+                        color: '#bdc3c7', 
+                        fontSize: '0.9rem',
+                        backgroundColor: '#2c3e50',
+                        padding: '1rem',
+                        borderRadius: '6px',
+                        maxHeight: '250px',
+                        overflowY: 'auto'
+                      }}>
+                        {reviewItem.content?.substring(0, 400)}
+                        {reviewItem.content?.length > 400 && '...'}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Change History for edits */}
+                  {reviewItem.type === 'rule' && reviewItem.isEdit && reviewItem.changeHistory && reviewItem.changeHistory.length > 0 && (
+                    <div style={{ 
+                      marginTop: '1rem',
+                      color: '#bdc3c7', 
+                      fontSize: '0.8rem',
+                      fontStyle: 'italic'
+                    }}>
+                      <strong>🔄 Change History:</strong> {reviewItem.changeHistory.map(change => change.description).join(', ')}
+                    </div>
+                  )}
                 </div>
                 
                 <FormGroup>

@@ -566,11 +566,8 @@ router.get('/announcements', requireAuth, requirePermission('editor'), async (re
                           OR (announcements.submitted_by = ? AND announcements.status IN ('draft', 'pending_approval'))`;
             queryParams = [req.user.id];
             console.log('🔍 EDITOR QUERY - User ID:', req.user.id, 'WHERE clause:', whereClause);
-        } else if (userLevel === 'moderator') {
-            // Moderators can see all announcements except rejected (only admin+ can see rejected)
-            whereClause = `WHERE announcements.is_active = 1 OR announcements.status IN ('pending_approval', 'draft') OR announcements.status IS NULL`;
         } else {
-            // Admin+ can see ALL announcements including rejected
+            // Moderators+ can see ALL announcements including rejected
             whereClause = `WHERE announcements.is_active = 1 OR announcements.status IN ('pending_approval', 'draft', 'rejected') OR announcements.status IS NULL`;
         }
         
@@ -873,7 +870,8 @@ router.put('/announcements/:id', requireAuth, requirePermission('editor'), async
                     finalStatus = status;
                     submittedBy = req.user.id;
                     submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
-                    isActive = 0; // Not active until approved
+                    // Keep existing approved announcements active during approval process
+                    isActive = finalStatus === 'draft' ? 0 : (regularAnnouncement.status === 'approved' ? 1 : 0);
                 } else if (userLevel === 'editor') {
                     // No status specified, keep existing status for editors
                     finalStatus = regularAnnouncement.status || 'approved';
@@ -1026,11 +1024,41 @@ router.put('/announcements/:id/reject', requireAuth, requirePermission('moderato
             return res.status(400).json({ error: 'Announcement is not pending approval' });
         }
 
-        // Reject the announcement
-        await db.run(
-            `UPDATE announcements SET status = 'rejected', reviewed_by = ?, review_notes = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [req.user.id, reviewNotes, id]
-        );
+        // Check if this announcement was previously approved (indicating it's an edit rejection, not new submission rejection)
+        const wasEverApproved = await db.get(`
+            SELECT COUNT(*) as count 
+            FROM staff_activity_logs 
+            WHERE resource_type = 'announcement' 
+              AND resource_id = ? 
+              AND action_details LIKE '%approved%'
+        `, [id]);
+        
+        // If this announcement was ever approved before, this is an edit rejection - revert to active
+        // If this was never approved, this is a new submission rejection - keep inactive
+        if (wasEverApproved.count > 0) {
+            console.log(`🔄 Reverting announcement ${id} to active status after edit rejection`);
+            
+            // Revert to active status since this was an edit rejection of a previously approved announcement
+            await db.run(
+                `UPDATE announcements SET 
+                    status = 'approved', 
+                    reviewed_by = ?, 
+                    review_notes = ?, 
+                    reviewed_at = CURRENT_TIMESTAMP, 
+                    is_active = 1, 
+                    updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?`,
+                [req.user.id, `Edit rejected: ${reviewNotes}. Reverted to active status.`, id]
+            );
+        } else {
+            console.log(`❌ Rejecting new announcement submission ${id}`);
+            
+            // This was a new announcement submission - keep it rejected and inactive
+            await db.run(
+                `UPDATE announcements SET status = 'rejected', reviewed_by = ?, review_notes = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                [req.user.id, reviewNotes, id]
+            );
+        }
 
         // Log the rejection activity
         await ActivityLogger.log({
@@ -1074,11 +1102,8 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
                           OR (r.submitted_by = ? AND r.status IN ('draft', 'pending_approval'))`;
             queryParams = [req.user.id];
             console.log('🔍 EDITOR QUERY - User ID:', req.user.id, 'WHERE clause:', whereClause);
-        } else if (userLevel === 'moderator') {
-            // Moderators can see all rules except rejected (only admin+ can see rejected)
-            whereClause = `WHERE r.is_active = 1 OR r.status IN ('pending_approval', 'draft') OR r.status IS NULL`;
         } else {
-            // Admin+ can see ALL rules including rejected
+            // Moderators+ can see ALL rules including rejected
             whereClause = `WHERE r.is_active = 1 OR r.status IN ('pending_approval', 'draft', 'rejected') OR r.status IS NULL`;
         }
         
@@ -1087,7 +1112,9 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
                    su_submitted.discord_username as submitted_by_username,
                    su_reviewed.discord_username as reviewed_by_username,
                    (SELECT COUNT(*) FROM rule_cross_references rcr 
-                    WHERE rcr.source_rule_id = r.id OR rcr.target_rule_id = r.id) as cross_references_count
+                    WHERE rcr.source_rule_id = r.id OR rcr.target_rule_id = r.id) as cross_references_count,
+                   (SELECT COUNT(*) FROM rule_changes ch 
+                    WHERE ch.rule_id = r.id AND ch.change_type = 'draft_edit') as has_draft_edit
             FROM rules r
             LEFT JOIN categories c ON r.category_id = c.id
             LEFT JOIN rule_codes rc ON r.id = rc.rule_id
@@ -1115,6 +1142,12 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
                 console.log('Error parsing images for rule', rule.id, ':', e);
                 images = [];
             }
+            
+            // Debug draft detection
+            if (rule.has_draft_edit > 0) {
+                console.log(`🔍 Rule ${rule.id} has draft edit: ${rule.has_draft_edit}, status: ${rule.status}`);
+            }
+            
             return {
                 ...rule,
                 images: Array.isArray(images) ? images : []
@@ -1141,6 +1174,51 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
     } catch (error) {
         console.error('Error fetching rules:', error);
         res.status(500).json({ error: 'Failed to fetch rules' });
+    }
+});
+
+// Get draft content for editing
+router.get('/rules/:id/draft', requireAuth, requirePermission('editor'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const db = require('../database/init').getInstance();
+        
+        // Get the rule and its latest draft
+        const rule = await db.get('SELECT * FROM rules WHERE id = ?', [id]);
+        if (!rule) {
+            return res.status(404).json({ error: 'Rule not found' });
+        }
+        
+        // Get latest draft edit if it exists
+        const draftEdit = await db.get(`
+            SELECT new_content, created_at, staff_user_id
+            FROM rule_changes 
+            WHERE rule_id = ? AND change_type = 'draft_edit'
+            ORDER BY created_at DESC 
+            LIMIT 1
+        `, [id]);
+        
+        console.log('🔍 Draft lookup for rule', id, ':', draftEdit ? 'FOUND' : 'NOT FOUND');
+        
+        if (draftEdit) {
+            // Return rule with draft content
+            res.json({
+                ...rule,
+                content: draftEdit.new_content,
+                isDraftEdit: true,
+                draftCreatedAt: draftEdit.created_at,
+                draftAuthor: draftEdit.staff_user_id
+            });
+        } else {
+            // No draft, return original rule
+            res.json({
+                ...rule,
+                isDraftEdit: false
+            });
+        }
+    } catch (error) {
+        console.error('Error getting draft content:', error);
+        res.status(500).json({ error: 'Failed to get draft content' });
     }
 });
 
@@ -1309,12 +1387,132 @@ router.put('/rules/:id', requireAuth, requirePermission('editor'), async (req, r
         // Determine new status and approval fields based on user level and request
         let finalStatus, submittedBy, submittedAt, isActive;
         
-        // If status is explicitly provided (draft or pending_approval), respect it for ALL user levels
-        if (status && (status === 'draft' || status === 'pending_approval')) {
+        // If status is explicitly provided, respect it for ALL user levels
+        if (status && (status === 'draft' || status === 'pending_approval' || status === 'approved')) {
             finalStatus = status;
             submittedBy = req.user.id;
             submittedAt = finalStatus === 'draft' ? null : new Date().toISOString();
-            isActive = 0; // Not active until approved
+            
+            // CRITICAL FIX: For draft edits of approved rules, keep original live
+            console.log('🔍 Draft check:', {
+                finalStatus,
+                existingStatus: existingRule.status,
+                shouldSaveDraft: finalStatus === 'draft' && existingRule.status === 'approved'
+            });
+            
+            if (finalStatus === 'draft' && existingRule.status === 'approved') {
+                console.log('🎯 SAVING DRAFT EDIT - keeping original live');
+                
+                try {
+                    // Check if a draft already exists for this rule
+                    const existingDraft = await db.get(
+                        `SELECT id FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+                        [id]
+                    );
+                    
+                    if (existingDraft) {
+                        // Update existing draft
+                        console.log('📝 Updating existing draft...');
+                        await db.run(
+                            `UPDATE rule_changes SET new_content = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                            [content, existingDraft.id]
+                        );
+                        console.log('✅ Existing draft updated');
+                    } else {
+                        // Create new draft
+                        console.log('📝 Creating new draft...');
+                        await db.run(
+                            `INSERT INTO rule_changes (rule_id, change_type, old_content, new_content, change_description, staff_user_id, created_at)
+                             VALUES (?, 'draft_edit', ?, ?, 'Draft edit of live rule', ?, CURRENT_TIMESTAMP)`,
+                            [id, existingRule.content, content, req.user.id]
+                        );
+                        console.log('✅ New draft created');
+                    }
+
+                    // Update only the title and images, keep original content and status
+                    await db.run(
+                        `UPDATE rules SET title = ?, images = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                        [title || null, JSON.stringify(images || []), id]
+                    );
+                    console.log('✅ Updated title and images only');
+
+                    // Log the draft save activity
+                    await ActivityLogger.log({
+                        staffUserId: req.user.id,
+                        actionType: 'update',
+                        resourceType: 'rule',
+                        resourceId: parseInt(id),
+                        actionDetails: {
+                            action: 'draft_saved',
+                            ruleTitle: title,
+                            oldTitle: existingRule.title,
+                            contentChanged: existingRule.content !== content,
+                            titleChanged: existingRule.title !== title,
+                            timestamp: new Date().toISOString()
+                        },
+                        ipAddress: req.ip || req.connection.remoteAddress,
+                        userAgent: req.get('User-Agent'),
+                        sessionId: req.sessionID,
+                        success: true
+                    });
+                    console.log('✅ Activity logged');
+
+                    console.log('🎯 DRAFT SAVE COMPLETE - returning early');
+                    return res.json({ 
+                        message: 'Draft saved successfully (original rule remains live)',
+                        status: 'draft',
+                        isDraft: true,
+                        originalStaysLive: true
+                    });
+                } catch (error) {
+                    console.error('❌ ERROR in draft save:', error);
+                    throw error;
+                }
+            }
+            
+            // Special case: Submitting a draft edit for approval
+            if (finalStatus === 'pending_approval' && existingRule.status === 'approved') {
+                console.log('🎯 SUBMITTING DRAFT EDIT FOR APPROVAL');
+                
+                // Check if there's a draft_edit for this rule
+                const draftEdit = await db.get(`
+                    SELECT new_content
+                    FROM rule_changes 
+                    WHERE rule_id = ? AND change_type = 'draft_edit'
+                    ORDER BY created_at DESC 
+                    LIMIT 1
+                `, [id]);
+                
+                if (draftEdit) {
+                    console.log('✅ Found draft edit, using draft content for approval submission');
+                    // Use the draft content instead of what was sent in the request
+                    content = draftEdit.new_content;
+                    
+                    // Clean up the draft_edit record since it's now being submitted for approval
+                    await db.run(
+                        `DELETE FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+                        [id]
+                    );
+                    console.log('🧹 Cleaned up draft_edit records (promoting to pending_approval)');
+                }
+            }
+            
+            // Special case: Explicitly setting status to approved - clean up drafts
+            if (finalStatus === 'approved') {
+                console.log('🎯 EXPLICITLY APPROVING RULE');
+                
+                // Clean up the draft_edit record since rule is being approved
+                await db.run(
+                    `DELETE FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+                    [id]
+                );
+                console.log('🧹 Cleaned up draft_edit records (explicit approval)');
+            }
+            
+            // Set active status based on final status
+            isActive = finalStatus === 'draft' ? 0 : 
+                      finalStatus === 'approved' ? 1 : 
+                      (existingRule.status === 'approved' ? 1 : 0);
         } else if (userLevel === 'editor') {
             // No status specified, keep existing status for editors
             finalStatus = existingRule.status || 'approved';
@@ -1327,6 +1525,13 @@ router.put('/rules/:id', requireAuth, requirePermission('editor'), async (req, r
             submittedBy = existingRule.submitted_by || req.user.id;
             submittedAt = existingRule.submitted_at || new Date().toISOString();
             isActive = 1; // Active immediately
+            
+            // Clean up any draft_edit records since we're directly approving
+            await db.run(
+                `DELETE FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+                [id]
+            );
+            console.log('🧹 Cleaned up draft_edit records (direct approval by moderator+)');
         }
         
         console.log('🔍 Calculated values:', {
@@ -1447,6 +1652,13 @@ router.put('/rules/:id/approve', requireAuth, requirePermission('moderator'), as
             [req.user.id, reviewNotes || '', id]
         );
 
+        // Clean up any draft_edit records for this rule since it's now approved
+        await db.run(
+            `DELETE FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+            [id]
+        );
+        console.log(`🧹 Cleaned up draft_edit records for approved rule ${id}`);
+
         // Create rule change record
         await db.run(
             `INSERT INTO rule_changes (rule_id, change_type, new_content, change_description, staff_user_id)
@@ -1503,18 +1715,74 @@ router.put('/rules/:id/reject', requireAuth, requirePermission('moderator'), asy
             return res.status(400).json({ error: 'Rule is not pending approval' });
         }
 
-        // Reject the rule
-        await db.run(
-            `UPDATE rules SET status = 'rejected', reviewed_by = ?, review_notes = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [req.user.id, reviewNotes, id]
-        );
+        // Check if this rule ever had an approved version by looking at change history
+        // Look for either 'approved' records OR look for the most recent 'updated' record where old_content differs from current content
+        const lastStableVersion = await db.get(`
+            SELECT rc.old_content, rc.new_content, rc.change_type, rc.created_at
+            FROM rule_changes rc 
+            WHERE rc.rule_id = ? AND (rc.change_type = 'approved' OR rc.change_type = 'updated') 
+            ORDER BY rc.created_at DESC 
+            LIMIT 1
+        `, [id]);
 
-        // Create rule change record
+        // If there was a previous stable version OR this rule has an update history, this is an edit rejection
+        if (lastStableVersion) {
+            console.log(`🔄 Reverting rule ${id} to last stable version after rejection`);
+            console.log(`Previous version type: ${lastStableVersion.change_type}`);
+            
+            // Determine what content to revert to
+            let revertContent;
+            if (lastStableVersion.change_type === 'approved') {
+                // Use the content that was approved
+                revertContent = lastStableVersion.new_content;
+            } else if (lastStableVersion.change_type === 'updated') {
+                // Use the old content from the last update (the content before this pending edit)
+                revertContent = lastStableVersion.old_content;
+            }
+            
+            // Revert to the last stable content and make rule active again
+            await db.run(
+                `UPDATE rules SET 
+                    content = ?, 
+                    status = 'approved', 
+                    reviewed_by = ?, 
+                    review_notes = ?, 
+                    reviewed_at = CURRENT_TIMESTAMP, 
+                    is_active = 1, 
+                    updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?`,
+                [revertContent, req.user.id, `Edit rejected: ${reviewNotes}. Reverted to last approved version.`, id]
+            );
+
+            // Create rule change record for the reversion
+            await db.run(
+                `INSERT INTO rule_changes (rule_id, change_type, old_content, new_content, change_description, staff_user_id)
+                 VALUES (?, 'reverted', ?, ?, 'Edit rejected - reverted to last approved version', ?)`,
+                [id, rule.content, revertContent, req.user.id]
+            );
+        } else {
+            // This is a new rule submission being rejected - keep it rejected and inactive
+            console.log(`❌ Rejecting new rule submission ${id}`);
+            
+            await db.run(
+                `UPDATE rules SET status = 'rejected', reviewed_by = ?, review_notes = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+                [req.user.id, reviewNotes, id]
+            );
+
+            // Create rule change record for the rejection
+            await db.run(
+                `INSERT INTO rule_changes (rule_id, change_type, new_content, change_description, staff_user_id)
+                 VALUES (?, 'rejected', ?, 'New rule submission rejected by moderator', ?)`,
+                [id, rule.content, req.user.id]
+            );
+        }
+
+        // Clean up any draft_edit records for this rule since it's been processed
         await db.run(
-            `INSERT INTO rule_changes (rule_id, change_type, new_content, change_description, staff_user_id)
-             VALUES (?, 'rejected', ?, 'Rule rejected by moderator', ?)`,
-            [id, rule.content, req.user.id]
+            `DELETE FROM rule_changes WHERE rule_id = ? AND change_type = 'draft_edit'`,
+            [id]
         );
+        console.log(`🧹 Cleaned up draft_edit records for rejected rule ${id}`);
 
         // Log the rejection activity
         await ActivityLogger.log({
@@ -1560,6 +1828,47 @@ router.get('/pending-approvals', requireAuth, requirePermission('moderator'), as
             ORDER BY r.submitted_at ASC
         `);
 
+        // Enhance each pending rule with edit history and previous version info
+        const enhancedPendingRules = await Promise.all(pendingRules.map(async (rule) => {
+            // Check if this is a new rule or an edit by looking for change history
+            const changeHistory = await db.all(`
+                SELECT change_type, old_content, new_content, change_description, created_at
+                FROM rule_changes 
+                WHERE rule_id = ? 
+                ORDER BY created_at DESC
+            `, [rule.id]);
+
+            // Determine if this is a new rule or edit
+            const isEdit = changeHistory.some(change => change.change_type === 'updated');
+            const isNewRule = !isEdit;
+
+            // For edits, get the previous approved version
+            let previousVersion = null;
+            if (isEdit) {
+                const lastUpdate = changeHistory.find(change => change.change_type === 'updated');
+                if (lastUpdate) {
+                    previousVersion = {
+                        content: lastUpdate.old_content,
+                        // For now, we'll assume the title didn't change in the previous version
+                        // In a more complex system, we'd store title changes too
+                        title: rule.title
+                    };
+                }
+            }
+
+            return {
+                ...rule,
+                isNewRule,
+                isEdit,
+                previousVersion,
+                changeHistory: changeHistory.map(change => ({
+                    type: change.change_type,
+                    description: change.change_description,
+                    createdAt: change.created_at
+                }))
+            };
+        }));
+
         const pendingAnnouncements = await db.all(`
             SELECT a.*, su_submitted.discord_username as submitted_by_username
             FROM announcements a
@@ -1569,9 +1878,9 @@ router.get('/pending-approvals', requireAuth, requirePermission('moderator'), as
         `);
 
         res.json({
-            rules: pendingRules,
+            rules: enhancedPendingRules,
             announcements: pendingAnnouncements,
-            totalPending: pendingRules.length + pendingAnnouncements.length
+            totalPending: enhancedPendingRules.length + pendingAnnouncements.length
         });
     } catch (error) {
         console.error('Error fetching pending approvals:', error);
@@ -1590,9 +1899,11 @@ router.delete('/rules/:id', requireAuth, requirePermission('moderator'), async (
             return res.status(404).json({ error: 'Rule not found' });
         }
 
-        // Check if rule has sub-rules
+        // Check if rule has sub-rules (only check active sub-rules for approved rules, check all for rejected/draft rules)
         const subRuleCount = await db.get(
-            'SELECT COUNT(*) as count FROM rules WHERE parent_rule_id = ? AND is_active = 1',
+            rule.status === 'approved' 
+                ? 'SELECT COUNT(*) as count FROM rules WHERE parent_rule_id = ? AND is_active = 1'
+                : 'SELECT COUNT(*) as count FROM rules WHERE parent_rule_id = ?',
             [id]
         );
 
@@ -1602,25 +1913,31 @@ router.delete('/rules/:id', requireAuth, requirePermission('moderator'), async (
             });
         }
 
-        // Soft delete the rule (set is_active = 0)
-        const result = await db.run(
-            'UPDATE rules SET is_active = 0 WHERE id = ?',
-            [id]
-        );
-
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Rule not found' });
-        }
-
-        // Also remove from rule_codes table
-        await db.run('DELETE FROM rule_codes WHERE rule_id = ?', [id]);
-
-        // Create rule change record
+        // Create rule change record BEFORE deletion (to avoid foreign key constraint issues)
         await db.run(
             `INSERT INTO rule_changes (rule_id, change_type, old_content, change_description, staff_user_id)
              VALUES (?, 'deleted', ?, 'Rule deleted', ?)`,
             [id, rule.content, req.user.id]
         );
+
+        // For rejected/draft rules, do a hard delete. For approved rules, do soft delete
+        let result;
+        if (rule.status === 'rejected' || rule.status === 'draft') {
+            // Hard delete rejected/draft rules to remove clutter
+            // First remove from rule_codes table
+            await db.run('DELETE FROM rule_codes WHERE rule_id = ?', [id]);
+            // Then delete the rule itself
+            result = await db.run('DELETE FROM rules WHERE id = ?', [id]);
+        } else {
+            // Soft delete approved rules (set is_active = 0)
+            result = await db.run('UPDATE rules SET is_active = 0 WHERE id = ?', [id]);
+            // Also remove from rule_codes table
+            await db.run('DELETE FROM rule_codes WHERE rule_id = ?', [id]);
+        }
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Rule not found' });
+        }
 
         // Log the rule deletion activity
         await ActivityLogger.log({
