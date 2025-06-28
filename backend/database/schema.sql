@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS staff_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     steam_id TEXT, -- Removed NOT NULL constraint to allow Discord-only users
     steam_username TEXT,
-    discord_id TEXT,
+    discord_id TEXT UNIQUE, -- Discord ID must be unique for authentication
     discord_username TEXT,
     discord_discriminator TEXT,
     discord_avatar TEXT,

@@ -47,7 +47,7 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
         // Get rule with category information
         const rule = await db.get(`
             SELECT r.*, c.name as category_name, c.letter_code as category_letter_code,
-                   rc.full_code, su.steam_username as created_by_username
+                   rc.full_code, su.discord_username as created_by_username
             FROM rules r
             LEFT JOIN categories c ON r.category_id = c.id
             LEFT JOIN rule_codes rc ON r.id = rc.rule_id
@@ -221,7 +221,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                     rc.*,
                     r.title as rule_title, 
                     c.name as category_name, 
-                    su.steam_username,
+                    su.discord_username as steam_username,
                     rule_codes.full_code
                 FROM rule_changes rc
                 LEFT JOIN rules r ON rc.rule_id = r.id
@@ -316,7 +316,7 @@ router.get('/users', requireAuth, (req, res, next) => {
         const db = require('../database/init').getInstance();
         const users = await db.all(`
             SELECT 
-                su.id, su.steam_id, su.steam_username, su.permission_level, 
+                su.id, su.discord_id, su.discord_username as steam_username, su.permission_level, 
                 su.is_active, su.created_at, su.last_login,
                 (SELECT COUNT(*) FROM staff_activity_logs WHERE staff_user_id = su.id) as total_actions,
                 (SELECT COUNT(*) FROM staff_activity_logs WHERE staff_user_id = su.id AND created_at >= datetime('now', '-7 days')) as recent_actions
@@ -377,7 +377,7 @@ router.post('/users', requireAuth, (req, res, next) => {
         }
 
         const result = await db.run(
-            `INSERT INTO staff_users (steam_id, steam_username, permission_level) 
+                            `INSERT INTO staff_users (discord_id, discord_username, permission_level) 
              VALUES (?, ?, ?)`,
             [steamId, username, permissionLevel]
         );
@@ -389,7 +389,7 @@ router.post('/users', requireAuth, (req, res, next) => {
             resourceType: 'user',
             resourceId: result.id,
             actionDetails: {
-                newUserSteamId: steamId,
+                newUserDiscordId: steamId,
                 newUserUsername: username,
                 newUserPermissionLevel: permissionLevel
             },
@@ -470,8 +470,8 @@ router.put('/users/:id', requireAuth, (req, res, next) => {
                 newPermissionLevel: permissionLevel,
                 oldIsActive: oldUser.is_active,
                 newIsActive: isActive,
-                targetUserSteamId: oldUser.steam_id,
-                targetUsername: oldUser.steam_username
+                targetUserDiscordId: oldUser.discord_id,
+                targetUsername: oldUser.discord_username
             },
             ipAddress: req.ip,
             userAgent: req.get('User-Agent'),
@@ -532,8 +532,8 @@ router.delete('/users/:id', requireAuth, (req, res, next) => {
             resourceType: 'user',
             resourceId: parseInt(id),
             actionDetails: {
-                deactivatedUserSteamId: user.steam_id,
-                deactivatedUsername: user.steam_username,
+                deactivatedUserDiscordId: user.discord_id,
+                deactivatedUsername: user.discord_username,
                 deactivatedPermissionLevel: user.permission_level
             },
             ipAddress: req.ip,
@@ -577,8 +577,8 @@ router.get('/announcements', requireAuth, requirePermission('editor'), async (re
         // Get immediate announcements
         const immediateAnnouncements = await db.all(`
             SELECT announcements.*, 'immediate' as announcement_type, 0 as is_scheduled, NULL as scheduled_for, NULL as auto_expire_hours,
-                   su_submitted.steam_username as submitted_by_username,
-                   su_reviewed.steam_username as reviewed_by_username
+                   su_submitted.discord_username as submitted_by_username,
+                   su_reviewed.discord_username as reviewed_by_username
             FROM announcements
             LEFT JOIN staff_users su_submitted ON announcements.submitted_by = su_submitted.id
             LEFT JOIN staff_users su_reviewed ON announcements.reviewed_by = su_reviewed.id
@@ -1084,8 +1084,8 @@ router.get('/rules', requireAuth, requirePermission('editor'), ActivityLogger.mi
         
         const rules = await db.all(`
             SELECT r.*, c.name as category_name, c.letter_code, rc.full_code,
-                   su_submitted.steam_username as submitted_by_username,
-                   su_reviewed.steam_username as reviewed_by_username,
+                   su_submitted.discord_username as submitted_by_username,
+                   su_reviewed.discord_username as reviewed_by_username,
                    (SELECT COUNT(*) FROM rule_cross_references rcr 
                     WHERE rcr.source_rule_id = r.id OR rcr.target_rule_id = r.id) as cross_references_count
             FROM rules r
@@ -1551,7 +1551,7 @@ router.get('/pending-approvals', requireAuth, requirePermission('moderator'), as
         
         const pendingRules = await db.all(`
             SELECT r.*, c.name as category_name, c.letter_code, rc.full_code,
-                   su_submitted.steam_username as submitted_by_username
+                   su_submitted.discord_username as submitted_by_username
             FROM rules r
             LEFT JOIN categories c ON r.category_id = c.id
             LEFT JOIN rule_codes rc ON r.id = rc.rule_id
@@ -1561,7 +1561,7 @@ router.get('/pending-approvals', requireAuth, requirePermission('moderator'), as
         `);
 
         const pendingAnnouncements = await db.all(`
-            SELECT a.*, su_submitted.steam_username as submitted_by_username
+            SELECT a.*, su_submitted.discord_username as submitted_by_username
             FROM announcements a
             LEFT JOIN staff_users su_submitted ON a.submitted_by = su_submitted.id
             WHERE a.status = 'pending_approval'
@@ -2005,7 +2005,7 @@ router.get('/scheduled-announcements', requireAuth, requirePermission('moderator
     try {
         const db = require('../database/init').getInstance();
         const scheduledAnnouncements = await db.all(`
-            SELECT s.*, u.steam_username as created_by_username
+            SELECT s.*, u.discord_username as created_by_username
             FROM scheduled_announcements s
             LEFT JOIN staff_users u ON s.created_by = u.id
             WHERE s.is_published = 0

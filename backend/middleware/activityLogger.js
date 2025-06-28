@@ -223,7 +223,7 @@ class ActivityLogger {
         const query = `
             SELECT 
                 sal.*,
-                ${includeUserDetails ? 'su.steam_username, su.permission_level,' : ''}
+                ${includeUserDetails ? 'su.discord_username as steam_username, su.permission_level,' : ''}
                 CASE 
                     WHEN sal.resource_type = 'rule' THEN r.title
                     WHEN sal.resource_type = 'category' THEN c.name

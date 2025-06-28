@@ -138,6 +138,109 @@ class DatabaseAdapter {
                     console.error('Unexpected error adding action_type column:', error.message);
                 }
             }
+
+            // Migration: Add UNIQUE constraint to discord_id column in staff_users
+            try {
+                // Check if UNIQUE constraint already exists by checking table info
+                const tableInfo = await this.all('PRAGMA table_info(staff_users)');
+                const discordIdColumn = tableInfo.find(col => col.name === 'discord_id');
+                
+                // Check if we need to apply the migration by trying to insert a duplicate
+                let needsMigration = true;
+                try {
+                    // Try to create a test duplicate - if it fails, UNIQUE constraint exists
+                    await this.run('BEGIN TRANSACTION');
+                    await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', ['test_duplicate_check', 'editor']);
+                    await this.run('INSERT INTO staff_users (discord_id, permission_level) VALUES (?, ?)', ['test_duplicate_check', 'editor']);
+                    // If we get here, no UNIQUE constraint exists
+                    await this.run('DELETE FROM staff_users WHERE discord_id = ?', ['test_duplicate_check']);
+                    await this.run('COMMIT');
+                } catch (error) {
+                    await this.run('ROLLBACK');
+                    if (error.message.includes('UNIQUE constraint failed')) {
+                        needsMigration = false;
+                        console.log('discord_id UNIQUE constraint already exists in staff_users table');
+                    }
+                }
+
+                if (needsMigration && discordIdColumn) {
+                    console.log('🔄 Adding UNIQUE constraint to discord_id column...');
+                    
+                    // Step 1: Check for duplicates and warn
+                    const duplicates = await this.all(`
+                        SELECT discord_id, COUNT(*) as count 
+                        FROM staff_users 
+                        WHERE discord_id IS NOT NULL AND discord_id != ''
+                        GROUP BY discord_id 
+                        HAVING COUNT(*) > 1
+                    `);
+                    
+                    if (duplicates.length > 0) {
+                        console.warn('⚠️  Found duplicate discord_id values:', duplicates);
+                        console.log('🧹 Removing duplicates (keeping oldest entry for each discord_id)...');
+                        
+                        // Remove duplicates, keeping the oldest (smallest id) for each discord_id
+                        await this.run(`
+                            DELETE FROM staff_users 
+                            WHERE id NOT IN (
+                                SELECT MIN(id) 
+                                FROM staff_users 
+                                WHERE discord_id IS NOT NULL AND discord_id != ''
+                                GROUP BY discord_id
+                            ) AND discord_id IS NOT NULL AND discord_id != ''
+                        `);
+                    }
+
+                    // Step 2: Create backup
+                    await this.run('CREATE TABLE IF NOT EXISTS staff_users_backup_discord_unique AS SELECT * FROM staff_users');
+
+                    // Step 3: Create new table with UNIQUE constraint
+                    await this.run(`
+                        CREATE TABLE staff_users_new (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            steam_id TEXT,
+                            steam_username TEXT,
+                            discord_id TEXT UNIQUE,
+                            discord_username TEXT,
+                            discord_discriminator TEXT,
+                            discord_avatar TEXT,
+                            discord_roles TEXT DEFAULT '[]',
+                            permission_level TEXT NOT NULL DEFAULT 'editor',
+                            is_active BOOLEAN DEFAULT 1,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            last_login DATETIME,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    `);
+
+                    // Step 4: Copy data
+                    await this.run(`
+                        INSERT INTO staff_users_new (
+                            id, steam_id, steam_username, discord_id, discord_username, 
+                            discord_discriminator, discord_avatar, discord_roles, 
+                            permission_level, is_active, created_at, last_login, updated_at
+                        )
+                        SELECT 
+                            id, steam_id, steam_username, discord_id, discord_username,
+                            discord_discriminator, discord_avatar, discord_roles,
+                            permission_level, is_active, created_at, last_login, updated_at
+                        FROM staff_users
+                    `);
+
+                    // Step 5: Replace table
+                    await this.run('DROP TABLE staff_users');
+                    await this.run('ALTER TABLE staff_users_new RENAME TO staff_users');
+
+                    // Step 6: Recreate indexes
+                    await this.run('CREATE INDEX IF NOT EXISTS idx_staff_steam ON staff_users(steam_id)');
+                    await this.run('CREATE INDEX IF NOT EXISTS idx_staff_active ON staff_users(is_active)');
+                    await this.run('CREATE INDEX IF NOT EXISTS idx_staff_discord ON staff_users(discord_id)');
+
+                    console.log('✅ Migration: Added UNIQUE constraint to discord_id column');
+                }
+            } catch (error) {
+                console.error('Error adding UNIQUE constraint to discord_id:', error.message);
+            }
         } catch (error) {
             console.error('SQLite migration error:', error);
         }

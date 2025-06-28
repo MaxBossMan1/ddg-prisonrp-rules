@@ -1660,7 +1660,7 @@ const ChangesList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 400px;
+  max-height: 800px;
   overflow-y: auto;
   padding-right: 0.5rem;
   
@@ -1708,8 +1708,10 @@ const ChangeItem = styled.div`
   border: 1px solid rgba(103, 123, 174, 0.2);
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   min-width: 0; /* Allow flex items to shrink */
+  min-height: fit-content;
+  word-wrap: break-word;
   
   &::before {
     content: '';
@@ -1717,7 +1719,7 @@ const ChangeItem = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    height: 100%;
     background: ${props => {
       switch(props.type) {
         case 'create': return 'radial-gradient(circle at top right, rgba(39, 174, 96, 0.1) 0%, transparent 50%)';

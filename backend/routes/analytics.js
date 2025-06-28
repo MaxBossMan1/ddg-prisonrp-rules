@@ -156,7 +156,7 @@ router.get('/staff-activity', requireAuth, requirePermission('admin'), async (re
         const activitySummary = await db.all(`
             SELECT 
                 su.id,
-                su.steam_username,
+                su.discord_username as steam_username,
                 su.permission_level,
                 COUNT(sal.id) as total_actions,
                 COUNT(CASE WHEN sal.action_type = 'create' THEN 1 END) as creates,
@@ -173,7 +173,7 @@ router.get('/staff-activity', requireAuth, requirePermission('admin'), async (re
             FROM staff_users su
             LEFT JOIN staff_activity_logs sal ON su.id = sal.staff_user_id ${whereClause.replace('WHERE', 'AND')}
             WHERE su.is_active = 1
-            GROUP BY su.id, su.steam_username, su.permission_level
+            GROUP BY su.id, su.discord_username, su.permission_level
             ORDER BY total_actions DESC
         `, params);
 

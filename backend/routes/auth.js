@@ -460,8 +460,11 @@ const requirePermission = (minLevel) => {
                     }
                     
                     if (currentPermissionLevel !== req.user.permissionLevel) {
+                        // Store previous level before updating for accurate logging
+                        const previousLevel = req.user.permissionLevel;
+                        
                         // Permission level changed - update session and database
-                        console.log(`🔄 User ${req.user.username} permission changed: ${req.user.permissionLevel} → ${currentPermissionLevel}`);
+                        console.log(`🔄 User ${req.user.username} permission changed: ${previousLevel} → ${currentPermissionLevel}`);
                         
                         const db = require('../database/init').getInstance();
                         await db.run(`
@@ -470,11 +473,15 @@ const requirePermission = (minLevel) => {
                             WHERE id = ?
                         `, [currentPermissionLevel, req.user.id]);
                         
-                        // Update session
+                        // Update session - ensure proper session persistence
                         req.user.permissionLevel = currentPermissionLevel;
+                        if (req.session.passport && req.session.passport.user) {
+                            // Update the session data to ensure persistence
+                            req.session.passport.user.permissionLevel = currentPermissionLevel;
+                        }
                         
                         await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
-                            previousLevel: req.user.permissionLevel,
+                            previousLevel: previousLevel,
                             newLevel: currentPermissionLevel,
                             reason: 'Discord roles changed'
                         });
@@ -703,8 +710,12 @@ router.post('/refresh-permissions', requireAuth, async (req, res) => {
                 WHERE id = ?
             `, [currentPermissionLevel, req.user.id]);
             
-            // Update session
+            // Update session - ensure proper session persistence
             req.user.permissionLevel = currentPermissionLevel;
+            if (req.session.passport && req.session.passport.user) {
+                // Update the session data to ensure persistence
+                req.session.passport.user.permissionLevel = currentPermissionLevel;
+            }
             
             await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
                 previousLevel: previousLevel,
