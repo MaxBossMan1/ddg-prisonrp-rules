@@ -35,6 +35,8 @@ console.log('🔧 Staff Routes Dynamic URLs:', {
 // Helper function to automatically send Discord notifications for rules
 async function sendRuleToDiscord(ruleId, action = 'update') {
     try {
+        console.log(`🚀 sendRuleToDiscord called with ruleId: ${ruleId}, action: ${action}`);
+        
         const db = require('../database/init').getInstance();
         
         // Get Discord settings
@@ -55,97 +57,33 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
             WHERE r.id = ?
         `, [ruleId]);
 
+        console.log(`📋 Rule data for Discord: ID ${ruleId}, full_code: ${rule?.full_code}, title: ${rule?.title}, status: ${rule?.status}, is_active: ${rule?.is_active}`);
+
         if (!rule) {
             console.log('Rule not found for Discord notification:', ruleId);
             return;
         }
 
-        // Only send for approved/active rules
-        if (rule.status !== 'approved' || !rule.is_active) {
-            console.log('Rule not approved/active, skipping Discord notification:', rule.status, rule.is_active);
+        // Determine if we should send notification based on action type
+        let shouldSend = false;
+        
+        if (action === 'approved' || action === 'create') {
+            // For approved/created rules, they should be active
+            shouldSend = rule.status === 'approved' && rule.is_active;
+        } else if (action === 'update') {
+            // For updates, rule should be approved and active
+            shouldSend = rule.status === 'approved' && rule.is_active;
+        } else if (action === 'rejected' || action === 'delete') {
+            // For rejected/deleted, we might want to notify regardless (but we probably don't send these to public channel)
+            shouldSend = true; 
+        }
+        
+        if (!shouldSend) {
+            console.log(`Rule not ready for Discord notification: status=${rule.status}, is_active=${rule.is_active}, action=${action}`);
             return;
         }
 
-        // Create the Discord embed
-        
-        // Action-specific colors and icons
-        const actionConfig = {
-            create: {
-                color: 0x27ae60, // Green
-                icon: '📝',
-                title: 'New Rule Created'
-            },
-            update: {
-                color: 0xf39c12, // Orange
-                icon: '✏️',
-                title: 'Rule Updated'
-            },
-            delete: {
-                color: 0xe74c3c, // Red
-                icon: '🗑️',
-                title: 'Rule Deleted'
-            }
-        };
-
-        const config = actionConfig[action] || actionConfig.update;
-        
-        // Create rule URL - parse full_code into proper URL format
-        let ruleUrl;
-        if (rule.full_code) {
-            // Parse rule code like "C.7" or "C.7.1" into proper URL format
-            const parts = rule.full_code.split('.');
-            if (parts.length >= 2) {
-                const category = parts[0]; // "C"
-                const ruleNumber = parts[1]; // "7"
-                if (parts.length >= 3) {
-                    // Sub-rule like "C.7.1" -> /rules/C/7/1
-                    const subRuleNumber = parts[2]; // "1"
-                    ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}/${subRuleNumber}`;
-                } else {
-                    // Main rule like "C.7" -> /rules/C/7
-                    ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}`;
-                }
-            } else {
-                // Fallback if format is unexpected
-                ruleUrl = `${dynamicUrls.frontend}/rules/${rule.full_code}`;
-            }
-        } else {
-            // Fallback to rule ID if no full_code
-            ruleUrl = `${dynamicUrls.frontend}/rules/id-${rule.id}`;
-        }
-        
-        const embed = {
-            title: `${config.icon} ${config.title}: ${rule.full_code || `Rule #${rule.id}`}`,
-            description: rule.title ? `**${rule.title}**\n\n${rule.content.substring(0, 200)}...` : rule.content.substring(0, 300) + '...',
-            color: config.color,
-            url: ruleUrl, // Direct link to the rule page
-            fields: [
-                {
-                    name: '📋 Category',
-                    value: `${rule.category_letter_code} - ${rule.category_name}`,
-                    inline: true
-                },
-                {
-                    name: '👤 Author',
-                    value: rule.created_by_username || 'Unknown',
-                    inline: true
-                },
-                {
-                    name: '📅 Date',
-                    value: new Date().toLocaleDateString(),
-                    inline: true
-                },
-                {
-                    name: '🔗 View Rule',
-                    value: `[Click here to view ${rule.full_code || `Rule #${rule.id}`}](${ruleUrl})`,
-                    inline: false
-                }
-            ],
-            footer: {
-                text: 'DDG PrisonRP Rules System'
-            },
-            timestamp: new Date().toISOString()
-        };
+        // Discord bot service now handles all embed formatting
 
         // Send to Discord using bot
         const { getInstance: getDiscordBot } = require('../services/discordBot');
@@ -157,26 +95,26 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
                 rule,
                 settings,
                 action,
-                'System'
+                rule.created_by_username || 'System'
             );
 
             if (result.success) {
-                // Log successful Discord message
-                await db.run(`
-                    INSERT INTO discord_messages (
+            // Log successful Discord message
+            await db.run(`
+                INSERT INTO discord_messages (
                         message_type, rule_id, discord_channel_id,
                         sent_by, action_type, discord_message_id, sent_at
                     ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                `, [
-                    'rule',
-                    ruleId,
+            `, [
+                'rule',
+                ruleId,
                     settings.rules_channel_id,
-                    1, // System user
-                    action,
+                1, // System user
+                action,
                     result.messageId
-                ]);
-                
-                console.log(`Discord rule notification sent successfully: ${rule.full_code} (${action})`);
+            ]);
+            
+            console.log(`Discord rule notification sent successfully: ${rule.full_code} (${action})`);
             } else {
                 console.error(`Failed to send Discord rule notification: ${result.error}`);
             }
@@ -1412,7 +1350,7 @@ router.post('/rules', requireAuth, requirePermission('editor'), async (req, res)
 
         // Send rule to Discord if approved
         if (finalStatus === 'approved') {
-            await sendRuleToDiscord(result.id, 'create');
+        await sendRuleToDiscord(result.id, 'create');
         }
         
         // Send rule approval notification if pending approval

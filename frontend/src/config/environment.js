@@ -9,13 +9,25 @@ const getEnvironmentConfig = () => {
   
   // For production builds, use relative URLs or same domain
   if (process.env.NODE_ENV === 'production') {
-    return {
-      API_BASE_URL: '', // Use relative URLs in production
-      FRONTEND_URL: `${protocol}//${hostname}:3000`,
-      BACKEND_URL: `${protocol}//${hostname}:3001`,
-      IS_PRODUCTION: true,
-      IS_LOCALHOST: isLocalhost
-    };
+    // If running locally (localhost), use localhost URLs
+    if (isLocalhost) {
+      return {
+        API_BASE_URL: 'http://localhost:3001',
+        FRONTEND_URL: 'http://localhost:3000',
+        BACKEND_URL: 'http://localhost:3001',
+        IS_PRODUCTION: true,
+        IS_LOCALHOST: true
+      };
+    } else {
+      // If running on server/IP, use the hostname with port
+      return {
+        API_BASE_URL: `${protocol}//${hostname}:3001`,
+        FRONTEND_URL: `${protocol}//${hostname}:3000`,
+        BACKEND_URL: `${protocol}//${hostname}:3001`,
+        IS_PRODUCTION: true,
+        IS_LOCALHOST: false
+      };
+    }
   }
   
   // For development, detect if we're running locally or on cloud server

@@ -473,14 +473,8 @@ const requirePermission = (minLevel) => {
                             WHERE id = ?
                         `, [currentPermissionLevel, req.user.id]);
                         
-                        // Update session - use req.login to properly update the serialized user session
+                        // Update current request's user object (database update ensures future requests get correct level)
                         req.user.permissionLevel = currentPermissionLevel;
-                        await new Promise((resolve, reject) => {
-                            req.login(req.user, (err) => {
-                                if (err) reject(err);
-                                else resolve();
-                            });
-                        });
                         
                         await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
                             previousLevel: previousLevel,
@@ -712,14 +706,8 @@ router.post('/refresh-permissions', requireAuth, async (req, res) => {
                 WHERE id = ?
             `, [currentPermissionLevel, req.user.id]);
             
-            // Update session - use req.login to properly update the serialized user session
+            // Update current request's user object (database update ensures future requests get correct level)
             req.user.permissionLevel = currentPermissionLevel;
-            await new Promise((resolve, reject) => {
-                req.login(req.user, (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
             
             await discordBot.logAuthEvent(req.user.discordId, 'permission_updated', true, {
                 previousLevel: previousLevel,

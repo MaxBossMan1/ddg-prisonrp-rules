@@ -6146,8 +6146,8 @@ For questions, contact staff immediately.`,
                       </div>
                       
                       {discordChannels.length > 0 ? (
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                          <div>
+                      <div style={{ display: 'grid', gap: '1rem' }}>
+                        <div>
                             <Label>📢 Announcements Channel</Label>
                             <Select
                               value={discordSettings.announcementChannelId}
@@ -6160,9 +6160,9 @@ For questions, contact staff immediately.`,
                                 </option>
                               ))}
                             </Select>
-                          </div>
-                          
-                          <div>
+                        </div>
+                        
+                        <div>
                             <Label>📋 Rules Updates Channel</Label>
                             <Select
                               value={discordSettings.rulesChannelId}
@@ -6175,7 +6175,7 @@ For questions, contact staff immediately.`,
                                 </option>
                               ))}
                             </Select>
-                          </div>
+                        </div>
 
                           <div>
                             <Label>🔔 Staff Notifications Channel (Rule Approvals)</Label>
@@ -6192,7 +6192,7 @@ For questions, contact staff immediately.`,
                             </Select>
                             <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
                               Channel where staff will be notified about rules awaiting approval
-                            </div>
+                      </div>
                           </div>
                         </div>
                       ) : (

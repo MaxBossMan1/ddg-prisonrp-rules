@@ -368,7 +368,7 @@ class DiscordBotService {
         }
     }
 
-    async sendRuleToChannel(channelId, rule, settings, action = 'update', sentByUsername) {
+    async sendRuleToChannel(channelId, rule, settings, action = 'update', sentByUsername, previousContent = null) {
         try {
             if (!this.isConnected || !this.client) {
                 throw new Error('Discord bot not connected');
@@ -377,6 +377,43 @@ class DiscordBotService {
             const channel = await this.client.channels.fetch(channelId);
             if (!channel) {
                 throw new Error(`Channel ${channelId} not found`);
+            }
+
+            // Get dynamic URLs
+            const getDynamicUrls = () => {
+                const baseUrl = process.env.NODE_ENV === 'production' 
+                    ? (process.env.FRONTEND_URL || 'https://ddg-motd.web.app')
+                    : 'http://localhost:3000';
+                
+                return {
+                    frontend: baseUrl
+                };
+            };
+            const dynamicUrls = getDynamicUrls();
+
+            // Create rule URL - parse full_code into proper URL format
+            let ruleUrl;
+            if (rule.full_code) {
+                // Parse rule code like "C.7" or "C.7.1" into proper URL format
+                const parts = rule.full_code.split('.');
+                if (parts.length >= 2) {
+                    const category = parts[0]; // "C"
+                    const ruleNumber = parts[1]; // "7"
+                    if (parts.length >= 3) {
+                        // Sub-rule like "C.7.1" -> /rules/C/7/1
+                        const subRuleNumber = parts[2]; // "1"
+                        ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}/${subRuleNumber}`;
+                    } else {
+                        // Main rule like "C.7" -> /rules/C/7
+                        ruleUrl = `${dynamicUrls.frontend}/rules/${category}/${ruleNumber}`;
+                    }
+                } else {
+                    // Fallback if format is unexpected
+                    ruleUrl = `${dynamicUrls.frontend}/rules/${rule.full_code}`;
+                }
+            } else {
+                // Fallback to rule ID if no full_code
+                ruleUrl = `${dynamicUrls.frontend}/rules/id-${rule.id}`;
             }
 
             // Action-specific colors and icons
@@ -391,6 +428,16 @@ class DiscordBotService {
                     icon: '✏️',
                     title: 'Rule Updated'
                 },
+                approved: {
+                    color: 0x2ecc71, // Bright Green
+                    icon: '✅',
+                    title: 'Rule Approved'
+                },
+                rejected: {
+                    color: 0x95a5a6, // Gray
+                    icon: '❌',
+                    title: 'Rule Rejected'
+                },
                 delete: {
                     color: 0xe74c3c, // Red
                     icon: '🗑️',
@@ -400,10 +447,19 @@ class DiscordBotService {
 
             const config = actionConfig[action] || actionConfig.update;
 
+            // Determine author - prefer rule creator over current user
+            let authorName = 'System';
+            if (rule.created_by_username) {
+                authorName = rule.created_by_username;
+            } else if (sentByUsername && sentByUsername !== 'System') {
+                authorName = sentByUsername;
+            }
+
             const embed = new EmbedBuilder()
                 .setTitle(`${config.icon} ${config.title}: ${rule.full_code || `Rule #${rule.id}`}`)
                 .setDescription(rule.title ? `**${rule.title}**\n\n${rule.content.substring(0, 200)}...` : rule.content.substring(0, 300) + '...')
                 .setColor(config.color)
+                .setURL(ruleUrl) // Make the title clickable
                 .setTimestamp()
                 .addFields([
                     {
@@ -412,19 +468,39 @@ class DiscordBotService {
                         inline: true
                     },
                     {
-                        name: '👤 Sent By',
-                        value: sentByUsername || 'System',
+                        name: '👤 Author',
+                        value: authorName,
                         inline: true
                     },
                     {
                         name: '📅 Date',
                         value: new Date().toLocaleDateString(),
                         inline: true
+                    },
+                    {
+                        name: '🔗 View Rule',
+                        value: `[Click here to view ${rule.full_code || `Rule #${rule.id}`}](${ruleUrl})`,
+                        inline: false
                     }
                 ])
                 .setFooter({
                     text: 'DDG PrisonRP Rules System'
                 });
+
+            // Add change information for updates
+            if (action === 'update' && previousContent && previousContent !== rule.content) {
+                // Simple change detection - could be enhanced with more sophisticated diff
+                const changeInfo = `📝 **What Changed:**\nRule content has been updated. [View full rule](${ruleUrl}) for complete details.`;
+                
+                // Add change field
+                embed.addFields([
+                    {
+                        name: '🔄 Changes Made',
+                        value: changeInfo,
+                        inline: false
+                    }
+                ]);
+            }
 
             const message = await channel.send({ embeds: [embed] });
 

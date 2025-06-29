@@ -119,7 +119,7 @@ router.put('/settings', requireAuth, requirePermission('admin'), async (req, res
                     const channel = await discordBot.client.channels.fetch(rulesChannelId);
                     if (!channel) {
                         return res.status(400).json({ error: 'Rules channel not found' });
-                    }
+        }
                     const permissions = channel.permissionsFor(discordBot.client.user);
                     if (!permissions.has('SendMessages')) {
                         return res.status(400).json({ error: 'Bot does not have permission to send messages in the rules channel' });
@@ -254,12 +254,12 @@ router.post('/test', requireAuth, requirePermission('admin'), async (req, res) =
         if (result.success) {
             res.json({ 
                 message: `Test message sent successfully to #${result.channelName}!`,
-                messageId: result.messageId
+                messageId: result.messageId 
             });
         } else {
             res.status(500).json({ 
                 error: 'Failed to send test message',
-                details: result.error
+                details: result.error 
             });
         }
     } catch (error) {
@@ -350,9 +350,9 @@ router.post('/announcements/:id/send', requireAuth, requirePermission('moderator
             const embed = createAnnouncementEmbed(announcement, settings);
             
             result = await sendDiscordWebhook(settings.announcement_webhook_url, {
-                content,
-                embeds: [embed]
-            });
+            content,
+            embeds: [embed]
+        });
         }
 
         if (result.success) {
@@ -550,8 +550,8 @@ router.post('/rules/:id/send', requireAuth, requirePermission('moderator'), asyn
             const embed = createRuleEmbed(rule, settings, action);
 
             result = await sendDiscordWebhook(settings.rules_webhook_url, {
-                embeds: [embed]
-            });
+            embeds: [embed]
+        });
         }
 
         if (result.success) {

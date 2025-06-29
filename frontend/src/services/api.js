@@ -15,9 +15,7 @@ const getApiBaseUrl = () => {
   return `http://${hostname}:3001`;
 };
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '' // In production, API calls will be relative to the same domain
-  : getApiBaseUrl(); // Dynamic detection for development
+const API_BASE_URL = getApiBaseUrl(); // Always use dynamic detection for proper backend URL
 
 console.log('🔧 API Configuration:', { 
   NODE_ENV: process.env.NODE_ENV,

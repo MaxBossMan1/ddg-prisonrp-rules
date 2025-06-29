@@ -139,7 +139,10 @@ app.use((req, res, next) => {
 // CORS configuration with dynamic URLs
 const allowedOrigins = [
     dynamicUrls.frontend,
-    process.env.FRONTEND_URL // Keep for backward compatibility
+    process.env.FRONTEND_URL, // Keep for backward compatibility
+    'http://localhost:3000', // Always allow localhost
+    'http://100.111.147.152:3000', // Allow network IP access
+    'http://127.0.0.1:3000' // Allow 127.0.0.1 access
 ].filter(Boolean); // Remove any undefined values
 
 app.use(cors({
