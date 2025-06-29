@@ -39,7 +39,7 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
         
         // Get Discord settings
         const settings = await db.get('SELECT * FROM discord_settings WHERE id = 1');
-        if (!settings || !settings.rules_enabled || !settings.rules_webhook_url) {
+        if (!settings || !settings.rules_enabled || !settings.rules_channel_id) {
             console.log('Discord rules notifications disabled or not configured');
             return;
         }
@@ -67,7 +67,6 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
         }
 
         // Create the Discord embed
-        const axios = require('axios');
         
         // Action-specific colors and icons
         const actionConfig = {
@@ -148,80 +147,41 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
             timestamp: new Date().toISOString()
         };
 
-        const webhookPayload = {
-            embeds: [embed]
-        };
+        // Send to Discord using bot
+        const { getInstance: getDiscordBot } = require('../services/discordBot');
+        const discordBot = getDiscordBot();
 
-        // Send to Discord using bot or webhook
-        let result;
-        const useBotMode = settings.use_bot_instead_of_webhooks === 1;
+        if (discordBot && discordBot.isReady() && settings.rules_channel_id) {
+            const result = await discordBot.sendRuleToChannel(
+                settings.rules_channel_id,
+                rule,
+                settings,
+                action,
+                'System'
+            );
 
-        if (useBotMode) {
-            // Use Discord bot
-            const { getInstance: getDiscordBot } = require('../services/discordBot');
-            const discordBot = getDiscordBot();
-
-            if (discordBot && discordBot.isReady() && settings.rules_channel_id) {
-                result = await discordBot.sendRuleToChannel(
+            if (result.success) {
+                // Log successful Discord message
+                await db.run(`
+                    INSERT INTO discord_messages (
+                        message_type, rule_id, discord_channel_id,
+                        sent_by, action_type, discord_message_id, sent_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                `, [
+                    'rule',
+                    ruleId,
                     settings.rules_channel_id,
-                    rule,
-                    settings,
+                    1, // System user
                     action,
-                    'System'
-                );
-
-                if (result.success) {
-                    // Log successful Discord message
-                    await db.run(`
-                        INSERT INTO discord_messages (
-                            message_type, rule_id, discord_channel_id, delivery_method,
-                            sent_by, action_type, discord_message_id, sent_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    `, [
-                        'rule',
-                        ruleId,
-                        settings.rules_channel_id,
-                        'bot',
-                        1, // System user
-                        action,
-                        result.messageId
-                    ]);
-                    
-                    console.log(`Discord rule notification sent successfully via bot: ${rule.full_code} (${action})`);
-                } else {
-                    console.error(`Failed to send Discord rule notification via bot: ${result.error}`);
-                }
+                    result.messageId
+                ]);
+                
+                console.log(`Discord rule notification sent successfully: ${rule.full_code} (${action})`);
             } else {
-                console.warn('Discord bot not available or rules channel not configured for auto-notification');
+                console.error(`Failed to send Discord rule notification: ${result.error}`);
             }
         } else {
-            // Use webhook (legacy mode)
-            if (settings.rules_webhook_url) {
-                const response = await axios.post(settings.rules_webhook_url, webhookPayload, {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 10000
-                });
-
-                if (response.status >= 200 && response.status < 300) {
-                    // Log successful Discord message
-                    await db.run(`
-                        INSERT INTO discord_messages (
-                            message_type, rule_id, webhook_url, delivery_method,
-                            sent_by, action_type, discord_message_id, sent_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    `, [
-                        'rule',
-                        ruleId,
-                        settings.rules_webhook_url.substring(0, 100),
-                        'webhook',
-                        1, // System user
-                        action,
-                        response.data?.id || `webhook_${Date.now()}`
-                    ]);
-                    
-                    console.log(`Discord rule notification sent successfully via webhook: ${rule.full_code} (${action})`);
-                }
-            }
+            console.warn('Discord bot not available or rules channel not configured for auto-notification');
         }
     } catch (error) {
         console.error('Error sending rule to Discord:', error);
@@ -231,15 +191,13 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
             const db = require('../database/init').getInstance();
             await db.run(`
                 INSERT INTO discord_messages (
-                    message_type, rule_id, webhook_url, discord_channel_id, 
-                    delivery_method, sent_by, action_type, discord_message_id, sent_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    message_type, rule_id, discord_channel_id,
+                    sent_by, action_type, discord_message_id, sent_at
+                ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             `, [
                 'rule',
                 ruleId,
                 'error', // Error placeholder
-                null,
-                'error',
                 1, // System user
                 action,
                 `error_${Date.now()}` // Error message ID
