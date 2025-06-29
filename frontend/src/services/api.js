@@ -5,17 +5,25 @@ import { withCache, CACHE_TTL, invalidateCache } from './cache';
 const getApiBaseUrl = () => {
   const hostname = window.location.hostname;
   const port = window.location.port;
+  const protocol = window.location.protocol;
   
-  // If we're running on localhost or 127.0.0.1, use local backend
+  // If we're running on localhost or 127.0.0.1, use local backend with explicit port
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:3001';
   }
   
-  // If we're on the server IP or any other domain, use the same host with port 3001
-  return `http://${hostname}:3001`;
+  // In production, check if we're being served on a standard port (80/443)
+  // If so, assume reverse proxy setup and use relative URLs
+  if ((protocol === 'http:' && (!port || port === '80')) || 
+      (protocol === 'https:' && (!port || port === '443'))) {
+    return ''; // Use relative URLs for reverse proxy setups
+  }
+  
+  // Otherwise, use explicit port 3001 (for custom port deployments)
+  return `${protocol}//${hostname}:3001`;
 };
 
-const API_BASE_URL = getApiBaseUrl(); // Always use dynamic detection for proper backend URL
+const API_BASE_URL = getApiBaseUrl(); // Smart detection: localhost uses :3001, production uses relative URLs
 
 console.log('🔧 API Configuration:', { 
   NODE_ENV: process.env.NODE_ENV,
