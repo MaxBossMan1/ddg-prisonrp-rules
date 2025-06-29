@@ -58,7 +58,8 @@ export const API_ENDPOINTS = {
   
   // Discord
   DISCORD_SETTINGS: '/api/discord/settings',
-  DISCORD_WEBHOOK_TEST: '/api/discord/webhook/test',
+  DISCORD_CHANNELS: '/api/discord/channels',
+  DISCORD_TEST: '/api/discord/test',
   DISCORD_ANNOUNCEMENTS: '/api/discord/announcements',
   DISCORD_RULES: '/api/discord/rules',
   DISCORD_MESSAGES: '/api/discord/messages'

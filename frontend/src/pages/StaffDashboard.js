@@ -2255,17 +2255,21 @@ For questions, contact staff immediately.`,
 
   // Discord integration state
   const [discordSettings, setDiscordSettings] = useState({
-    announcementWebhookUrl: '',
-    rulesWebhookUrl: '',
+    announcementChannelId: '',
+    rulesChannelId: '',
+    staffNotificationChannelId: '', // For rule approval notifications
     announcementsEnabled: false,
     rulesEnabled: false,
+    ruleApprovalNotificationsEnabled: false,
     emergencyRoleId: '',
-    defaultChannelType: 'announcements',
+    staffRoleId: '', // Role to mention for rule approvals
     embedColor: '#677bae'
   });
+  const [discordChannels, setDiscordChannels] = useState([]);
   const [discordMessages, setDiscordMessages] = useState([]);
   const [loadingDiscord, setLoadingDiscord] = useState(false);
-  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [loadingChannels, setLoadingChannels] = useState(false);
+  const [testingIntegration, setTestingIntegration] = useState(false);
   const [sendingToDiscord, setSendingToDiscord] = useState(false);
   const [loadingDiscordMessages, setLoadingDiscordMessages] = useState(false);
   const [discordMessageFilter, setDiscordMessageFilter] = useState('all'); // 'all', 'announcements', 'rules'
@@ -4374,14 +4378,19 @@ For questions, contact staff immediately.`,
       if (response.ok) {
         const data = await response.json();
         setDiscordSettings({
-          announcementWebhookUrl: data.announcementWebhookUrl || '',
-          rulesWebhookUrl: data.rulesWebhookUrl || '',
+          announcementChannelId: data.announcementChannelId || '',
+          rulesChannelId: data.rulesChannelId || '',
+          staffNotificationChannelId: data.staffNotificationChannelId || '',
           announcementsEnabled: data.announcementsEnabled || false,
           rulesEnabled: data.rulesEnabled || false,
+          ruleApprovalNotificationsEnabled: data.ruleApprovalNotificationsEnabled || false,
           emergencyRoleId: data.emergencyRoleId || '',
-          defaultChannelType: data.defaultChannelType || 'announcements',
+          staffRoleId: data.staffRoleId || '',
           embedColor: data.embedColor || '#677bae'
         });
+        
+        // Always load channels for bot mode
+        loadDiscordChannels();
       } else {
         console.error('Failed to load Discord settings');
       }
@@ -4389,6 +4398,37 @@ For questions, contact staff immediately.`,
       console.error('Error loading Discord settings:', error);
     } finally {
       setLoadingDiscord(false);
+    }
+  };
+
+  const loadDiscordChannels = async () => {
+    try {
+      setLoadingChannels(true);
+      const response = await fetch(`${BASE_URL}/api/discord/channels`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDiscordChannels(data.channels || []);
+      } else {
+        const error = await response.json();
+        console.error('Failed to load Discord channels:', error.error);
+        showCustomAlert(
+          '⚠️ Channel Loading Failed',
+          `Failed to load Discord channels: ${error.error || 'Discord bot may not be connected'}`,
+          'warning'
+        );
+      }
+    } catch (error) {
+      console.error('Error loading Discord channels:', error);
+      showCustomAlert(
+        '❌ Channel Loading Error',
+        `Error loading Discord channels: ${error.message}`,
+        'error'
+      );
+    } finally {
+      setLoadingChannels(false);
     }
   };
 
@@ -4430,44 +4470,52 @@ For questions, contact staff immediately.`,
     }
   };
 
-  const testDiscordWebhook = async (webhookType) => {
+  const testDiscordIntegration = async (type) => {
     try {
-      setTestingWebhook(true);
-      const response = await fetch(`${BASE_URL}/api/discord/webhook/test`, {
+      setTestingIntegration(true);
+      
+      let channelId;
+      if (type === 'announcements') {
+        channelId = discordSettings.announcementChannelId;
+      } else if (type === 'rules') {
+        channelId = discordSettings.rulesChannelId;
+      } else if (type === 'staff-notifications') {
+        channelId = discordSettings.staffNotificationChannelId;
+      }
+
+      const response = await fetch(`${BASE_URL}/api/discord/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          webhookType,
-          webhookUrl: webhookType === 'announcements' ? discordSettings.announcementWebhookUrl : discordSettings.rulesWebhookUrl
-        })
+        body: JSON.stringify({ type, channelId })
       });
 
       if (response.ok) {
+        const data = await response.json();
         showCustomAlert(
-          '✅ Webhook Tested',
-          `The ${webhookType} webhook was tested successfully.`,
+          '✅ Test Successful',
+          `${data.message}`,
           'success'
         );
       } else {
         const error = await response.json();
         showCustomAlert(
           '❌ Test Failed',
-          `Failed to test ${webhookType} webhook: ${error.error || 'Unknown error'}`,
+          `Failed to test ${type} integration: ${error.error || 'Unknown error'}`,
           'error'
         );
       }
     } catch (error) {
-      console.error('Error testing Discord webhook:', error);
+      console.error('Error testing Discord integration:', error);
       showCustomAlert(
         '❌ Test Failed',
-        `Error testing Discord webhook: ${error.message}`,
+        `Error testing Discord integration: ${error.message}`,
         'error'
       );
     } finally {
-      setTestingWebhook(false);
+      setTestingIntegration(false);
     }
   };
 
@@ -4588,6 +4636,15 @@ For questions, contact staff immediately.`,
       ...prevSettings,
       embedColor: color
     }));
+  };
+
+
+
+  const getChannelDisplayName = (channel) => {
+    if (channel.parentName) {
+      return `${channel.parentName} / #${channel.name}`;
+    }
+    return `#${channel.name}`;
   };
 
   if (loading && !user) {
@@ -5545,7 +5602,7 @@ For questions, contact staff immediately.`,
                       
                       {/* Send to Discord Button - Only for approved/live announcements and moderators+ */}
                       {(announcement.status === 'approved' || !announcement.status) && announcement.is_active && 
-                       discordSettings.announcementsEnabled && discordSettings.announcementWebhookUrl &&
+                       discordSettings.announcementsEnabled && discordSettings.announcementChannelId &&
                        (user.permissionLevel === 'moderator' || user.permissionLevel === 'admin' || user.permissionLevel === 'owner') && (
                         <ActionButton 
                           onClick={() => sendAnnouncementToDiscord(announcement.id)}
@@ -6037,8 +6094,8 @@ For questions, contact staff immediately.`,
                   <div style={{ display: 'grid', gap: '1.5rem' }}>
                     {/* Master Enable Toggle */}
                     <div>
-                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Master Controls</h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Integration Controls</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <input
                             type="checkbox"
@@ -6046,7 +6103,7 @@ For questions, contact staff immediately.`,
                             onChange={(e) => setDiscordSettings({...discordSettings, announcementsEnabled: e.target.checked})}
                             style={{ marginRight: '0.5rem' }}
                           />
-                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Announcements</span>
+                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>📢 Announcements</span>
                         </label>
                         
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -6056,35 +6113,111 @@ For questions, contact staff immediately.`,
                             onChange={(e) => setDiscordSettings({...discordSettings, rulesEnabled: e.target.checked})}
                             style={{ marginRight: '0.5rem' }}
                           />
-                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>Enable Rules Updates</span>
+                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>📋 Rules Updates</span>
+                        </label>
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={discordSettings.ruleApprovalNotificationsEnabled}
+                            onChange={(e) => setDiscordSettings({...discordSettings, ruleApprovalNotificationsEnabled: e.target.checked})}
+                            style={{ marginRight: '0.5rem' }}
+                          />
+                          <span style={{ color: '#ecf0f1', fontWeight: '500' }}>🔔 Rule Approvals</span>
                         </label>
                       </div>
                     </div>
 
-                    {/* Webhook URLs */}
+                    {/* Discord Channel Configuration */}
                     <div>
-                      <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Webhook Configuration</h4>
-                      <div style={{ display: 'grid', gap: '1rem' }}>
-                        <div>
-                          <Label>Announcements Webhook URL</Label>
-                          <Input
-                            type="text"
-                            value={discordSettings.announcementWebhookUrl}
-                            onChange={(e) => setDiscordSettings({...discordSettings, announcementWebhookUrl: e.target.value})}
-                            placeholder="https://discord.com/api/webhooks/..."
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label>Rules Webhook URL</Label>
-                          <Input
-                            type="text"
-                            value={discordSettings.rulesWebhookUrl}
-                            onChange={(e) => setDiscordSettings({...discordSettings, rulesWebhookUrl: e.target.value})}
-                            placeholder="https://discord.com/api/webhooks/..."
-                          />
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <h4 style={{ color: '#ecf0f1', margin: 0 }}>🤖 Discord Bot Channel Configuration</h4>
+                        <Button 
+                          onClick={loadDiscordChannels} 
+                          disabled={loadingChannels}
+                          style={{ 
+                            padding: '0.25rem 0.5rem', 
+                            fontSize: '0.8rem',
+                            backgroundColor: '#3498db'
+                          }}
+                        >
+                          {loadingChannels ? '🔄' : '🔄 Refresh'}
+                        </Button>
                       </div>
+                      
+                      {discordChannels.length > 0 ? (
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                          <div>
+                            <Label>📢 Announcements Channel</Label>
+                            <Select
+                              value={discordSettings.announcementChannelId}
+                              onChange={(e) => setDiscordSettings({...discordSettings, announcementChannelId: e.target.value})}
+                            >
+                              <option value="">Select a channel...</option>
+                              {discordChannels.map(channel => (
+                                <option key={channel.id} value={channel.id}>
+                                  {getChannelDisplayName(channel)}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label>📋 Rules Updates Channel</Label>
+                            <Select
+                              value={discordSettings.rulesChannelId}
+                              onChange={(e) => setDiscordSettings({...discordSettings, rulesChannelId: e.target.value})}
+                            >
+                              <option value="">Select a channel...</option>
+                              {discordChannels.map(channel => (
+                                <option key={channel.id} value={channel.id}>
+                                  {getChannelDisplayName(channel)}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>🔔 Staff Notifications Channel (Rule Approvals)</Label>
+                            <Select
+                              value={discordSettings.staffNotificationChannelId}
+                              onChange={(e) => setDiscordSettings({...discordSettings, staffNotificationChannelId: e.target.value})}
+                            >
+                              <option value="">Select a channel...</option>
+                              {discordChannels.map(channel => (
+                                <option key={channel.id} value={channel.id}>
+                                  {getChannelDisplayName(channel)}
+                                </option>
+                              ))}
+                            </Select>
+                            <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                              Channel where staff will be notified about rules awaiting approval
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{
+                          padding: '1rem',
+                          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                          borderRadius: '6px',
+                          borderLeft: '4px solid #e74c3c',
+                          color: '#e74c3c'
+                        }}>
+                          <strong>⚠️ No Discord channels found</strong>
+                          <br />
+                          Make sure the Discord bot is connected and has access to your server.
+                          <Button 
+                            onClick={loadDiscordChannels} 
+                            disabled={loadingChannels}
+                            style={{ 
+                              marginTop: '0.5rem',
+                              backgroundColor: '#e74c3c'
+                            }}
+                          >
+                            {loadingChannels ? 'Loading...' : 'Retry Loading Channels'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Advanced Settings */}
@@ -6092,24 +6225,29 @@ For questions, contact staff immediately.`,
                       <h4 style={{ color: '#ecf0f1', marginBottom: '1rem' }}>Advanced Settings</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div>
-                          <Label>Emergency Role ID (Priority 5)</Label>
+                          <Label>🚨 Emergency Role ID</Label>
                           <Input
                             type="text"
                             value={discordSettings.emergencyRoleId}
                             onChange={(e) => setDiscordSettings({...discordSettings, emergencyRoleId: e.target.value})}
                             placeholder="Role ID for emergency notifications"
                           />
+                          <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                            Role to mention for high priority announcements
+                          </div>
                         </div>
                         
                         <div>
-                          <Label>Default Channel Type</Label>
-                          <Select
-                            value={discordSettings.defaultChannelType}
-                            onChange={(e) => setDiscordSettings({...discordSettings, defaultChannelType: e.target.value})}
-                          >
-                            <option value="announcements">Announcements</option>
-                            <option value="rules">Rules</option>
-                          </Select>
+                          <Label>👥 Staff Role ID</Label>
+                          <Input
+                            type="text"
+                            value={discordSettings.staffRoleId}
+                            onChange={(e) => setDiscordSettings({...discordSettings, staffRoleId: e.target.value})}
+                            placeholder="Role ID for staff notifications"
+                          />
+                          <div style={{ color: '#bdc3c7', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                            Role to mention for rule approval notifications
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -6212,25 +6350,33 @@ For questions, contact staff immediately.`,
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #445566' }}>
+                    <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #445566', flexWrap: 'wrap' }}>
                       <Button onClick={saveDiscordSettings} disabled={loadingDiscord}>
                         {loadingDiscord ? 'Saving...' : '💾 Save Settings'}
                       </Button>
                       
                       <Button 
-                        onClick={() => testDiscordWebhook('announcements')} 
-                        disabled={testingWebhook || !discordSettings.announcementWebhookUrl}
+                        onClick={() => testDiscordIntegration('announcements')} 
+                        disabled={testingIntegration || !discordSettings.announcementChannelId}
                         style={{ backgroundColor: '#3498db' }}
                       >
-                        {testingWebhook ? 'Testing...' : '🧪 Test Announcements Webhook'}
+                        {testingIntegration ? 'Testing...' : '🧪 Test Announcements'}
                       </Button>
                       
                       <Button 
-                        onClick={() => testDiscordWebhook('rules')} 
-                        disabled={testingWebhook || !discordSettings.rulesWebhookUrl}
+                        onClick={() => testDiscordIntegration('rules')} 
+                        disabled={testingIntegration || !discordSettings.rulesChannelId}
                         style={{ backgroundColor: '#9b59b6' }}
                       >
-                        {testingWebhook ? 'Testing...' : '🧪 Test Rules Webhook'}
+                        {testingIntegration ? 'Testing...' : '🧪 Test Rules'}
+                      </Button>
+
+                      <Button 
+                        onClick={() => testDiscordIntegration('staff-notifications')} 
+                        disabled={testingIntegration || !discordSettings.staffNotificationChannelId}
+                        style={{ backgroundColor: '#e67e22' }}
+                      >
+                        {testingIntegration ? 'Testing...' : '🧪 Test Staff Notifications'}
                       </Button>
                     </div>
                   </div>

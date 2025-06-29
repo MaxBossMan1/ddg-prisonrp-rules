@@ -228,13 +228,16 @@ CREATE TABLE IF NOT EXISTS bulk_operations (
 -- Discord Integration Tables
 CREATE TABLE IF NOT EXISTS discord_settings (
     id SERIAL PRIMARY KEY,
-    announcement_webhook_url TEXT,
-    rules_webhook_url TEXT,
+    announcement_webhook_url TEXT, -- Legacy webhook support (deprecated)
+    rules_webhook_url TEXT, -- Legacy webhook support (deprecated)
+    announcement_channel_id TEXT, -- New channel-based approach
+    rules_channel_id TEXT, -- New channel-based approach
     announcements_enabled INTEGER DEFAULT 0,
     rules_enabled INTEGER DEFAULT 0,
     emergency_role_id TEXT,
     default_channel_type VARCHAR(50) DEFAULT 'announcements',
     embed_color VARCHAR(7) DEFAULT '#677bae',
+    use_bot_instead_of_webhooks INTEGER DEFAULT 1, -- New flag for bot vs webhook mode
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -244,9 +247,11 @@ CREATE TABLE IF NOT EXISTS discord_messages (
     announcement_id INTEGER,
     rule_id INTEGER,
     message_type VARCHAR(50) NOT NULL, -- 'announcement', 'rule_change', etc.
-    action_type TEXT,
+    action_type TEXT, -- 'create', 'update', 'delete' for rules
     discord_message_id TEXT NOT NULL,
-    webhook_url TEXT NOT NULL,
+    discord_channel_id TEXT, -- New field for channel-based messages
+    webhook_url TEXT, -- Legacy webhook support (deprecated)
+    delivery_method VARCHAR(20) DEFAULT 'bot', -- 'bot' or 'webhook'
     sent_by INTEGER NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (announcement_id) REFERENCES announcements(id),

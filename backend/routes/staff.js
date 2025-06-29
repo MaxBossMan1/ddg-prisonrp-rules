@@ -152,30 +152,76 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
             embeds: [embed]
         };
 
-        // Send to Discord
-        const response = await axios.post(settings.rules_webhook_url, webhookPayload, {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 10000
-        });
+        // Send to Discord using bot or webhook
+        let result;
+        const useBotMode = settings.use_bot_instead_of_webhooks === 1;
 
-        if (response.status >= 200 && response.status < 300) {
-            // Log successful Discord message
-            await db.run(`
-                INSERT INTO discord_messages (
-                    message_type, rule_id, webhook_url, delivery_status, 
-                    sent_by, action_type, discord_message_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            `, [
-                'rule',
-                ruleId,
-                settings.rules_webhook_url.substring(0, 100),
-                'sent',
-                1, // System user
-                action,
-                response.data?.id || `webhook_${Date.now()}`
-            ]);
-            
-            console.log(`Discord rule notification sent successfully: ${rule.full_code} (${action})`);
+        if (useBotMode) {
+            // Use Discord bot
+            const { getInstance: getDiscordBot } = require('../services/discordBot');
+            const discordBot = getDiscordBot();
+
+            if (discordBot && discordBot.isReady() && settings.rules_channel_id) {
+                result = await discordBot.sendRuleToChannel(
+                    settings.rules_channel_id,
+                    rule,
+                    settings,
+                    action,
+                    'System'
+                );
+
+                if (result.success) {
+                    // Log successful Discord message
+                    await db.run(`
+                        INSERT INTO discord_messages (
+                            message_type, rule_id, discord_channel_id, delivery_method,
+                            sent_by, action_type, discord_message_id, sent_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    `, [
+                        'rule',
+                        ruleId,
+                        settings.rules_channel_id,
+                        'bot',
+                        1, // System user
+                        action,
+                        result.messageId
+                    ]);
+                    
+                    console.log(`Discord rule notification sent successfully via bot: ${rule.full_code} (${action})`);
+                } else {
+                    console.error(`Failed to send Discord rule notification via bot: ${result.error}`);
+                }
+            } else {
+                console.warn('Discord bot not available or rules channel not configured for auto-notification');
+            }
+        } else {
+            // Use webhook (legacy mode)
+            if (settings.rules_webhook_url) {
+                const response = await axios.post(settings.rules_webhook_url, webhookPayload, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 10000
+                });
+
+                if (response.status >= 200 && response.status < 300) {
+                    // Log successful Discord message
+                    await db.run(`
+                        INSERT INTO discord_messages (
+                            message_type, rule_id, webhook_url, delivery_method,
+                            sent_by, action_type, discord_message_id, sent_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    `, [
+                        'rule',
+                        ruleId,
+                        settings.rules_webhook_url.substring(0, 100),
+                        'webhook',
+                        1, // System user
+                        action,
+                        response.data?.id || `webhook_${Date.now()}`
+                    ]);
+                    
+                    console.log(`Discord rule notification sent successfully via webhook: ${rule.full_code} (${action})`);
+                }
+            }
         }
     } catch (error) {
         console.error('Error sending rule to Discord:', error);
@@ -185,21 +231,95 @@ async function sendRuleToDiscord(ruleId, action = 'update') {
             const db = require('../database/init').getInstance();
             await db.run(`
                 INSERT INTO discord_messages (
-                    message_type, rule_id, webhook_url, delivery_status, 
-                    sent_by, action_type, error_message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    message_type, rule_id, webhook_url, discord_channel_id, 
+                    delivery_method, sent_by, action_type, discord_message_id, sent_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             `, [
                 'rule',
                 ruleId,
-                'webhook_error',
-                'failed',
+                'error', // Error placeholder
+                null,
+                'error',
                 1, // System user
                 action,
-                error.message || 'Unknown error'
+                `error_${Date.now()}` // Error message ID
             ]);
         } catch (logError) {
             console.error('Error logging Discord failure:', logError);
         }
+    }
+}
+
+async function sendRuleApprovalNotification(ruleId) {
+    try {
+        const db = require('../database/init').getInstance();
+        
+        // Get Discord settings
+        const settings = await db.get('SELECT * FROM discord_settings WHERE id = 1');
+        if (!settings || !settings.rule_approval_notifications_enabled || !settings.staff_notification_channel_id) {
+            console.log('Discord rule approval notifications disabled or not configured');
+            return;
+        }
+
+        // Get rule with category information
+        const rule = await db.get(`
+            SELECT r.*, c.name as category_name, c.letter_code as category_letter_code,
+                   rc.full_code, su.discord_username as created_by_username
+            FROM rules r
+            LEFT JOIN categories c ON r.category_id = c.id
+            LEFT JOIN rule_codes rc ON r.id = rc.rule_id
+            LEFT JOIN staff_users su ON r.submitted_by = su.id
+            WHERE r.id = ?
+        `, [ruleId]);
+
+        if (!rule) {
+            console.log('Rule not found for approval notification:', ruleId);
+            return;
+        }
+
+        // Only send for pending approval rules
+        if (rule.status !== 'pending_approval') {
+            console.log('Rule not pending approval, skipping notification:', rule.status);
+            return;
+        }
+
+        // Use Discord bot
+        const { getInstance: getDiscordBot } = require('../services/discordBot');
+        const discordBot = getDiscordBot();
+
+        if (discordBot && discordBot.isReady()) {
+            const result = await discordBot.sendRuleApprovalNotification(
+                settings.staff_notification_channel_id,
+                rule,
+                settings,
+                settings.staff_role_id
+            );
+
+            if (result.success) {
+                // Log successful Discord message
+                await db.run(`
+                    INSERT INTO discord_messages (
+                        message_type, rule_id, discord_channel_id,
+                        sent_by, action_type, discord_message_id, sent_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                `, [
+                    'staff_notification',
+                    ruleId,
+                    settings.staff_notification_channel_id,
+                    1, // System user
+                    'approval_needed',
+                    result.messageId
+                ]);
+                
+                console.log(`Discord rule approval notification sent successfully: ${rule.full_code || `Rule #${rule.id}`}`);
+            } else {
+                console.error(`Failed to send Discord rule approval notification: ${result.error}`);
+            }
+        } else {
+            console.warn('Discord bot not available for rule approval notification');
+        }
+    } catch (error) {
+        console.error('Error sending rule approval notification to Discord:', error);
     }
 }
 
@@ -1332,8 +1452,15 @@ router.post('/rules', requireAuth, requirePermission('editor'), async (req, res)
             success: true
         });
 
-        // Send rule to Discord
-        await sendRuleToDiscord(result.id, 'create');
+        // Send rule to Discord if approved
+        if (finalStatus === 'approved') {
+            await sendRuleToDiscord(result.id, 'create');
+        }
+        
+        // Send rule approval notification if pending approval
+        if (finalStatus === 'pending_approval') {
+            await sendRuleApprovalNotification(result.id);
+        }
 
         const message = finalStatus === 'draft' ? 'Draft saved successfully' : 
                        finalStatus === 'pending_approval' ? 'Rule submitted for approval' : 

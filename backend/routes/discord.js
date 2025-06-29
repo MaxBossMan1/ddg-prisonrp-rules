@@ -33,7 +33,7 @@ console.log('🔧 Discord Dynamic URLs:', {
 // Activity logging middleware for all Discord routes
 router.use(ActivityLogger.middleware('access', 'discord'));
 
-// Discord webhook settings management
+// Discord settings management
 router.get('/settings', requireAuth, requirePermission('admin'), async (req, res) => {
     try {
         const db = require('../database/init').getInstance();
@@ -44,25 +44,29 @@ router.get('/settings', requireAuth, requirePermission('admin'), async (req, res
             WHERE id = 1
         `);
 
-        // Return settings including webhook URLs for admin users
+        // Return bot-based Discord settings
         if (settings) {
             res.json({
-                announcementWebhookUrl: settings.announcement_webhook_url || '',
-                rulesWebhookUrl: settings.rules_webhook_url || '',
+                announcementChannelId: settings.announcement_channel_id || '',
+                rulesChannelId: settings.rules_channel_id || '',
+                staffNotificationChannelId: settings.staff_notification_channel_id || '',
                 announcementsEnabled: settings.announcements_enabled === 1,
                 rulesEnabled: settings.rules_enabled === 1,
+                ruleApprovalNotificationsEnabled: settings.rule_approval_notifications_enabled === 1,
                 emergencyRoleId: settings.emergency_role_id || '',
-                defaultChannelType: settings.default_channel_type || 'announcements',
+                staffRoleId: settings.staff_role_id || '',
                 embedColor: settings.embed_color || '#677bae'
             });
         } else {
             res.json({
-                announcementWebhookUrl: '',
-                rulesWebhookUrl: '',
+                announcementChannelId: '',
+                rulesChannelId: '',
+                staffNotificationChannelId: '',
                 announcementsEnabled: false,
                 rulesEnabled: false,
+                ruleApprovalNotificationsEnabled: false,
                 emergencyRoleId: '',
-                defaultChannelType: 'announcements',
+                staffRoleId: '',
                 embedColor: '#677bae'
             });
         }
@@ -75,40 +79,91 @@ router.get('/settings', requireAuth, requirePermission('admin'), async (req, res
 router.put('/settings', requireAuth, requirePermission('admin'), async (req, res) => {
     try {
         const {
-            announcementWebhookUrl,
-            rulesWebhookUrl,
+            announcementChannelId,
+            rulesChannelId,
+            staffNotificationChannelId,
             announcementsEnabled,
             rulesEnabled,
+            ruleApprovalNotificationsEnabled,
             emergencyRoleId,
-            defaultChannelType,
+            staffRoleId,
             embedColor
         } = req.body;
 
         const db = require('../database/init').getInstance();
 
-        // Validate webhook URLs if provided
-        if (announcementWebhookUrl && !isValidDiscordWebhookUrl(announcementWebhookUrl)) {
-            return res.status(400).json({ error: 'Invalid announcement webhook URL' });
-        }
+        // Validate channel IDs if provided
+        const { getInstance: getDiscordBot } = require('../services/discordBot');
+        const discordBot = getDiscordBot();
+        
+        if (discordBot && discordBot.isReady()) {
+            // Validate announcement channel
+            if (announcementChannelId) {
+                try {
+                    const channel = await discordBot.client.channels.fetch(announcementChannelId);
+                    if (!channel) {
+                        return res.status(400).json({ error: 'Announcement channel not found' });
+                    }
+                    const permissions = channel.permissionsFor(discordBot.client.user);
+                    if (!permissions.has('SendMessages')) {
+                        return res.status(400).json({ error: 'Bot does not have permission to send messages in the announcement channel' });
+                    }
+                } catch (error) {
+                    return res.status(400).json({ error: `Invalid announcement channel: ${error.message}` });
+                }
+            }
 
-        if (rulesWebhookUrl && !isValidDiscordWebhookUrl(rulesWebhookUrl)) {
-            return res.status(400).json({ error: 'Invalid rules webhook URL' });
+            // Validate rules channel
+            if (rulesChannelId) {
+                try {
+                    const channel = await discordBot.client.channels.fetch(rulesChannelId);
+                    if (!channel) {
+                        return res.status(400).json({ error: 'Rules channel not found' });
+                    }
+                    const permissions = channel.permissionsFor(discordBot.client.user);
+                    if (!permissions.has('SendMessages')) {
+                        return res.status(400).json({ error: 'Bot does not have permission to send messages in the rules channel' });
+                    }
+                } catch (error) {
+                    return res.status(400).json({ error: `Invalid rules channel: ${error.message}` });
+                }
+            }
+
+            // Validate staff notification channel
+            if (staffNotificationChannelId) {
+                try {
+                    const channel = await discordBot.client.channels.fetch(staffNotificationChannelId);
+                    if (!channel) {
+                        return res.status(400).json({ error: 'Staff notification channel not found' });
+                    }
+                    const permissions = channel.permissionsFor(discordBot.client.user);
+                    if (!permissions.has('SendMessages')) {
+                        return res.status(400).json({ error: 'Bot does not have permission to send messages in the staff notification channel' });
+                    }
+                } catch (error) {
+                    return res.status(400).json({ error: `Invalid staff notification channel: ${error.message}` });
+                }
+            }
+        } else if ((announcementChannelId || rulesChannelId || staffNotificationChannelId)) {
+            return res.status(400).json({ error: 'Discord bot is not connected. Cannot validate channels.' });
         }
 
         // Update or insert settings
         await db.run(`
             INSERT OR REPLACE INTO discord_settings (
-                id, announcement_webhook_url, rules_webhook_url,
-                announcements_enabled, rules_enabled, emergency_role_id,
-                default_channel_type, embed_color, updated_at
-            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                id, announcement_channel_id, rules_channel_id, staff_notification_channel_id,
+                announcements_enabled, rules_enabled, rule_approval_notifications_enabled,
+                emergency_role_id, staff_role_id, embed_color, updated_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `, [
-            announcementWebhookUrl || null,
-            rulesWebhookUrl || null,
+            announcementChannelId || null,
+            rulesChannelId || null,
+            staffNotificationChannelId || null,
             announcementsEnabled ? 1 : 0,
             rulesEnabled ? 1 : 0,
+            ruleApprovalNotificationsEnabled ? 1 : 0,
             emergencyRoleId || null,
-            defaultChannelType || 'announcements',
+            staffRoleId || null,
             embedColor || '#677bae'
         ]);
 
@@ -118,10 +173,12 @@ router.put('/settings', requireAuth, requirePermission('admin'), async (req, res
             actionType: 'update',
             resourceType: 'discord_settings',
             actionDetails: {
-                hasAnnouncementWebhook: !!announcementWebhookUrl,
-                hasRulesWebhook: !!rulesWebhookUrl,
+                hasAnnouncementChannel: !!announcementChannelId,
+                hasRulesChannel: !!rulesChannelId,
+                hasStaffNotificationChannel: !!staffNotificationChannelId,
                 announcementsEnabled,
                 rulesEnabled,
+                ruleApprovalNotificationsEnabled,
                 timestamp: new Date().toISOString()
             },
             ipAddress: req.ip,
@@ -137,13 +194,31 @@ router.put('/settings', requireAuth, requirePermission('admin'), async (req, res
     }
 });
 
-// Test webhook endpoint
-router.post('/webhook/test', requireAuth, requirePermission('admin'), async (req, res) => {
+// Get available Discord channels
+router.get('/channels', requireAuth, requirePermission('admin'), async (req, res) => {
     try {
-        const { webhookType } = req.body; // 'announcements' or 'rules'
+        const { getInstance: getDiscordBot } = require('../services/discordBot');
+        const discordBot = getDiscordBot();
+
+        if (!discordBot || !discordBot.isReady()) {
+            return res.status(503).json({ error: 'Discord bot not connected' });
+        }
+
+        const channels = await discordBot.getGuildChannels();
+        res.json({ channels });
+    } catch (error) {
+        console.error('Error fetching Discord channels:', error);
+        res.status(500).json({ error: 'Failed to fetch Discord channels' });
+    }
+});
+
+// Test Discord bot integration
+router.post('/test', requireAuth, requirePermission('admin'), async (req, res) => {
+    try {
+        const { type, channelId } = req.body; // type: 'announcements', 'rules', or 'staff-notifications'
         
-        if (!webhookType || !['announcements', 'rules'].includes(webhookType)) {
-            return res.status(400).json({ error: 'Invalid webhook type' });
+        if (!type || !['announcements', 'rules', 'staff-notifications'].includes(type)) {
+            return res.status(400).json({ error: 'Invalid test type' });
         }
 
         const db = require('../database/init').getInstance();
@@ -153,57 +228,43 @@ router.post('/webhook/test', requireAuth, requirePermission('admin'), async (req
             return res.status(404).json({ error: 'Discord settings not configured' });
         }
 
-        const webhookUrl = webhookType === 'announcements' 
-            ? settings.announcement_webhook_url 
-            : settings.rules_webhook_url;
+        // Test bot channel access
+        const { getInstance: getDiscordBot } = require('../services/discordBot');
+        const discordBot = getDiscordBot();
 
-        if (!webhookUrl) {
-            return res.status(404).json({ error: `${webhookType} webhook URL not configured` });
+        if (!discordBot || !discordBot.isReady()) {
+            return res.status(503).json({ error: 'Discord bot not connected' });
         }
 
-        // Create test embed
-        const testEmbed = {
-            title: `🧪 DDG PrisonRP ${webhookType === 'announcements' ? 'Announcements' : 'Rules'} Webhook Test`,
-            description: `This is a test message from the DDG PrisonRP staff system.\n\nWebhook is working correctly!`,
-            color: parseInt(settings.embed_color.replace('#', ''), 16),
-            timestamp: new Date().toISOString(),
-            footer: {
-                text: `Test by ${req.user.username}`,
-                icon_url: 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg'
-            },
-            fields: [
-                {
-                    name: '🏷️ Type',
-                    value: webhookType === 'announcements' ? 'Announcements Channel' : 'Rules Channel',
-                    inline: true
-                },
-                {
-                    name: '⚙️ Status',
-                    value: 'Integration Active',
-                    inline: true
-                }
-            ]
-        };
+        let testChannelId;
+        if (type === 'announcements') {
+            testChannelId = channelId || settings.announcement_channel_id;
+        } else if (type === 'rules') {
+            testChannelId = channelId || settings.rules_channel_id;
+        } else if (type === 'staff-notifications') {
+            testChannelId = channelId || settings.staff_notification_channel_id;
+        }
+        
+        if (!testChannelId) {
+            return res.status(400).json({ error: `${type.replace('-', ' ')} channel not configured` });
+        }
 
-        // Send test message
-        const result = await sendDiscordWebhook(webhookUrl, {
-            embeds: [testEmbed]
-        });
+        const result = await discordBot.testChannelAccess(testChannelId, type);
 
         if (result.success) {
             res.json({ 
-                message: 'Test message sent successfully!',
-                messageId: result.messageId 
+                message: `Test message sent successfully to #${result.channelName}!`,
+                messageId: result.messageId
             });
         } else {
             res.status(500).json({ 
                 error: 'Failed to send test message',
-                details: result.error 
+                details: result.error
             });
         }
     } catch (error) {
-        console.error('Error testing webhook:', error);
-        res.status(500).json({ error: 'Failed to test webhook' });
+        console.error('Error testing Discord integration:', error);
+        res.status(500).json({ error: 'Failed to test Discord integration' });
     }
 });
 
@@ -257,20 +318,59 @@ router.post('/announcements/:id/send', requireAuth, requirePermission('moderator
             content = `<@&${settings.emergency_role_id}>`;
         }
 
-        // Send to Discord
-        const result = await sendDiscordWebhook(settings.announcement_webhook_url, {
-            content,
-            embeds: [embed]
-        });
+        // Send to Discord using bot or webhook
+        let result;
+        const useBotMode = settings.use_bot_instead_of_webhooks === 1;
+
+        if (useBotMode) {
+            // Use Discord bot
+            const { getInstance: getDiscordBot } = require('../services/discordBot');
+            const discordBot = getDiscordBot();
+
+            if (!discordBot || !discordBot.isReady()) {
+                return res.status(503).json({ error: 'Discord bot not connected' });
+            }
+
+            if (!settings.announcement_channel_id) {
+                return res.status(400).json({ error: 'Announcement channel not configured' });
+            }
+
+            result = await discordBot.sendAnnouncementToChannel(
+                settings.announcement_channel_id,
+                announcement,
+                settings,
+                req.user.username
+            );
+        } else {
+            // Use webhook (legacy mode)
+            if (!settings.announcement_webhook_url) {
+                return res.status(400).json({ error: 'Announcement webhook not configured' });
+            }
+
+            const embed = createAnnouncementEmbed(announcement, settings);
+            
+            result = await sendDiscordWebhook(settings.announcement_webhook_url, {
+                content,
+                embeds: [embed]
+            });
+        }
 
         if (result.success) {
             // Record the Discord message
             await db.run(`
                 INSERT OR REPLACE INTO discord_messages (
                     announcement_id, message_type, discord_message_id,
-                    webhook_url, sent_by, sent_at
-                ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            `, [id, 'announcement', result.messageId, settings.announcement_webhook_url, req.user.id]);
+                    discord_channel_id, webhook_url, delivery_method, sent_by, sent_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            `, [
+                id, 
+                'announcement', 
+                result.messageId,
+                useBotMode ? settings.announcement_channel_id : null,
+                useBotMode ? null : settings.announcement_webhook_url,
+                useBotMode ? 'bot' : 'webhook',
+                req.user.id
+            ]);
 
             // Log the activity
             await ActivityLogger.log({
@@ -282,6 +382,8 @@ router.post('/announcements/:id/send', requireAuth, requirePermission('moderator
                     announcementTitle: announcement.title,
                     priority: announcement.priority,
                     discordMessageId: result.messageId,
+                    deliveryMethod: useBotMode ? 'bot' : 'webhook',
+                    channelId: useBotMode ? settings.announcement_channel_id : null,
                     forceResend,
                     timestamp: new Date().toISOString()
                 },
@@ -294,12 +396,14 @@ router.post('/announcements/:id/send', requireAuth, requirePermission('moderator
             res.json({ 
                 message: 'Announcement sent to Discord successfully!',
                 messageId: result.messageId,
+                method: useBotMode ? 'bot' : 'webhook',
                 sentAt: new Date().toISOString()
             });
         } else {
             res.status(500).json({ 
                 error: 'Failed to send announcement to Discord',
-                details: result.error 
+                details: result.error,
+                method: useBotMode ? 'bot' : 'webhook'
             });
         }
     } catch (error) {
@@ -413,10 +517,42 @@ router.post('/rules/:id/send', requireAuth, requirePermission('moderator'), asyn
         // Create Discord embed
         const embed = createRuleEmbed(rule, settings, action);
 
-        // Send to Discord
-        const result = await sendDiscordWebhook(settings.rules_webhook_url, {
-            embeds: [embed]
-        });
+        // Send to Discord using bot or webhook
+        let result;
+        const useBotMode = settings.use_bot_instead_of_webhooks === 1;
+
+        if (useBotMode) {
+            // Use Discord bot
+            const { getInstance: getDiscordBot } = require('../services/discordBot');
+            const discordBot = getDiscordBot();
+
+            if (!discordBot || !discordBot.isReady()) {
+                return res.status(503).json({ error: 'Discord bot not connected' });
+            }
+
+            if (!settings.rules_channel_id) {
+                return res.status(400).json({ error: 'Rules channel not configured' });
+            }
+
+            result = await discordBot.sendRuleToChannel(
+                settings.rules_channel_id,
+                rule,
+                settings,
+                action,
+                req.user.username
+            );
+        } else {
+            // Use webhook (legacy mode)
+            if (!settings.rules_webhook_url) {
+                return res.status(400).json({ error: 'Rules webhook not configured' });
+            }
+
+            const embed = createRuleEmbed(rule, settings, action);
+
+            result = await sendDiscordWebhook(settings.rules_webhook_url, {
+                embeds: [embed]
+            });
+        }
 
         if (result.success) {
             // Record the Discord message (only for create/update, not delete)
@@ -424,9 +560,19 @@ router.post('/rules/:id/send', requireAuth, requirePermission('moderator'), asyn
                 await db.run(`
                     INSERT OR REPLACE INTO discord_messages (
                         rule_id, message_type, discord_message_id,
-                        webhook_url, sent_by, sent_at, action_type
-                    ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
-                `, [id, 'rule', result.messageId, settings.rules_webhook_url, req.user.id, action]);
+                        discord_channel_id, webhook_url, delivery_method, 
+                        sent_by, sent_at, action_type
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+                `, [
+                    id, 
+                    'rule', 
+                    result.messageId,
+                    useBotMode ? settings.rules_channel_id : null,
+                    useBotMode ? null : settings.rules_webhook_url,
+                    useBotMode ? 'bot' : 'webhook',
+                    req.user.id, 
+                    action
+                ]);
             }
 
             // Log the activity
@@ -440,6 +586,8 @@ router.post('/rules/:id/send', requireAuth, requirePermission('moderator'), asyn
                     ruleTitle: rule.title,
                     action: action,
                     discordMessageId: result.messageId,
+                    deliveryMethod: useBotMode ? 'bot' : 'webhook',
+                    channelId: useBotMode ? settings.rules_channel_id : null,
                     forceResend,
                     timestamp: new Date().toISOString()
                 },
@@ -452,12 +600,14 @@ router.post('/rules/:id/send', requireAuth, requirePermission('moderator'), asyn
             res.json({ 
                 message: `Rule ${action} notification sent to Discord successfully!`,
                 messageId: result.messageId,
+                method: useBotMode ? 'bot' : 'webhook',
                 sentAt: new Date().toISOString()
             });
         } else {
             res.status(500).json({ 
                 error: 'Failed to send rule notification to Discord',
-                details: result.error 
+                details: result.error,
+                method: useBotMode ? 'bot' : 'webhook'
             });
         }
     } catch (error) {

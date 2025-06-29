@@ -284,6 +284,331 @@ class DiscordBotService {
         }
     }
 
+    async sendAnnouncementToChannel(channelId, announcement, settings, sentByUsername) {
+        try {
+            if (!this.isConnected || !this.client) {
+                throw new Error('Discord bot not connected');
+            }
+
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel) {
+                throw new Error(`Channel ${channelId} not found`);
+            }
+
+            // Priority colors and labels
+            const priorityColors = {
+                5: 0xFF0000, // Red - Emergency
+                4: 0xFF8C00, // Orange - Critical  
+                3: 0xFFD700, // Gold - High
+                2: 0x00FF00, // Green - Normal
+                1: 0x808080  // Gray - Low
+            };
+
+            const priorityLabels = {
+                5: '🚨 EMERGENCY',
+                4: '⚠️ CRITICAL', 
+                3: '📢 HIGH PRIORITY',
+                2: '📋 ANNOUNCEMENT',
+                1: '💬 INFO'
+            };
+
+            const color = priorityColors[announcement.priority] || parseInt(settings.embed_color?.replace('#', '') || '677bae', 16);
+
+            const embed = new EmbedBuilder()
+                .setTitle(announcement.title)
+                .setDescription(announcement.content.length > 2000 
+                    ? announcement.content.substring(0, 1997) + '...'
+                    : announcement.content)
+                .setColor(color)
+                .setTimestamp()
+                .addFields([
+                    {
+                        name: '🏷️ Priority',
+                        value: priorityLabels[announcement.priority] || 'UNKNOWN',
+                        inline: true
+                    },
+                    {
+                        name: '📅 Created',
+                        value: new Date(announcement.created_at).toLocaleDateString(),
+                        inline: true
+                    },
+                    {
+                        name: '👤 Sent By',
+                        value: sentByUsername || 'System',
+                        inline: true
+                    }
+                ])
+                .setFooter({
+                    text: 'DigitalDeltaGaming PrisonRP Staff System',
+                    iconURL: 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg'
+                });
+
+            // Add role mention for high priority announcements
+            let content = '';
+            if (announcement.priority >= 4 && settings.emergency_role_id) {
+                content = `<@&${settings.emergency_role_id}>`;
+            }
+
+            const message = await channel.send({ 
+                content: content || undefined,
+                embeds: [embed] 
+            });
+
+            return {
+                success: true,
+                messageId: message.id,
+                channelId: channel.id
+            };
+        } catch (error) {
+            console.error('🚨 Error sending announcement to Discord channel:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async sendRuleToChannel(channelId, rule, settings, action = 'update', sentByUsername) {
+        try {
+            if (!this.isConnected || !this.client) {
+                throw new Error('Discord bot not connected');
+            }
+
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel) {
+                throw new Error(`Channel ${channelId} not found`);
+            }
+
+            // Action-specific colors and icons
+            const actionConfig = {
+                create: {
+                    color: 0x27ae60, // Green
+                    icon: '📝',
+                    title: 'New Rule Created'
+                },
+                update: {
+                    color: 0xf39c12, // Orange
+                    icon: '✏️',
+                    title: 'Rule Updated'
+                },
+                delete: {
+                    color: 0xe74c3c, // Red
+                    icon: '🗑️',
+                    title: 'Rule Deleted'
+                }
+            };
+
+            const config = actionConfig[action] || actionConfig.update;
+
+            const embed = new EmbedBuilder()
+                .setTitle(`${config.icon} ${config.title}: ${rule.full_code || `Rule #${rule.id}`}`)
+                .setDescription(rule.title ? `**${rule.title}**\n\n${rule.content.substring(0, 200)}...` : rule.content.substring(0, 300) + '...')
+                .setColor(config.color)
+                .setTimestamp()
+                .addFields([
+                    {
+                        name: '📋 Category',
+                        value: `${rule.category_letter_code || 'N/A'} - ${rule.category_name || 'Uncategorized'}`,
+                        inline: true
+                    },
+                    {
+                        name: '👤 Sent By',
+                        value: sentByUsername || 'System',
+                        inline: true
+                    },
+                    {
+                        name: '📅 Date',
+                        value: new Date().toLocaleDateString(),
+                        inline: true
+                    }
+                ])
+                .setFooter({
+                    text: 'DDG PrisonRP Rules System'
+                });
+
+            const message = await channel.send({ embeds: [embed] });
+
+            return {
+                success: true,
+                messageId: message.id,
+                channelId: channel.id
+            };
+        } catch (error) {
+            console.error('🚨 Error sending rule to Discord channel:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async getGuildChannels() {
+        try {
+            if (!this.isConnected || !this.client) {
+                throw new Error('Discord bot not connected');
+            }
+
+            const guild = await this.client.guilds.fetch(this.guildId);
+            if (!guild) {
+                throw new Error(`Guild ${this.guildId} not found`);
+            }
+
+            const channels = await guild.channels.fetch();
+            
+            // Filter to text channels only and format for frontend
+            const textChannels = channels
+                .filter(channel => channel.type === 0) // TEXT channel type
+                .map(channel => ({
+                    id: channel.id,
+                    name: channel.name,
+                    parentId: channel.parentId,
+                    parentName: channel.parent?.name || null,
+                    position: channel.position
+                }))
+                .sort((a, b) => a.position - b.position);
+
+            return textChannels;
+        } catch (error) {
+            console.error('🚨 Error fetching guild channels:', error);
+            throw error;
+        }
+    }
+
+    async testChannelAccess(channelId, testType = 'general') {
+        try {
+            if (!this.isConnected || !this.client) {
+                throw new Error('Discord bot not connected');
+            }
+
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel) {
+                throw new Error(`Channel ${channelId} not found`);
+            }
+
+            // Check if bot has permission to send messages
+            const permissions = channel.permissionsFor(this.client.user);
+            if (!permissions.has('SendMessages')) {
+                throw new Error(`Bot does not have permission to send messages in #${channel.name}`);
+            }
+
+            // Create test embed based on test type
+            let embed;
+            if (testType === 'announcements') {
+                embed = new EmbedBuilder()
+                    .setTitle('📢 DDG PrisonRP Announcements Test')
+                    .setDescription('This is a test message for the announcements channel.\n\nBot integration is working correctly!')
+                    .setColor(0x3498db)
+                    .setTimestamp()
+                    .setFooter({
+                        text: 'DDG PrisonRP Staff System Test'
+                    });
+            } else if (testType === 'rules') {
+                embed = new EmbedBuilder()
+                    .setTitle('📋 DDG PrisonRP Rules Test')
+                    .setDescription('This is a test message for the rules channel.\n\nBot integration is working correctly!')
+                    .setColor(0x9b59b6)
+                    .setTimestamp()
+                    .setFooter({
+                        text: 'DDG PrisonRP Staff System Test'
+                    });
+            } else if (testType === 'staff-notifications') {
+                embed = new EmbedBuilder()
+                    .setTitle('🔔 DDG PrisonRP Staff Notifications Test')
+                    .setDescription('This is a test message for staff notifications.\n\nThis channel will receive notifications when rules need approval.')
+                    .setColor(0xe67e22)
+                    .setTimestamp()
+                    .setFooter({
+                        text: 'DDG PrisonRP Staff System Test'
+                    });
+            } else {
+                embed = new EmbedBuilder()
+                    .setTitle('🧪 DDG PrisonRP Bot Test')
+                    .setDescription('This is a test message from the DDG PrisonRP staff system.\n\nBot integration is working correctly!')
+                    .setColor(0x677bae)
+                    .setTimestamp()
+                    .setFooter({
+                        text: 'DDG PrisonRP Staff System Test'
+                    });
+            }
+
+            const message = await channel.send({ embeds: [embed] });
+
+            return {
+                success: true,
+                messageId: message.id,
+                channelName: channel.name
+            };
+        } catch (error) {
+            console.error('🚨 Error testing channel access:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async sendRuleApprovalNotification(staffChannelId, rule, settings, staffRoleId) {
+        try {
+            if (!this.isConnected || !this.client) {
+                throw new Error('Discord bot not connected');
+            }
+
+            const channel = await this.client.channels.fetch(staffChannelId);
+            if (!channel) {
+                throw new Error(`Staff notification channel ${staffChannelId} not found`);
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle('🔔 Rule Awaiting Approval')
+                .setDescription(`**${rule.title || 'Untitled Rule'}**\n\n${rule.content.substring(0, 300)}${rule.content.length > 300 ? '...' : ''}`)
+                .setColor(0xe67e22) // Orange color for notifications
+                .setTimestamp()
+                .addFields([
+                    {
+                        name: '📋 Category',
+                        value: `${rule.category_letter_code || 'N/A'} - ${rule.category_name || 'Uncategorized'}`,
+                        inline: true
+                    },
+                    {
+                        name: '👤 Created By',
+                        value: rule.created_by_username || 'Unknown',
+                        inline: true
+                    },
+                    {
+                        name: '📅 Created',
+                        value: new Date(rule.created_at).toLocaleDateString(),
+                        inline: true
+                    }
+                ])
+                .setFooter({
+                    text: 'DDG PrisonRP Staff System - Rule Approval Needed'
+                });
+
+            // Add staff role mention if provided
+            let content = '';
+            if (staffRoleId) {
+                content = `<@&${staffRoleId}> A new rule needs your review and approval!`;
+            }
+
+            const message = await channel.send({ 
+                content: content || undefined,
+                embeds: [embed] 
+            });
+
+            return {
+                success: true,
+                messageId: message.id,
+                channelId: channel.id
+            };
+        } catch (error) {
+            console.error('🚨 Error sending rule approval notification:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
     async updateRoleMappings(mappings) {
         try {
             const db = Database.getInstance();

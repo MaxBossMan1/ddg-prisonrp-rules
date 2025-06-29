@@ -168,8 +168,11 @@ export const apiService = {
     // Update Discord settings
     updateSettings: (settings) => api.put('/api/discord/settings', settings),
     
-    // Test Discord webhook
-    testWebhook: (webhookUrl) => api.post('/api/discord/webhook/test', { webhookUrl }),
+    // Get available Discord channels (bot mode)
+    getChannels: () => api.get('/api/discord/channels'),
+    
+    // Test Discord integration (bot or webhook)
+    test: (config) => api.post('/api/discord/test', config),
     
     // Send announcement to Discord
     sendAnnouncement: (announcementId) => api.post(`/api/discord/announcements/${announcementId}/send`),
